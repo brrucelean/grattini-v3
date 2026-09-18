@@ -21,11 +21,15 @@ The Tabaccaio is the first style anchor and already has a non-destructive V3 sib
 
 `graffiata`, `kawaii`, `marcia`, `morta`, `piede`, `polliceVerde`, `sana`, `sanguinante`, `unghiaNera`.
 
+Progress: five core physical states integrated in native 56×56 pixel art (`sana`, `graffiata`, `sanguinante`, `marcia`, `morta`). The four special states remain on their legacy fallback until matching generation capacity is available.
+
 ## 3. Cursor/finger sprites — 24
 
 Nine finger cursors matching the nail states above, plus fifteen held-item cursors:
 
 `bottone`, `bullone`, `chiaveOttone`, `coltelloAffilato`, `discoRotto`, `fasciaPolso`, `gettoneLavaggio`, `guantoBoss`, `guantoFerro`, `monetaCinese`, `moneta_argento`, `moneta_oro`, `plettro`, `portaChiavi`, `unghiaFinta`.
+
+Progress: the five core nail states now use their same V3 fingertip artwork as visible cursors, with the hotspot on the nail tip.
 
 ## 4. Items and equipment — 40
 
