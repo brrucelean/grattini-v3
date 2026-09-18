@@ -91,7 +91,26 @@ Con il layout B il ticket deve entrare a ×1 nella colonna di un telefono
 Le miniature derivano dallo stesso master. La bible passa da
 "320×240 o 384×288" a 320×240.
 
-## 4. Stato delle schermate
+### D-03 — Mappa · direzione in definizione (2026-09-18)
+
+- orientamento **orizzontale**: partenza a sinistra, boss a destra, atto intero
+  visibile senza scroll;
+- estetica **slot da tabacchi "trash"** tradotta in pixel art (cornici oro a
+  gradini, simboli saturi, numeri di payline, scritte JACKPOT/BONUS), senza
+  gradienti morbidi né glow;
+- **patina argentata solo sui nodi segreti**; il resto resta leggibile;
+- **pedina** sulla mappa che avanza a scatti; non è il dito (si confonderebbe
+  col cursore).
+
+## 4. Idee di gameplay (fuori dal redesign)
+
+Richiedono bilanciamento e commit separati; il redesign prepara solo la sede.
+
+- **G-01 Pedine collezionabili.** La pedina della mappa è un oggetto: si
+  compra o si trova, un nuovo NPC le spaccia, e quella equipaggiata modifica il
+  gioco. Il redesign mappa mostra una pedina base e lascia pronto lo slot.
+
+## 4bis. Stato delle schermate
 
 Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 "Fatto" = [Definition of done](#6-definition-of-done) completa.
