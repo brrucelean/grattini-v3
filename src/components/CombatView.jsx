@@ -1020,24 +1020,50 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
               <span style={{ fontSize: "11px", letterSpacing: "2px", color: "#8a7a5a" }}>TURNO {turn} · {inFury ? "in furia" : `furia al ${FURY_TURN}`}</span>
-              {phase !== "intro" && enemyPlan.length > 0 && (
-                <div style={{ display: "flex", gap: "6px" }}>
-                  {enemyPlan.slice(0, 3).map((ec, i) => {
-                    const t = intent(ec);
-                    const done = phase === "player" && i < activeEx;
-                    const active = phase === "player" && i === activeEx;
-                    return (
-                      <span key={i} title={`Mossa ${i + 1}: ${t.lb.toLowerCase()}`} style={{
-                        display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", fontSize: "11px",
-                        background: active ? t.col : "#0b090b", color: active ? "#0b090b" : done ? "#4a4038" : t.col,
-                        boxShadow: `inset 0 0 0 1px ${done ? "#2a2420" : t.col}`, textDecoration: done ? "line-through" : "none",
-                      }}>{t.ic} {t.lb}</span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Mosse del nemico: una per ogni tua carta, spiegata; la prossima brilla */}
+          {phase !== "intro" && enemyPlan.length > 0 && (
+            <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "auto repeat(3, minmax(0,1fr))", gap: "8px", alignItems: "stretch" }}>
+              <style>{`@keyframes nextMove { 0%,49% { box-shadow: inset 0 0 0 2px var(--mc), 0 0 0 2px ${TCG_GOLD}; } 50%,100% { box-shadow: inset 0 0 0 2px var(--mc), 0 0 0 2px #050304; } }
+                @media (prefers-reduced-motion: reduce) { .next-move { animation: none !important; } }`}</style>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", paddingRight: "4px" }}>
+                <span style={{ fontSize: "11px", letterSpacing: "2px", color: TCG_GOLD }}>LE SUE MOSSE</span>
+                <span style={{ fontSize: "10px", color: "#8a7a5a" }}>una per ogni tua carta</span>
+              </div>
+              {enemyPlan.slice(0, 3).map((ec, i) => {
+                const t = intent(ec);
+                const done = phase === "player" ? i < activeEx : phase !== "player";
+                const active = phase === "player" && i === activeEx;
+                const heal = Math.round((ec.value || 20) * 0.35);
+                const what = ec.category === "COMBATTIMENTO"
+                  ? "Ti colpisce le unghie. Difenditi grattando una ◆ PARATA."
+                  : ec.category === "DIFESA"
+                    ? `Alza lo scudo di ${stats.shieldPerDef}: i tuoi colpi valgono meno.`
+                    : inFury ? "In furia: prova a curarsi ma non ci riesce." : `Si cura di ${heal} vita.`;
+                return (
+                  <div key={i} className={active ? "next-move" : undefined} style={{
+                    "--mc": t.col,
+                    display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: "8px", alignItems: "center",
+                    padding: "6px 10px", background: active ? "#1d1810" : "#0b090b",
+                    boxShadow: `inset 0 0 0 ${active ? 2 : 1}px ${done ? "#2a2420" : t.col}`,
+                    opacity: done && !active ? 0.45 : 1,
+                    animation: active ? "nextMove 0.9s steps(1) infinite" : "none",
+                  }}>
+                    <span style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+                      background: done && !active ? "#1a1614" : t.col, color: "#0b090b", fontSize: "16px" }}>{t.ic}</span>
+                    <span style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <span style={{ fontSize: "11px", letterSpacing: "1px", color: active ? TCG_GOLD : t.col, whiteSpace: "nowrap" }}>
+                        {active ? "▸ PROSSIMA · " : `${i + 1}ª CARTA · `}{t.lb}{ec.name ? ` — ${ec.name}` : ""}
+                      </span>
+                      <span style={{ fontSize: "10px", lineHeight: 1.35, color: "#d8ccb0", textDecoration: done && !active ? "line-through" : "none" }}>{what}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Carte del turno — misura fissa, calcolata sullo spazio disponibile */}
           <div style={{ flex: 1, minHeight: 0, containerType: "size", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
