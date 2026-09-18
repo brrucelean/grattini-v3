@@ -21,7 +21,6 @@ import { NODE_ICONS } from "./data/map.js";
 import { ITEM_DEFS, RELIC_DEFS, GRATTATORE_DEFS } from "./data/items.js";
 import { BIOMES, CEDOLE, BIOME_PALETTE, BOSS_MIN_MONEY } from "./data/biomes.js";
 import { MECH_RULES } from "./data/cards.js";
-import { ASCII_TITLE } from "./data/art.js";
 import { AudioEngine } from "./audio.js";
 import { Haptics } from "./utils/haptics.js";
 import { degradeNailObj, healDamagedNails, nailCursor, grattatoreCursor } from "./utils/nail.js";
@@ -44,6 +43,7 @@ import { CarmeloLogBox, CarmeloScratchStrip } from "./components/DialogueBox.jsx
 import { NewsTicker } from "./components/NewsTicker.jsx";
 import { HUD } from "./components/HUD.jsx";
 import { NailSidebar } from "./components/NailSidebar.jsx";
+import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
 import { CARD_VARIANTS } from "./utils/combat.js";
@@ -521,15 +521,19 @@ export default function Grattini() {
       `}</style>
 
       {/* ── V2.1 GRANA PELLICOLA + VIGNETTATURA — unifica tutte le schermate ── */}
-      <div aria-hidden style={{
+      {!['title','tutorialNails'].includes(screen) && (
+        <div aria-hidden style={{
         position:"fixed", inset:0, zIndex:90000, pointerEvents:"none",
         backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")`,
         opacity:0.05, mixBlendMode:"overlay",
-      }}/>
-      <div aria-hidden style={{
+        }}/>
+      )}
+      {!['title','tutorialNails'].includes(screen) && (
+        <div aria-hidden style={{
         position:"fixed", inset:0, zIndex:90001, pointerEvents:"none",
         background:"radial-gradient(ellipse at 50% 42%, transparent 56%, rgba(0,0,0,0.40) 100%)",
-      }}/>
+        }}/>
+      )}
 
       {/* ═══ FLASH ROSSO — UNGHIA SANGUINANTE (estetico, sparisce da solo) ═══ */}
       {globalPainFlash > 0 && (
@@ -805,255 +809,22 @@ export default function Grattini() {
         transition: "background-image 0.8s ease",
       }}>
 
-      {/* ═══ TITLE SCREEN ═══ */}
-      {["title","tutorialNails"].includes(screen) && (
-        <div style={{
-          position:"absolute", inset:0, pointerEvents:"none", zIndex:0, overflow:"hidden",
-        }}>
-          {[
-            {x:8,y:15,d:0,dur:2.1},{x:92,y:22,d:0.4,dur:1.8},{x:18,y:70,d:0.8,dur:2.4},
-            {x:82,y:65,d:1.2,dur:1.6},{x:45,y:8,d:0.3,dur:2.8},{x:55,y:88,d:1.6,dur:2.0},
-            {x:3,y:45,d:0.7,dur:1.9},{x:97,y:50,d:1.1,dur:2.3},{x:30,y:30,d:2.0,dur:1.7},
-            {x:70,y:75,d:0.5,dur:2.6},{x:12,y:85,d:1.4,dur:2.2},{x:88,y:10,d:0.9,dur:1.5},
-            {x:50,y:50,d:1.8,dur:2.9},{x:25,y:55,d:0.2,dur:2.0},{x:75,y:35,d:1.5,dur:1.8},
-            {x:60,y:5,d:1.0,dur:2.2},{x:35,y:92,d:0.6,dur:1.9},{x:5,y:80,d:1.3,dur:2.5},
-            {x:95,y:40,d:0.1,dur:1.7},{x:48,y:60,d:2.2,dur:2.1},{x:22,y:18,d:0.8,dur:2.8},
-            {x:78,y:88,d:1.7,dur:1.6},{x:65,y:45,d:0.4,dur:2.3},{x:15,y:50,d:1.9,dur:2.0},
-            {x:85,y:30,d:0.2,dur:1.8},{x:40,y:78,d:1.1,dur:2.6},{x:58,y:25,d:2.0,dur:1.5},
-          ].map((s,i) => (
-            <div key={i} style={{
-              position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
-              color:C.gold, fontSize:`${8+Math.round(i%4)*4}px`, pointerEvents:"none",
-              animation:`titleGlitter ${s.dur}s ${s.d}s infinite`,
-              opacity:0, textShadow:`0 0 8px ${C.gold}`,
-            }}>✦</div>
-          ))}
-        </div>
-      )}
-
       {screen === "title" && (
-        <div style={{
-          width:"100%", flex:1, display:"flex", flexDirection:"column",
-          alignItems:"center", justifyContent:"center",
-          position:"relative", padding:"24px 12px",
-        }}>
-
-          {/* Contenuto titolo — largo abbastanza da contenere l'ASCII "GRATTINI"
-              a piena dimensione (altrimenti il logo sfora e resta ancorato a sinistra) */}
-          <div style={{
-            textAlign:"center", width:"min(95vw, 720px)", position:"relative", zIndex:1,
-            padding:"20px 22px 18px", border:`4px solid ${C.text}`,
-            background:"rgba(8,10,11,0.90)",
-            boxShadow:`0 0 0 4px ${C.red}, 0 0 0 8px ${C.gold}, 10px 10px 0 #000`,
-          }}>
-            {/* Insegna neon TABACCHI — la T blu, sempre accesa, mai del tutto */}
-            <div style={{
-              display:"flex", alignItems:"center", justifyContent:"center", gap:"12px",
-              marginBottom:"12px",
-            }}>
-              <div style={{
-                width:"46px", height:"46px", flexShrink:0,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                border:`3px solid ${C.cyan}`, background:C.card,
-                boxShadow:"4px 4px 0 #000",
-                color:C.text, fontSize:"32px", fontWeight:"bold", fontFamily:FONT,
-                textShadow:`2px 0 ${C.red}, -2px 0 ${C.cyan}`,
-              }}>T</div>
-              <div style={{textAlign:"left"}}>
-                <div style={{
-                  color:C.cyan, fontSize:"12px", letterSpacing:"7px",
-                  textShadow:"2px 2px 0 #000", fontFamily:FONT, fontWeight:"bold",
-                }}>TABACCHI</div>
-                <div style={{
-                  color:C.red, fontSize:"10px", letterSpacing:"3px",
-                  textShadow:"2px 2px 0 #000", marginTop:"4px", fontFamily:FONT,
-                }}>SALA GRATTINI · APERTO H24</div>
-              </div>
-            </div>
-            {/* ASCII TITLE — foil iridescente animato sopra il gold */}
-            <div className="foil-ascii" style={{display:"block", width:"100%", margin:"0 auto", padding:"8px 0"}}>
-              <pre style={{...S.pre, color:C.gold,
-                fontSize:"clamp(10px, 1.9vw, 19px)",
-                lineHeight:"1.2", overflowX:"hidden", textAlign:"center",
-                textShadow:`3px 0 ${C.red}, -3px 0 ${C.cyan}, 4px 4px 0 #000`,
-                margin:0,
-              }}>
-                {ASCII_TITLE}
-              </pre>
-            </div>
-            {/* Divisore oro */}
-            <div style={{
-              width:"80%", height:"1px", margin:"12px auto 14px",
-              background:C.gold,
-              boxShadow:`0 3px 0 ${C.red}`,
-            }}/>
-            <div style={{color:C.dim, fontSize:"clamp(10px, 1.2vw, 12px)", letterSpacing:"4px",
-              textShadow:`0 0 8px ${C.gold}44`,
-            }}>
-              ░ V3 · TABACCHI EDITION ░
-            </div>
-            <div style={{color:C.text+"aa", marginBottom:"28px", marginTop:"14px", fontSize:"clamp(11px, 1.1vw, 14px)", letterSpacing:"0.5px", textAlign:"center", lineHeight:"1.6"}}>
-              Un roguelike di grattate, unghie e fortuna.
-            </div>
-          <Btn variant="gold" onClick={startGame} style={{
-            fontSize:"clamp(13px, 1.4vw, 16px)", padding:"16px 44px", letterSpacing:"3px",
-            boxShadow:`4px 4px 0 #000`,
-          }}>
-            ░░░ INIZIA LA RUN ░░░
-          </Btn>
-          <div style={{color:C.dim, fontSize:"clamp(10px, 0.9vw, 11px)", marginTop:"20px", letterSpacing:"1px", lineHeight:"1.9", opacity:0.7}}>
-            5 unghie · {BIOMES.length} biomi · 1 destino<br/>
-            Gratta con saggezza. Le unghie non ricrescono.
-          </div>
-          {activeCedola && (() => {
-            const cd = CEDOLE.find(c => c.id === activeCedola);
-            return cd ? (
-              <div style={{
-                marginTop:"12px", border:`2px solid ${C.gold}`, padding:"8px 14px",
-                background:"#000000", display:"inline-block",
-              }}>
-                <div style={{color:C.gold, fontSize:"10px", letterSpacing:"2px"}}>CEDOLA ATTIVA</div>
-                <div style={{color:C.text, fontSize:"12px", marginTop:"4px"}}>
-                  {cd.icon} {cd.name}
-                </div>
-                <div style={{color:C.dim, fontSize:"10px", marginTop:"2px"}}>
-                  ✚ {cd.pro} &nbsp;|&nbsp; ✖ {cd.contro}
-                </div>
-                <Btn onClick={() => {
-                  removeStored(STORAGE_KEYS.cedola);
-                  setActiveCedola(null);
-                }} style={{
-                  background:"none", border:`1px solid ${C.red}`, color:C.red,
-                  fontSize:"10px", marginTop:"6px", padding:"2px 8px",
-                  fontFamily:FONT,
-                }}>✖ rimuovi cedola</Btn>
-              </div>
-            ) : null;
-          })()}
-          {/* ─── META-PROGRESS FOIL CARDS ─── */}
-          <div style={{
-            display:"grid",
-            gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",
-            gap:"12px", maxWidth:"720px", margin:"20px auto 0",
-          }}>
-            {(() => {
-              const trophyCount = Object.keys(achievements).length;
-              const trophyMax = ACHIEVEMENTS.length;
-              const relicCount = discoveredRelics.length;
-              const relicMax = Object.keys(RELIC_DEFS).length;
-              const vintageCount = vintageCollected.length;
-              const cards = [
-                { onClick: () => setShowTrophies(true), accent: C.gold, emoji: "🏆", label: "TROFEI", count: trophyCount, max: trophyMax, shimmer: true, hasProgress: trophyCount > 0 },
-                { onClick: () => setShowReliquie(true), accent: "#c060ff", emoji: "🏺", label: "RELIQUIE", count: relicCount, max: relicMax, shimmer: true, hasProgress: relicCount > 0 },
-                { onClick: () => setShowVintage(true), accent: "#ffaa88", emoji: "🎨", label: "VINTAGE", count: vintageCount, max: 5, shimmer: true, hasProgress: vintageCount > 0 },
-                { onClick: () => setShowAllTimeStats(true), accent: C.cyan, emoji: "📊", label: "STATS", count: null, max: null, shimmer: true, hasProgress: true },
-              ];
-              return cards.map((c, ci) => {
-                const pct = c.max ? (c.count / c.max) : 1;
-                return (
-                  <div key={ci} onClick={c.onClick} style={{
-                    cursor:"pointer", userSelect:"none",
-                    background:C.card,
-                    border:`2px solid ${c.accent}`,
-                    boxShadow:"4px 4px 0 #000",
-                    display:"flex", flexDirection:"column",
-                    position:"relative", overflow:"hidden",
-                    transition:"transform 0.12s",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = `4px 7px 0 #000`;
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = `4px 4px 0 #000`;
-                  }}
-                  >
-                    {/* Preview tile — emoji + foil shimmer */}
-                    <div style={{
-                      position:"relative", height:"74px",
-                      backgroundColor:C.cardHi,
-                      backgroundImage:`linear-gradient(45deg, transparent 0 7px, ${c.accent}22 7px 9px, transparent 9px 16px)`,
-                      backgroundSize:"16px 16px",
-                      borderBottom:`1px solid ${c.accent}55`,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      overflow:"hidden",
-                    }}>
-                      {/* Corner brackets decorativi — NON si sovrappongono all'emoji */}
-                      {["tl","tr","bl","br"].map(pos => {
-                        const [v, h] = pos.split("");
-                        return (
-                          <div key={pos} style={{
-                            position:"absolute",
-                            [v === "t" ? "top" : "bottom"]: "5px",
-                            [h === "l" ? "left" : "right"]: "5px",
-                            width:"10px", height:"10px",
-                            borderTop: v === "t" ? `1px solid ${c.accent}aa` : "none",
-                            borderBottom: v === "b" ? `1px solid ${c.accent}aa` : "none",
-                            borderLeft: h === "l" ? `1px solid ${c.accent}aa` : "none",
-                            borderRight: h === "r" ? `1px solid ${c.accent}aa` : "none",
-                            zIndex:1,
-                          }}/>
-                        );
-                      })}
-                      {/* Emoji centrale */}
-                      <div style={{
-                        fontSize:"32px", position:"relative", zIndex:2,
-                        textShadow:"3px 3px 0 #000",
-                        filter: c.hasProgress ? "none" : "grayscale(0.4) brightness(0.85)",
-                      }}><Asset emoji={c.emoji} size={40} /></div>
-                      {/* Sparkle angolo */}
-                      {c.shimmer && c.max && c.count >= c.max && (
-                        <div style={{
-                          position:"absolute", top:4, right:6, fontSize:"14px",
-                          color: c.accent, zIndex:3,
-                          animation:"variantSparkle 1.6s ease-in-out infinite",
-                          textShadow:`0 0 8px ${c.accent}`,
-                        }}>✦</div>
-                      )}
-                    </div>
-                    {/* Badge label solid */}
-                    <div style={{
-                      background: c.accent, color:"#000",
-                      padding:"4px 6px", fontSize:"11px", fontWeight:"bold",
-                      letterSpacing:"2px", textAlign:"center",
-                    }}>
-                      ★ {c.label} ★
-                    </div>
-                    {/* Body: counter + progress bar */}
-                    <div style={{padding:"8px 10px 10px", background:"#07070d"}}>
-                      {c.max ? (
-                        <>
-                          <div style={{
-                            display:"flex", justifyContent:"space-between",
-                            fontSize:"10px", color:`${c.accent}bb`, letterSpacing:"1px",
-                            marginBottom:"4px",
-                          }}>
-                            <span>SBLOCCATI</span>
-                            <span style={{color:c.accent, fontWeight:"bold"}}>{c.count} / {c.max}</span>
-                          </div>
-                          <div style={{height:"4px", background:"#1a1a22", border:`1px solid ${c.accent}33`, position:"relative"}}>
-                            <div style={{
-                              height:"100%", width:`${pct*100}%`,
-                              background:c.accent,
-                              transition:"width 0.4s",
-                            }}/>
-                          </div>
-                        </>
-                      ) : (
-                        <div style={{
-                          fontSize:"10px", color:`${c.accent}bb`, letterSpacing:"1px",
-                          textAlign:"center", padding:"3px 0",
-                        }}>▸ APRI STATS</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              });
-            })()}
-          </div>
-          </div>
-        </div>
+        <TitleScreen
+          onStart={startGame}
+          activeCedola={activeCedola}
+          onRemoveCedola={() => {
+            removeStored(STORAGE_KEYS.cedola);
+            setActiveCedola(null);
+          }}
+          achievements={achievements}
+          discoveredRelics={discoveredRelics}
+          vintageCollected={vintageCollected}
+          onOpenTrophies={() => setShowTrophies(true)}
+          onOpenReliquie={() => setShowReliquie(true)}
+          onOpenVintage={() => setShowVintage(true)}
+          onOpenStats={() => setShowAllTimeStats(true)}
+        />
       )}
 
       {/* ═══ TUTORIAL — 3 pagine: Unghie · Combattimento · Mappa/Soldi ═══ */}
