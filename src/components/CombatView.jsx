@@ -16,6 +16,7 @@ import { NailDisplay } from "./NailDisplay.jsx";
 import { Asset } from "./Asset.jsx";
 import { hasAsset } from "../assets/registry.js";
 import { ANIM } from "../styles/animations.js";
+import { PixelIcon, CATEGORY_ICON } from "./PixelIcon.jsx";
 import { ToolTray, Receipt, TABLE_BG, MAT_STYLE } from "./scratch/ScratchTable.jsx";
 
 // Nomi categoria abbreviati — COMBATTIMENTO è troppo lungo per le card strette
@@ -191,7 +192,8 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
           {/* intestazione: categoria + nome */}
           <div style={{ display: "flex", alignItems: "center", gap: "2.5cqw", minWidth: 0 }}>
             <span style={{ padding: "0.6cqh 1.6cqw", fontSize: "max(10px, 11cqh)", letterSpacing: "0.3cqw",
-              color: "#f0e6cc", background: F.gem, lineHeight: 1.1, whiteSpace: "nowrap" }}>{F.sigil} {F.title}</span>
+              color: "#f0e6cc", background: F.gem, lineHeight: 1.1, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "1.2cqw" }}>
+              <PixelIcon kind={CATEGORY_ICON[cell.category]} size="max(12px, 11cqh)" color="#f0e6cc" />{F.title}</span>
             <span style={{ flex: 1, minWidth: 0, fontSize: "max(10px, 11cqh)", color: TCG_GOLD, whiteSpace: "nowrap",
               overflow: "hidden", textOverflow: "ellipsis" }}>{isRevealed ? cell.name : "GRATTA E VINCI"}</span>
           </div>
@@ -211,7 +213,7 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
             )}
             {!isRevealed && (
               <span aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center",
-                justifyContent: "center", fontSize: "34cqh", color: "#2a2420", opacity: 0.55 }}>{F.sigil}</span>
+                justifyContent: "center", opacity: 0.6 }}><PixelIcon kind={CATEGORY_ICON[cell.category]} size="40cqh" color="#3a3430" /></span>
             )}
           </div>
           {/* piede: serie + valore */}
@@ -1009,13 +1011,21 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
                 </span>
                 {inFury && <span style={{ fontSize: "11px", color: C.orange, boxShadow: `inset 0 0 0 1px ${C.orange}`, padding: "2px 8px", letterSpacing: "2px" }}>FURIA</span>}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", gap: "12px", alignItems: "center" }}>
+              {/* Vita e, sotto, scudo: due barre a blocchi come nella versione classica */}
+              <div style={{ display: "grid", gridTemplateColumns: "20px minmax(0,1fr) 64px", gap: "6px 10px", alignItems: "center" }}>
+                <span aria-hidden style={{ color: "#c0433a", fontSize: "14px", textAlign: "center" }}>♥</span>
                 <div aria-label={`Vita ${enemyHp} su ${enemyMaxHp}`} style={{ position: "relative", height: "14px", background: "#2a0a0a", boxShadow: "inset 0 0 0 1px #050304" }}>
                   <div style={{ width: `${hpPct}%`, height: "100%", background: "#9e2626", transition: "width 0.4s steps(8)" }} />
                   <div aria-hidden style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(90deg, transparent 0 18px, #050304 18px 20px)" }} />
                 </div>
-                <span style={{ fontSize: "14px", color: "#e0b0a0", fontVariantNumeric: "tabular-nums" }}>{enemyHp}/{enemyMaxHp}</span>
-                <span style={{ fontSize: "13px", color: "#9cb4e8", fontVariantNumeric: "tabular-nums" }}>◆ {enemyShield}</span>
+                <span style={{ fontSize: "14px", color: "#e0b0a0", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{enemyHp}/{enemyMaxHp}</span>
+                <PixelIcon kind="shield" size={18} dim={enemyShield <= 0} color="#9cb4e8" style={{ justifySelf: "center" }} />
+                <div aria-label={`Scudo ${enemyShield}`} title="Scudo: assorbe i tuoi colpi prima della vita"
+                  style={{ position: "relative", height: "10px", background: "#0b1428", boxShadow: "inset 0 0 0 1px #050304" }}>
+                  <div style={{ width: `${Math.min(100, enemyShield)}%`, height: "100%", background: "#3d6bc9", transition: "width 0.4s steps(8)" }} />
+                  <div aria-hidden style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(90deg, transparent 0 18px, #050304 18px 20px)" }} />
+                </div>
+                <span style={{ fontSize: "14px", color: enemyShield > 0 ? "#9cc2ff" : "#4a5570", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{enemyShield}</span>
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
@@ -1034,7 +1044,7 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
                 const active = phase === "player" && i === activeEx;
                 const heal = Math.round((ec.value || 20) * 0.35);
                 const what = ec.category === "COMBATTIMENTO"
-                  ? "Ti colpisce le unghie. Difenditi grattando una ◆ PARATA."
+                  ? "Ti colpisce le unghie. Difenditi grattando una PARATA."
                   : ec.category === "DIFESA"
                     ? `Alza lo scudo di ${stats.shieldPerDef}: i tuoi colpi valgono meno.`
                     : inFury ? "In furia: prova a curarsi ma non ci riesce." : `Si cura di ${heal} vita.`;
@@ -1047,8 +1057,10 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
                     opacity: done && !active ? 0.45 : 1,
                     animation: active ? "nextMove 0.9s steps(1) infinite" : "none",
                   }}>
-                    <span style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: done && !active ? "#1a1614" : t.col, color: "#0b090b", fontSize: "16px" }}>{t.ic}</span>
+                    <span style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                      background: done && !active ? "#1a1614" : "#0b090b", boxShadow: `inset 0 0 0 1px ${t.col}` }}>
+                      <PixelIcon kind={CATEGORY_ICON[ec.category] || "coin"} size={24} dim={done && !active} color={active ? TCG_GOLD : "#d8ccb0"} />
+                    </span>
                     <span style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
                       <span style={{ fontSize: "11px", letterSpacing: "1px", color: active ? TCG_GOLD : t.col, whiteSpace: "nowrap" }}>
                         {active ? "▸ PROSSIMA · " : `${i + 1}ª CARTA · `}{t.lb}{ec.name ? ` — ${ec.name}` : ""}
