@@ -34,6 +34,15 @@ function cellBurstPieces(tier, seed) {
   });
 }
 
+// Inchiostri da tipografia: ogni simbolo ha il suo colore (stabile), come sui
+// gratta e vinci veri, invece di tutti blu petrolio. Le emoji hanno già i loro.
+const PRINT_INKS = ["#c8161d", "#1f5fbf", "#1c7a3a", "#b0306a", "#d0621c", "#6a2fb0", "#0f7f86", "#8a5a00"];
+function inkFor(sym = "") {
+  let h = 0;
+  for (const ch of String(sym)) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return PRINT_INKS[h % PRINT_INKS.length];
+}
+
 export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPartialMatch, ambidestri=false, bloodMode=false, isBloody=false, themeColor=null, blocked=false, onBlockedAttempt=null, fill=false, winTier=1, printSkin=false }) {
   const canvasRef = useRef(null);
   const rootRef = useRef(null);
@@ -182,7 +191,9 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
   // Vincita = casella gialla jackpot, coppia in corso = filo oro doppio,
   // trappola/stop = inchiostro rosso su rosa, jolly = oro, oggetto = verde acqua.
   const PRINT = {
-    paper: "#fff3c4", ink: "#153f42",
+    // carta con trama di stampa (dithering 2px fra due crema), non tinta piatta
+    paper: "repeating-conic-gradient(#fff6d8 0% 25%, #fbeec4 0% 50%) 0 0 / 4px 4px",
+    ink: inkFor(cell.symbol),
     win: "#ffd84a", winInk: "#0d3a1c", winEdge: "#1c7a3a",
     partialEdge: "#c8901f",
     trap: "#f6c9c0", trapInk: "#a3161d",

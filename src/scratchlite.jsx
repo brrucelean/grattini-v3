@@ -138,6 +138,7 @@ export default function Grattini() {
     vintageCollected, collectVintage,
   } = useMeta();
   // ─── SPECIAL MINIGAME STATES ─────────────────────────────────
+  const [scratchGameHost, setScratchGameHost] = useState(null); // colonna "sul tavolo" della grattata desktop
   const [labirintoState, setLabirintoState] = useState(null); // {pos, revealed, prize, grid, done}
   const [showVintage, setShowVintage] = useState(false); // Sprint 5: modal collezione vintage
   const [combinaState, setCombinaState] = useState(null); // gratta & combina
@@ -580,7 +581,7 @@ export default function Grattini() {
       {scratchingCard && player && (
         <div style={{
           position:"fixed", inset:0, zIndex:9000,
-          background: bioPal.bg,
+          background: wideShell ? "#2a170c" : bioPal.bg,
           display:"flex", flexDirection:"column",
           overflow:"hidden",
         }}>
@@ -591,8 +592,8 @@ export default function Grattini() {
             paddingBottom: "10px",
             paddingLeft: "14px",
             paddingRight: "14px",
-            background:"#030308",
-            borderBottom:`2px solid ${scratchingCard.theme?.border || C.dim}`,
+            background: wideShell ? "#2a170c" : "#030308",
+            borderBottom: wideShell ? "2px solid #e9c46a" : `2px solid ${scratchingCard.theme?.border || C.dim}`,
             display:"flex", alignItems:"center", gap:"10px",
             animation:"scratchTopBarIn 0.22s ease-out both",
             boxShadow:`0 2px 18px #00000088`,
@@ -697,6 +698,7 @@ export default function Grattini() {
               <ScratchCardView
                 card={scratchingCard}
                 fit={wideShell}
+                gameHost={wideShell ? scratchGameHost : null}
                 nailState={getActiveNailState()}
                 nailImplant={player.nails[player.activeNail]?.implant || null}
                 grattaMania={player.grattaMania}
@@ -736,7 +738,7 @@ export default function Grattini() {
               </Suspense>
             </div>
             {wideShell ? (
-              <RightRail player={player} onEquipGrattatore={handleRailEquipGrattatore} log={log} />
+              <RightRail player={player} onEquipGrattatore={handleRailEquipGrattatore} log={log} setGameHost={setScratchGameHost} />
             ) : wideDesk && log.length > 0 && (
               <ScratchLogRail log={log} palette={bioPal} />
             )}
