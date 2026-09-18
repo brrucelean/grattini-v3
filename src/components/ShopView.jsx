@@ -438,7 +438,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
             boxShadow: `inset 0 0 14px ${C.gold}14, 0 0 10px ${C.gold}22`,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <Asset id="spr-tabaccaio" emoji="🏪" size={72}
+            <Asset id="spr-tabaccaio-v3" emoji="🏪" size={96}
               style={{ filter: `drop-shadow(0 0 6px ${C.gold}66)` }} />
           </div>
         )}
