@@ -215,7 +215,7 @@ export function TableTopBar({ card, nails, activeNail, money }) {
         </span>
       </div>
       <span style={{ flex: 1 }} />
-      <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+      <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "2px", alignItems: "flex-start" }}>
         {nails.map((n, i) => <NailChip key={i} n={n} i={i} active={i === activeNail} />)}
       </div>
       <div aria-label={`Soldi: ${fmtMoney(money)} euro`} style={{
@@ -237,16 +237,18 @@ function NailChip({ n, i, active }) {
   return (
     <Tooltip text={`Dito ${i + 1}: ${m.info.label}${active ? " — in uso" : ""}`} color={col}>
       <div role="listitem" aria-label={`Dito ${i + 1}, ${m.info.label}${active ? ", in uso" : ""}`}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", opacity: m.isDead ? 0.5 : 1 }}>
+        // Colonna a larghezza fissa: le dita restano in fila e equidistanti
+        // qualunque sia la sigla sotto (SANA, GRAFFI, SANGUE…).
+        style={{ width: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", opacity: m.isDead ? 0.5 : 1 }}>
         <span style={{
           width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
           background: m.isDead ? "repeating-linear-gradient(45deg, #2b2320 0 3px, #1b100a 3px 6px)" : "#1b100a",
           boxShadow: active ? `inset 0 0 0 2px ${C.gold}, 0 0 0 2px #120904, 3px 3px 0 #120904` : `inset 0 0 0 2px ${col}`,
-          transform: active ? "translateY(-2px)" : "none",
         }}>
           <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} />
         </span>
-        <span style={{ fontSize: "9px", letterSpacing: "0.5px", color: active ? C.gold : col, whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: "9px", letterSpacing: "0.5px", color: active ? C.gold : col, whiteSpace: "nowrap",
+          width: "100%", textAlign: "center", lineHeight: 1 }}>
           {m.glyph ? `${m.glyph} ` : ""}{m.shortLabel}
         </span>
       </div>
