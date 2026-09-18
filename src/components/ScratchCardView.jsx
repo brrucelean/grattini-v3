@@ -529,11 +529,17 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   //    (proporzione 4:3 fissa) con griglia in overlay; altrimenti layout classico.
   const v3TicketId = `ticket-${card.id}-v3`;
   const legacyTicketId = `ticket-${card.id}`;
-  const ticketAssetId = hasAsset(v3TicketId) ? v3TicketId : legacyTicketId;
+  const hasV3Ticket = hasAsset(v3TicketId);
+  const ticketAssetId = hasV3Ticket ? v3TicketId : legacyTicketId;
   const hasTicket = hasAsset(ticketAssetId);
   const ticketUrl = hasTicket ? assetUrl(ticketAssetId) : null;
   // layoutOverride = anteprima dal vivo dell'editor dev (?edit=1)
   const layout = layoutOverride || ticketLayout(card.id);
+  // I biglietti V3 condividono una gabbia interna conservativa: la zona
+  // grattabile non deve mai toccare la cornice illustrata, anche sulle 4×4.
+  const playLayout = hasV3Ticket
+    ? { top:47, left:7.5, right:7.5, bottom:11 }
+    : layout.play;
   // Griglia che RIEMPIE il pannello scuro dell'arte: righe e colonne in frazioni
   // uguali, le celle si stirano per occuparlo tutto. Niente fasce vuote, e ogni
   // biglietto detta la forma delle sue celle. Solo le griglie minuscole (1 cella)
@@ -608,7 +614,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
         ...(hasTicket ? {
           // Overlay sul biglietto AI: la griglia riempie il pannello scuro dell'arte.
           gridTemplateRows: `repeat(${gridRows}, 1fr)`,
-          gap: hasAsset(v3TicketId) ? "1.2%" : "2.4%",
+          gap: hasV3Ticket ? "1.5%" : "2.4%",
           width: gridSize, height: gridSize, margin: "auto",
         } : {
           gap: "4px", maxWidth: "min(340px, 94vw)", width: "100%", margin: "6px auto 8px",
@@ -631,7 +637,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
               isBloody={bloodyCells.has(idx)}
               blocked={nailState === "morta"} onBlockedAttempt={warnDeadNail}
               ambidestri={ambidestri} themeColor={card.theme?.border} fill={hasTicket}
-              printSkin={hasAsset(v3TicketId)}
+              printSkin={hasV3Ticket}
               /* Scala la festa dei coriandoli col valore del biglietto:
                  la LEGGENDARIA merita più della COMUNE. */
               winTier={tier} />
@@ -688,7 +694,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           {/* AREA-GIOCO — nessun box grigio: solo una cornice neon sul rettangolo
               scuro già presente nell'arte, e dentro la griglia che lo riempie. */}
           <div style={{
-            position: "absolute", inset: inset(layout.play), zIndex: 2,
+            position: "absolute", inset: inset(playLayout), zIndex: 2,
             containerType: "size",
             display: "flex", alignItems: "center", justifyContent: "center",
             border: `1px solid ${winFound ? C.green : accent}55`,
