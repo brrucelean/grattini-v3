@@ -124,7 +124,6 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
       boxShadow: bevel(GOLD, 2), padding: "6px",
     }}>
       <style>{`
-        @keyframes mbBulbs { 0%,49% { opacity:1 } 50%,100% { opacity:.25 } }
         @keyframes mbHop { 0% { transform:translate(-50%,-100%) } 40% { transform:translate(-50%,calc(-100% - 10px)) } 100% { transform:translate(-50%,-100%) } }
         @keyframes mbShine { 0% { transform:translateX(-120%) } 60%,100% { transform:translateX(220%) } }
         .mb-tile:focus-visible { outline:3px solid ${C.cyan}; outline-offset:3px; }
@@ -140,8 +139,6 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
         padding: "0 16px", background: theme.marquee, position: "relative",
         borderBottom: `2px solid ${GOLD.dark}`,
       }}>
-        {/* file di lampadine sopra la testata */}
-        <Bulbs color={GOLD.mid} animate={!reducedMotion} />
         <div style={{display:"flex", flexDirection:"column", gap:"4px"}}>
           <span style={{fontSize:"11px", letterSpacing:"2px", color: theme.ink}}>
             BIOMA {currentBiome + 1}/{BIOMES.length} · COLONNA {Math.min(currentRow + 1, cols)}/{cols}
@@ -341,21 +338,6 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
         <span style={{display:"inline-flex", alignItems:"center", gap:"6px", color: C.orange, flexShrink:0}}>★ ÉLITE</span>
         <span style={{marginLeft:"auto", color: theme.ink, flexShrink:0}}>PAGATO = già visitato</span>
       </div>
-    </div>
-  );
-}
-
-// Fila di lampadine della testata: alternate, due soli fotogrammi.
-function Bulbs({ color, animate }) {
-  const n = 40;
-  return (
-    <div aria-hidden style={{position:"absolute", left: 8, right: 8, top: -2, height: 4, display:"flex", justifyContent:"space-between"}}>
-      {Array.from({ length: n }, (_, i) => (
-        <span key={i} className="mb-anim" style={{
-          width: 4, height: 4, background: color,
-          animation: animate ? `mbBulbs 1.2s steps(1) ${i % 2 ? "0.6s" : "0s"} infinite` : "none",
-        }} />
-      ))}
     </div>
   );
 }

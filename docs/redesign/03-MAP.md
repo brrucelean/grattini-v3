@@ -31,7 +31,7 @@ sotto resta `MapView`.
   riga del grafo è una colonna numerata come una payline. Atto intero visibile
   senza scorrere a 1024×768, 1280×720 e 1920×1080.
 - **Testata:** nome del "gioco" del bioma (`mapTheme.js`), modificatore,
-  targa JACKPOT con il boss, fila di lampadine a due fotogrammi.
+  targa JACKPOT con il boss. (Fila di lampadine animate rimossa su richiesta.)
 - **Nodi come simboli di slot:** casella piena del colore di famiglia con
   cornice oro a gradini (ombre interne dure, niente blur) e glifo di famiglia
   nell'angolo (▲ pericolo, ● neutro, ✚ sicuro, ? evento, ✦ segreto, ★ élite).
