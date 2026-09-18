@@ -1025,13 +1025,9 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
 
           {/* Mosse del nemico: una per ogni tua carta, spiegata; la prossima brilla */}
           {phase !== "intro" && enemyPlan.length > 0 && (
-            <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "auto repeat(3, minmax(0,1fr))", gap: "8px", alignItems: "stretch" }}>
+            <div style={{ flexShrink: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 300px))", justifyContent: "center", gap: "12px", alignItems: "stretch" }}>
               <style>{`@keyframes nextMove { 0%,49% { box-shadow: inset 0 0 0 2px var(--mc), 0 0 0 2px ${TCG_GOLD}; } 50%,100% { box-shadow: inset 0 0 0 2px var(--mc), 0 0 0 2px #050304; } }
                 @media (prefers-reduced-motion: reduce) { .next-move { animation: none !important; } }`}</style>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", paddingRight: "4px" }}>
-                <span style={{ fontSize: "11px", letterSpacing: "2px", color: TCG_GOLD }}>LE SUE MOSSE</span>
-                <span style={{ fontSize: "10px", color: "#8a7a5a" }}>una per ogni tua carta</span>
-              </div>
               {enemyPlan.slice(0, 3).map((ec, i) => {
                 const t = intent(ec);
                 const done = phase === "player" ? i < activeEx : phase !== "player";
