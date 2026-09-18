@@ -49,6 +49,7 @@ import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
+import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -3242,115 +3243,18 @@ export default function Grattini() {
         <div
           onClick={() => setShowInventoryPanel(false)}
           style={{
-            position:"fixed", inset:0, top:"52px",
-            background:"rgba(0,0,0,0.55)", zIndex:99990, cursor:"pointer",
+            position:"fixed", inset:0,
+            background:"rgba(0,0,0,0.7)", zIndex:99990, cursor:"pointer",
           }}
         />
       )}
       {showInventoryPanel && player && (
-        <div style={{
-          position:"fixed",
-          top:"56px",
-          bottom:0,
-          right:0,
-          width:"min(400px, 100vw)",
-          background:C.card,
-          border:`2px solid ${C.magenta}`,
-          borderRight:"none",
-          boxShadow:`-4px 0 20px ${C.magenta}33, inset 0 0 30px ${C.magenta}08`,
-          zIndex:99995, overflowY:"auto", overflowX:"hidden",
-          display:"flex", flexDirection:"column",
-          fontFamily:FONT,
-          animation:"inventorySlideIn 0.2s ease-out",
-        }}>
-          <div style={{padding:"12px 14px 0"}}>
-            <div style={{marginBottom:"12px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-              <div style={{color:C.magenta, fontWeight:"bold", fontSize:"14px", letterSpacing:"1px"}}>
-                🎒 ZAINO
-              </div>
-              <div onClick={() => setShowInventoryPanel(false)} style={{
-                color:C.magenta, fontSize:"18px", cursor:"pointer", lineHeight:1,
-                padding:"2px 6px", opacity:0.7,
-              }}>✕</div>
-            </div>
-
-            {/* Consumabili */}
-            <div style={{marginBottom:"14px"}}>
-              <div style={{color:C.dim, fontSize:"10px", letterSpacing:"2px", borderBottom:`1px solid #2a2a3a`, paddingBottom:"4px", marginBottom:"8px"}}>
-                💊 CONSUMABILI ({player.items.length})
-              </div>
-              {player.items.length === 0 && (
-                <div style={{color:C.dim, fontSize:"12px", fontStyle:"italic"}}>Nessun consumabile nello zaino.</div>
-              )}
-              <div style={{display:"flex", flexWrap:"wrap", gap:"6px"}}>
-                {player.items.map((itemId, idx) => {
-                  const item = ITEM_DEFS[itemId];
-                  if (!item) return null;
-                  const ZAINO_RC = { comune:"#7a8aaa", media:C.cyan, rara:"#cc66ff", epica:C.orange, rarissimo:C.gold, rarissima:C.gold };
-                  const rc = ZAINO_RC[item.rarity] || C.magenta;
-                  return (
-                    <Tooltip key={idx} text={item.desc}>
-                      <div
-                        onClick={() => { handleUseItem(idx); if (itemId !== "cappelloSbirro") setShowInventoryPanel(false); }}
-                        style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"2px",
-                          padding:"7px 9px", background:`${rc}11`, border:`1px solid ${rc}55`,
-                          cursor:"pointer", minWidth:"62px", fontFamily:FONT, userSelect:"none"}}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${rc}22`}
-                        onMouseLeave={e=>e.currentTarget.style.background=`${rc}11`}
-                      >
-                        <div style={{fontSize:"22px", filter:`drop-shadow(0 0 5px ${rc}88)`}}><Asset id={`item-${itemId}`} emoji={item.emoji} size={26} /></div>
-                        <div style={{color:C.bright, fontSize:"10px", fontWeight:"bold", whiteSpace:"nowrap", maxWidth:"68px", overflow:"hidden", textOverflow:"ellipsis"}}>{item.name}</div>
-                        <div style={{color:rc, fontSize:"10px", letterSpacing:"1px"}}>{(item.rarity||"").toUpperCase()}</div>
-                      </div>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Grattatori */}
-            <div>
-              <div style={{color:C.dim, fontSize:"10px", letterSpacing:"2px", borderBottom:`1px solid #2a2a3a`, paddingBottom:"4px", marginBottom:"8px"}}>
-                🔧 GRATTATORI ({player.grattatori.length})
-              </div>
-              {player.grattatori.length === 0 && (
-                <div style={{color:C.dim, fontSize:"12px", fontStyle:"italic"}}>Nessun grattatore nello zaino.</div>
-              )}
-              <div style={{display:"flex", flexWrap:"wrap", gap:"6px"}}>
-                {player.grattatori.map((g, idx) => {
-                  const def = GRATTATORE_DEFS[g.id];
-                  const isEquipped = player.equippedGrattatore?.inventoryIdx === idx;
-                  const ZAINO_RC2 = { comune:"#7a8aaa", media:C.cyan, rara:"#cc66ff", epica:C.orange, rarissimo:C.gold, rarissima:C.gold };
-                  const rc = def ? (ZAINO_RC2[def.rarity] || C.cyan) : C.cyan;
-                  return (
-                    <Tooltip key={idx} text={`${g.desc || def?.desc} · ${g.usesLeft} usi rimasti`}>
-                      <div
-                        onClick={() => { if (isEquipped) unequipGrattatore(); else equipGrattatore(idx); }}
-                        style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"2px",
-                          padding:"7px 9px", background:isEquipped?`${rc}22`:`${rc}0c`,
-                          border:`1px solid ${isEquipped?rc:rc+"44"}`,
-                          boxShadow:isEquipped?`0 0 8px ${rc}44`:"none",
-                          cursor:"pointer", minWidth:"62px", fontFamily:FONT, userSelect:"none"}}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${rc}28`}
-                        onMouseLeave={e=>e.currentTarget.style.background=isEquipped?`${rc}22`:`${rc}0c`}
-                      >
-                        <div style={{fontSize:"22px", filter:`drop-shadow(0 0 5px ${rc}88)`}}><Asset id={`item-${g.id}`} emoji={g.emoji} size={26} /></div>
-                        <div style={{color:C.bright, fontSize:"10px", fontWeight:"bold", whiteSpace:"nowrap", maxWidth:"68px", overflow:"hidden", textOverflow:"ellipsis"}}>{g.name}</div>
-                        <div style={{color:isEquipped?rc:C.dim, fontSize:"10px", letterSpacing:"1px"}}>
-                          {isEquipped ? "✓ ATTIVO" : `${g.usesLeft} usi`}
-                        </div>
-                      </div>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-          <div style={{marginTop:"10px", padding:"10px 12px", borderTop:`1px solid #1a1a2a`, color:C.dim, fontSize:"10px", textAlign:"center"}}>
-            Puoi usare oggetti in qualsiasi momento · Grattatori vanno equipaggiati prima di grattare
-          </div>
-        </div>
+        <Backpack
+          player={player} maxItems={MAX_ITEMS}
+          onUseItem={(idx, itemId) => { handleUseItem(idx); if (itemId !== "cappelloSbirro") setShowInventoryPanel(false); }}
+          onToggleTool={(idx, inHand) => { if (inHand) unequipGrattatore(); else equipGrattatore(idx); }}
+          onClose={() => setShowInventoryPanel(false)}
+        />
       )}
 
       {/* ═══ SMOKE EFFECT OVERLAY ═══ */}
