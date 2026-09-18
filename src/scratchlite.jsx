@@ -47,7 +47,7 @@ import { RunBar } from "./components/shell/RunBar.jsx";
 import { NailRail } from "./components/shell/NailRail.jsx";
 import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
-import { Dossier, RightRail, TABLE_BG, MAT_STYLE } from "./components/scratch/ScratchTable.jsx";
+import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -596,8 +596,11 @@ export default function Grattini() {
             borderBottom: wideShell ? "2px solid #e9c46a" : `2px solid ${scratchingCard.theme?.border || C.dim}`,
             display:"flex", alignItems:"center", gap:"10px",
             animation:"scratchTopBarIn 0.22s ease-out both",
-            boxShadow:`0 2px 18px #00000088`,
+            boxShadow: wideShell ? "none" : `0 2px 18px #00000088`,
           }}>
+            {wideShell ? (
+              <TableTopBar card={scratchingCard} nails={player.nails} activeNail={player.activeNail} money={player.money} />
+            ) : (<>
             {/* Card info */}
             <div style={{flex:1, minWidth:0}}>
               <div style={{color:C.dim, fontSize:"10px", letterSpacing:"3px", fontFamily:FONT, marginBottom:"2px"}}>
@@ -664,6 +667,7 @@ export default function Grattini() {
             }}>
               €{fmtMoney(player.money)}
             </div>
+            </>)}
           </div>
 
           {/* ── SCROLL AREA con la schedina ── (desktop: niente scroll, tutto in vista) */}

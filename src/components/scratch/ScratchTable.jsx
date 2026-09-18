@@ -1,9 +1,11 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { C, FONT } from "../../data/theme.js";
 import { GRATTATORE_DEFS } from "../../data/items.js";
 import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
+import { readNail } from "../NailMeter.jsx";
+import { hasAsset } from "../../assets/registry.js";
 
 // ─── TAVOLO DA GRATTATA — ambientazione della schermata di grattata ──
 // Desktop (shell ≥1024px). Il biglietto sta su un tappetino in mezzo al
@@ -166,23 +168,88 @@ export const Receipt = memo(ReceiptImpl);
 // meccanica — Banco, punteggio, contatori, avvisi — così non stanno sotto il
 // biglietto e il biglietto non cambia mai misura.
 export function RightRail({ player, onEquipGrattatore, log, setGameHost }) {
+  // Il riquadro compare solo se la meccanica ci ha messo qualcosa: si osserva
+  // il contenitore del portal (React non lo sa da qui).
+  const [host, setHost] = useState(null);
+  const [hasContent, setHasContent] = useState(false);
+  useEffect(() => {
+    if (!host) return;
+    const check = () => setHasContent(host.childElementCount > 0);
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(host, { childList: true });
+    return () => mo.disconnect();
+  }, [host]);
+  const hostRef = useCallback((el) => { setHost(el); setGameHost?.(el); }, [setGameHost]);
   return (
     <div style={{ width: RAIL_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: "12px", minHeight: 0, padding: "8px 0" }}>
       <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} />
       {/* Riquadro "in questo biglietto": appare solo se la meccanica ha
           qualcosa da mostrare (Banco, punteggio, jolly, trappole, contatori). */}
-      <style>{`.table-game:has(.table-game-body:empty) { display: none; }
-        .table-game-body > * { margin: 0 !important; font-size: 12px !important; line-height: 1.45; }`}</style>
+      <style>{`.table-game-body > * { margin: 0 !important; font-size: 12px !important; line-height: 1.45; }`}</style>
       <section className="table-game" aria-label="In questo biglietto" style={{
-        flexShrink: 0, maxHeight: "50%", display: "flex", flexDirection: "column", minHeight: 0,
+        flexShrink: 0, maxHeight: "50%", display: hasContent ? "flex" : "none", flexDirection: "column", minHeight: 0,
         background: "#1b100a", boxShadow: "inset 0 0 0 2px #e9c46a, inset 0 0 0 4px #1b100a, inset 0 0 0 5px #7a5a1c, 5px 5px 0 #3a1f0f",
         padding: "10px", gap: "8px", fontFamily: FONT,
       }}>
         <Label color="#e9c46a">IN QUESTO BIGLIETTO</Label>
-        <div ref={setGameHost} className="table-game-body" style={{ display: "flex", flexDirection: "column", gap: "8px",
+        <div ref={hostRef} className="table-game-body" style={{ display: "flex", flexDirection: "column", gap: "8px",
           overflowY: "auto", minHeight: 0, fontSize: "12px", lineHeight: 1.45 }} />
       </section>
       <Receipt log={log} />
     </div>
+  );
+}
+
+// ── BARRA IN ALTO del tavolo: targhetta del biglietto, unghie, soldi ──
+// Stesso linguaggio della colonna unghie (sprite veri, colore di stato, sigla
+// leggibile senza colore) al posto dei quadratini con emoji e alone.
+export function TableTopBar({ card, nails, activeNail, money }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "16px", width: "100%", fontFamily: FONT }}>
+      <div style={{ ...paperBox, boxShadow: `inset 0 0 0 2px ${PAPER.edge}, 3px 3px 0 #120904`, padding: "6px 12px",
+        display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+        <span style={{ fontSize: "9px", letterSpacing: "3px", color: PAPER.dim }}>GRATTA E VINCI</span>
+        <span style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {card.name}
+        </span>
+      </div>
+      <span style={{ flex: 1 }} />
+      <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+        {nails.map((n, i) => <NailChip key={i} n={n} i={i} active={i === activeNail} />)}
+      </div>
+      <div aria-label={`Soldi: ${fmtMoney(money)} euro`} style={{
+        display: "flex", alignItems: "center", gap: "8px", height: "36px", padding: "0 12px",
+        border: `2px solid ${C.gold}`, background: "#1b100a", color: C.gold, fontSize: "18px",
+        boxShadow: "2px 2px 0 #120904", fontVariantNumeric: "tabular-nums",
+      }}>
+        <Asset id="hud-soldi" emoji="💰" size={20} />€{fmtMoney(money)}
+      </div>
+    </div>
+  );
+}
+
+function NailChip({ n, i, active }) {
+  const m = readNail(n);
+  const v3 = `nail-${n.state}-v3`;
+  const spriteId = n.implant ? null : (hasAsset(v3) ? v3 : `nail-${n.state}`);
+  const col = m.off ? m.off.borderCol : m.col;
+  return (
+    <Tooltip text={`Dito ${i + 1}: ${m.info.label}${active ? " — in uso" : ""}`} color={col}>
+      <div role="listitem" aria-label={`Dito ${i + 1}, ${m.info.label}${active ? ", in uso" : ""}`}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", opacity: m.isDead ? 0.5 : 1 }}>
+        <span style={{
+          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+          background: m.isDead ? "repeating-linear-gradient(45deg, #2b2320 0 3px, #1b100a 3px 6px)" : "#1b100a",
+          boxShadow: active ? `inset 0 0 0 2px ${C.gold}, 0 0 0 2px #120904, 3px 3px 0 #120904` : `inset 0 0 0 2px ${col}`,
+          transform: active ? "translateY(-2px)" : "none",
+        }}>
+          <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} />
+        </span>
+        <span style={{ fontSize: "9px", letterSpacing: "0.5px", color: active ? C.gold : col, whiteSpace: "nowrap" }}>
+          {m.glyph ? `${m.glyph} ` : ""}{m.shortLabel}
+        </span>
+      </div>
+    </Tooltip>
   );
 }
