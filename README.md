@@ -2,6 +2,13 @@
 
 Repository separato per il redesign visivo pixel-art di Grattini.
 
+## 🎮 Gioca subito
+
+### [▶ APRI GRATTINI V3 NEL BROWSER](https://brrucelean.github.io/grattini-v3/)
+
+Il link apre sempre l'ultima versione pubblicata del gioco. Dopo ogni modifica
+attendi il completamento della pubblicazione GitHub Pages e ricarica la pagina.
+
 Direzione creativa:
 
 > Videogioco DOS/PICO-8 incontra gratta-e-vinci italiano stampato male nel 1997.

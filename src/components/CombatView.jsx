@@ -18,7 +18,7 @@ import { hasAsset } from "../assets/registry.js";
 import { ANIM } from "../styles/animations.js";
 
 // Nomi categoria abbreviati — COMBATTIMENTO è troppo lungo per le card strette
-const CAT_SHORT = { COMBATTIMENTO: "ATTACCO", DIFESA: "DIFESA", DENARO: "DENARO" };
+const CAT_SHORT = { COMBATTIMENTO: "BOTTA", DIFESA: "PARATA", DENARO: "PREMIO" };
 
 // Sprite ASCII del nemico (schermo "mostro" sopra le barre — come da bozza)
 function enemySpriteKey(enemy) {
@@ -49,42 +49,46 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    // Base oro pulito — gradiente caldo, senza rumore eccessivo
+    // Patina argentata opaca da gratta e vinci, coerente con i biglietti V3.
+    // Il colore di categoria resta nella gabbia stampata, non nella lamina.
     const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0,   "#c09008");
-    grad.addColorStop(0.3, "#f0c830");
-    grad.addColorStop(0.55,"#ffe066");
-    grad.addColorStop(0.8, "#e8c000");
-    grad.addColorStop(1,   "#a87800");
+    grad.addColorStop(0,   "#858982");
+    grad.addColorStop(0.3, "#c8c8bd");
+    grad.addColorStop(0.55,"#a5a9a2");
+    grad.addColorStop(0.8, "#d4d1c4");
+    grad.addColorStop(1,   "#8b8e88");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     // Noise leggerissimo — quasi invisibile
-    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.fillStyle = "rgba(255,255,230,0.22)";
     for (let i = 0; i < 55; i++) {
       const x = Math.random() * canvas.width;
       const y = Math.random() * canvas.height;
       ctx.fillRect(x, y, 1, 1);
     }
     // Strisce diagonali sottilissime — appena percettibili
-    ctx.globalAlpha = 0.025;
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 5;
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
     for (let x = -canvas.height; x < canvas.width + canvas.height; x += 26) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + canvas.height, canvas.height); ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // Hint "GRATTA" in basso
-    ctx.globalAlpha = 0.42;
-    ctx.fillStyle = "#3a2000";
-    ctx.font = "bold 10px monospace";
+    // Marchio centrale della categoria, grande e leggibile anche senza colore.
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = "#243331";
+    ctx.font = "bold 15px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("G R A T T A", canvas.width / 2, canvas.height - 7);
+    ctx.fillText(CAT_SHORT[cell.category] || "GRATTA", canvas.width / 2, canvas.height - 12);
     ctx.globalAlpha = 1;
     // Bordo interno scuro
-    ctx.strokeStyle = "rgba(0,0,0,0.22)";
+    ctx.strokeStyle = catColors[cell.category] || C.gold;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+    ctx.strokeStyle = "rgba(25,35,34,0.65)";
     ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
-  }, []);
+    ctx.strokeRect(9, 9, canvas.width - 18, canvas.height - 18);
+  }, [cell.category, catColors]);
 
   const doScratch = (e) => {
     if (revealed.current || disabled) return;
@@ -147,13 +151,13 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
   return (
     <div style={{
       position:"relative", borderRadius:"0", overflow:"hidden",
-      border: disabled ? `2px solid #333` : `2px solid ${C.gold}`,
+      border: disabled ? `3px solid #333` : `3px solid ${catColors[cell.category] || C.gold}`,
       // Sfondo OPACO scuro — niente bleeding del contenuto
       background: disabled ? "#111" : CAT_BG[cell.category] || "#0a0a12",
       // La griglia usa righe 1fr: la carta riempie la cella disponibile invece
       // di restare fissa a COMBAT_CARD_H lasciando mezzo schermo vuoto sotto.
       height:"100%", minHeight:`${COMBAT_CARD_H}px`,
-      boxShadow: disabled ? "none" : `0 0 14px ${C.gold}66, inset 0 0 20px rgba(0,0,0,0.5)`,
+      boxShadow: disabled ? "none" : `3px 3px 0 #000, inset 0 0 0 2px #f4df83`,
       cursor: disabled ? "default" : "crosshair",
       touchAction: "none",
     }} {...evts}>
@@ -180,7 +184,7 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
         display:"flex", flexDirection:"column",
         alignItems:"center", justifyContent:"center",
         pointerEvents:"none", zIndex:3,
-        gap:"6px",
+        gap:"4px",
       }}>
         {disabled ? (
           <div style={{fontSize:"24px", opacity:0.2, color:C.dim}}>✕</div>
@@ -207,21 +211,21 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
           <>
             {/* Icona stampata sull'oro — colore scuro, ombra incisa */}
             <div style={{
-              fontSize:"40px", lineHeight:1,
-              filter:"drop-shadow(1px 2px 0px rgba(0,0,0,0.4))",
-              opacity:0.85,
+              fontSize:"44px", lineHeight:1,
+              filter:"drop-shadow(2px 2px 0px rgba(255,255,220,0.55))",
+              opacity:0.95,
             }}>
               <Asset
                 id={cell.category ? `combat-${cell.category.toLowerCase()}` : null}
                 emoji={CAT_EMOJI_MAP[cell.category] || "?"}
-                size={44}
+                size={52}
               />
             </div>
             {/* Label stampata — abbreviata per evitare overflow nelle card strette */}
             <div style={{
-              fontSize:"11px", fontWeight:"900", letterSpacing:"1.8px",
-              color: "#4a3000",
-              textShadow:"0 1px 0 rgba(255,255,200,0.4), 0 -1px 0 rgba(0,0,0,0.3)",
+              fontSize:"15px", fontWeight:"900", letterSpacing:"2px",
+              color: "#173c3b",
+              textShadow:"1px 1px 0 rgba(255,255,220,0.65)",
               textTransform:"uppercase",
             }}>
               {CAT_SHORT[cell.category] || cell.category}
@@ -1105,7 +1109,7 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
               // cabinet (fino a 1280px via W.content).
               gridTemplateColumns: "repeat(3, minmax(0, 160px))", gridTemplateRows: "repeat(3, 1fr)",
               justifyContent: "center",
-              gap: "6px", flex: "1 1 auto", minHeight: `${COMBAT_CARD_H * 3 + 12}px`,
+              gap: "10px", flex: "1 1 auto", minHeight: `${COMBAT_CARD_H * 3 + 20}px`,
             }}>
               {hand.map((cell, i) => {
                 const isRevealed = revealedIdxs.includes(i);
