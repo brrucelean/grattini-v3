@@ -6,6 +6,18 @@ Status: approved by the user on 2026-09-18.
 
 Use one visual language across the whole game: **Tabacchi Terminale** structure with the imperfect print texture of **Stampa Fuori Registro**. The previous A/B/C color-only comparison is retired.
 
+The canonical visual reference is the original Combat Style Lab preserved by
+the Git tag `combat-pilot-approved`. Its geometry and restraint are binding,
+not merely inspirational:
+
+- logical presentation frame based on 640×360 and an 8 px grid;
+- flat charcoal/black panels with cream outlines and hard offset shadows;
+- functional red/cyan/yellow accents on a restrained violet support color;
+- compact information strips, ticket grids and receipt-like side panels;
+- no glass cards, soft gradients, ornamental rounding, bloom or generic neon;
+- new screens must translate their content into this grammar instead of
+  decorating the legacy V2 layout.
+
 ## Non-negotiable interaction principles
 
 - Preserve the existing game rules and screen structure unless a change is explicitly approved.
@@ -21,7 +33,7 @@ Use one visual language across the whole game: **Tabacchi Terminale** structure 
 - Audio should feel dry, papery and close-miked rather than sharp or metallic.
 - The player must be able to reveal by keyboard as an accessible equivalent.
 - Visual effects must reinforce tactile satisfaction without moving the combat grid.
-- The five nails remain individually selectable. The active nail is shown both in the selector and on a visible pixel-art hand; do not replace it with an arrow cursor.
+- The five nails remain individually selectable. The active fingertip/nail is visible as the real pixel-art cursor; a separate full-hand illustration is not required and must not replace the original interaction.
 - The overall art direction may be more overtly gambling-oriented—jackpot signage, prize-board hierarchy, printed ticket ornament—but must retain the DOS/PICO-8 pixel discipline and avoid soft casino gradients.
 
 ## Rollout
