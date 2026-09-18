@@ -913,7 +913,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
                 boxShadow:"2px 2px 0 #000",
               }}>
                 {c.rank
-                  ? <PlayingCardFace rank={c.rank} suit={c.suit} isRed={c.isRed} compact />
+                  ? <PlayingCardFace rank={c.rank} suit={c.suit} isRed={c.isRed} />
                   : <span style={{fontFamily:FONT, fontWeight:"bold", fontSize:"18px", color: c.isRed ? "#cc1111" : "#111", background:"#f5f0e0", display:"block", height:"100%", textAlign:"center", lineHeight:"68px"}}>{c.symbol}</span>}
               </div>
             ))}
