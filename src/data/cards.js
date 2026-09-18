@@ -170,3 +170,81 @@ export function lossLine(card) {
   for (const ch of (card.cells || []).map(c => c.symbol).join("|")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return lines[h % lines.length];
 }
+
+// ─── COME SI GIOCA — descrizione per ogni biglietto ──────────
+// Mostrata sotto il biglietto mentre lo gratti e nel tooltip del negozio.
+// `tagline` = una riga d'atmosfera; `how` = come si vince, in parole semplici.
+// Tenere allineato alle regole reali (card.js, ScratchCardView, minigiochi).
+export const TICKET_GUIDE = {
+  fortunaFlash: {
+    tagline: "Il grattino degli spiccioli: costa poco, sogna poco.",
+    how: "Gratta le 6 caselle: trova 2 simboli uguali e vinci.",
+  },
+  setteEMezzo: {
+    tagline: "Tu contro il Banco, con le carte in mano.",
+    how: "Scopri le tue carte una alla volta e supera il punteggio del Banco senza andare oltre 7½, poi incassa. L'asso vale 1, le figure ½.",
+  },
+  portaFortuna: {
+    tagline: "Gatti neri, quadrifogli e un pizzico di magia.",
+    how: "Trova 4 simboli uguali. Il ✨ jolly vale come qualsiasi simbolo.",
+  },
+  fintoMilionario: {
+    tagline: "Banconote finte, sogni veri.",
+    how: "Trova 3 simboli di valuta uguali.",
+  },
+  puzzle: {
+    tagline: "Forme che cercano il loro posto.",
+    how: "Trova 3 forme uguali tra le 12 caselle.",
+  },
+  boccaDrago: {
+    tagline: "Il drago dorme sul tesoro. Non svegliarlo.",
+    how: "Trova 4 simboli uguali. Occhio alle 🔥: ogni fiammata rovina l'unghia.",
+  },
+  miliardario: {
+    tagline: "Il caveau è aperto. Per ora.",
+    how: "Ogni casella aggiunge euro al bottino: incassa quando vuoi. Se scopri uno 🛑 STOP perdi tutto.",
+  },
+  tredici: {
+    tagline: "Il numero che porta sfortuna. O fortuna.",
+    how: "I numeri si sommano mentre gratti: arriva a 13 esatto per vincere. Se lo superi, sballi.",
+  },
+  maledetto: {
+    tagline: "La cedola del diavolo: tanto rischio, premi da brivido.",
+    how: "Trova 3 simboli uguali tra 16 caselle maledette.",
+  },
+  ruota: {
+    tagline: "Una slot machine da tasca.",
+    how: "Ferma i 3 rulli uno alla volta: 3 uguali è jackpot, 2 uguali un premio di consolazione.",
+  },
+  labirinto: {
+    tagline: "Una giungla di frecce e trappole.",
+    how: "Segui le frecce: ogni passo vale €6, l'uscita 🏆 €50 in più. Una 💀 ti fa perdere tutto: incassa quando vuoi.",
+  },
+  grattaCombina: {
+    tagline: "Due griglie, un colpo di fortuna.",
+    how: "Scopri una casella per griglia: se sono uguali è combo (+€10). Tre combo fanno la MEGA COMBO ×5.",
+  },
+  mappaTesor0: {
+    tagline: "La X segna il punto. Anche le bombe.",
+    how: "Trova le 2 X evitando le 4 💣. I numeri dicono quanto sei lontano dal tesoro più vicino. Incassa quando vuoi.",
+  },
+  doppioOnulla: {
+    tagline: "Tutto o niente, in una sola grattata.",
+    how: "Gratta l'unica casella: ✅ vinci il premio in palio (il doppio della tua ultima vincita), ❌ niente.",
+  },
+  mahjong: {
+    tagline: "Tessere antiche dal Quartiere Cinese.",
+    how: "Trova 3 tessere uguali.",
+  },
+  jackpotMix: {
+    tagline: "Cartone industriale: servono gli attrezzi giusti.",
+    how: "Grattalo con un grattatore, a unghia nuda si spezza. Trova 3 simboli uguali.",
+  },
+  turistaPerSempre: {
+    tagline: "Un biglietto di sola andata per il paradiso.",
+    how: "Trova 4 simboli uguali tra 16 caselle. Il ✨ jolly vale come qualsiasi simbolo.",
+  },
+};
+export function ticketGuide(card) {
+  return TICKET_GUIDE[card?.id] || { tagline: "", how: card?.desc || "" };
+}

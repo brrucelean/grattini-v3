@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { C, FONT } from "../data/theme.js";
 import { NAIL_INFO } from "../data/nails.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../data/items.js";
-import { CARD_SYMBOLS, lossLine } from "../data/cards.js";
+import { CARD_SYMBOLS, lossLine, ticketGuide } from "../data/cards.js";
 import { AudioEngine } from "../audio.js";
 import { roll, pick, shuffle } from "../utils/random.js";
 import { S } from "../utils/styles.js";
@@ -20,6 +20,7 @@ const CANCELLED_MSG = "💀 VINCITA ANNULLATA! L'unghia ha rovinato il biglietto
 // Labirinto, Gratta & Combina e Mappa del Tesoro hanno una schermata loro: se
 // questa vista le mostra comunque (galleria dev), con matchNeeded 0 la prima
 // cella sarebbe già una "vincita".
+const MINIGAME_MECHANICS = new Set(["labirinto", "combina", "tesoro"]);
 const NO_MATCH_MECHANICS = new Set(["sum13", "collect", "setteemezzo", "ruota", "doppioOnulla", "labirinto", "combina", "tesoro"]);
 // Solo qui la Chiave d'Ottone rivela celle: altrove (somme, accumulo) una cella
 // segnata come grattata senza passare da doScratch andrebbe semplicemente persa.
@@ -550,7 +551,26 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   // ── Contenuto "zona-gioco" (griglia celle-argento o display meccanica) ──
   // Estratto in una const così viene renderizzato UNA sola volta: in overlay
   // sul biglietto AI (hasTicket) oppure nel flusso classico (fallback).
-  const playContent = card.mechanic === "ruota" ? (
+  // Labirinto, Gratta & Combina e Mappa del Tesoro nel gioco aprono un
+  // minigioco dedicato e non passano mai da qui: solo la galleria dev li mostra.
+  // Al posto di celle finte (grattabili ma senza vincita) si spiega il gioco.
+  const guide = ticketGuide(card);
+  const isMinigame = MINIGAME_MECHANICS.has(card.mechanic);
+  const playContent = isMinigame ? (
+    <div style={{
+      margin:"auto", padding:"6% 8%", textAlign:"center", maxWidth:"86%",
+      background:"#fff3c4", color:"#153f42", border:"2px solid #ead56b",
+      outline:"1px solid #6f1d24", outlineOffset:"-5px", fontFamily:FONT,
+    }}>
+      <div style={{fontSize:"clamp(11px, 5cqw, 18px)", fontWeight:"bold", letterSpacing:"1px", marginBottom:"6px"}}>
+        SI GIOCA COME MINIGIOCO
+      </div>
+      <div style={{fontSize:"clamp(10px, 3.4cqw, 14px)", lineHeight:1.45}}>{guide.how}</div>
+      <div style={{fontSize:"clamp(9px, 2.8cqw, 12px)", marginTop:"8px", opacity:0.75}}>
+        Compralo al tabaccaio per giocarlo.
+      </div>
+    </div>
+  ) : card.mechanic === "ruota" ? (
     <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"8px", margin:"10px auto 12px"}}>
       <div style={{color:C.gold, fontSize:"11px", letterSpacing:"3px", fontFamily:FONT}}>
         ★ FERMA I RULLI ★
@@ -703,6 +723,24 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           }}>
             {playContent}
           </div>
+        </div>
+      )}
+
+      {/* ═══ COME SI VINCE — il retro del biglietto, in breve ═══ */}
+      {hasTicket && guide.how && !isMinigame && (
+        <div style={{
+          width:"min(100%, calc(66vh * 4 / 3))", margin:"0 auto 10px", boxSizing:"border-box",
+          display:"grid", gridTemplateColumns:"auto minmax(0,1fr)", gap:"4px 12px", alignItems:"baseline",
+          padding:"8px 12px", textAlign:"left",
+          background:"#fff3c4", color:"#153f42", border:"2px solid #ead56b",
+          outline:"1px solid #6f1d24", outlineOffset:"-5px", fontFamily:FONT,
+        }}>
+          <span style={{gridRow:"span 2", alignSelf:"center", fontSize:"11px", fontWeight:"bold", letterSpacing:"1.5px",
+            background:"#153f42", color:"#fff3c4", padding:"4px 6px", lineHeight:1.2, textAlign:"center"}}>
+            COME<br/>SI VINCE
+          </span>
+          {guide.tagline && <span style={{fontSize:"11px", fontStyle:"italic", opacity:0.8}}>{guide.tagline}</span>}
+          <span style={{fontSize:"13px", lineHeight:1.4}}>{guide.how}</span>
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { C, FONT, FS, W } from "../data/theme.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../data/items.js";
-import { CARD_TYPES } from "../data/cards.js";
+import { CARD_TYPES, ticketGuide } from "../data/cards.js";
 import { TABACCAIO_LINES } from "../data/art.js";
 import { rng } from "../utils/random.js";
 import { fmtMoney } from "../utils/money.js";
@@ -523,7 +523,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
                 accent={accent}
                 canAfford={player.money >= price}
                 onClick={() => onBuyCard(c.id)}
-                tooltip={`${c.desc} · Max: €${c.maxPrize}${c.malus ? ` · ⚠ ${c.malus.desc}` : ""}`}
+                tooltip={`${ticketGuide(c).how} · Max: €${c.maxPrize}${c.malus ? ` · ⚠ ${c.malus.desc}` : ""}`}
                 shimmer={rar === "leggendaria" || rar === "rarissimo"}
               />
             );
@@ -630,7 +630,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
                       accent={accent}
                       canAfford={player.money >= price}
                       onClick={() => onBuyCard(c.id)}
-                      tooltip={`${c.desc} · Max €${c.maxPrize}`}
+                      tooltip={`${ticketGuide(c).how} · Max €${c.maxPrize}`}
                       badgeLabel="VIP"
                       shimmer
                     />
