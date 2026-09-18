@@ -8,13 +8,16 @@ Direzione creativa:
 
 ## Stato
 
-Il progetto si trova in **Fase 1 — Visual System e style lab**. Il prototipo
-pubblico consente di confrontare tre direzioni sullo stesso combat frame. Non
-sostituisce ancora Grattini V2 e non usa il suo controller di gameplay.
+Il progetto contiene ora **il gioco completo** importato dalla baseline V2
+verificata (`78d27a3`). Dialoghi, notiziario, gimmick, biglietti, combattimenti,
+eventi, negozi, locanda, mappa, trofei, reliquie, statistiche e finali sono
+presenti. La nuova direzione visiva viene applicata progressivamente senza
+ridurre il contenuto o modificare il bilanciamento.
 
 - V2 funzionale di riferimento: <https://github.com/brrucelean/grattini-v2-redesign>
 - audit, visual system e decisioni: [`docs/`](docs/)
-- stack previsto: React 18 + Vite 5
+- stack: React 18 + Vite 5
+- pilot approvato conservato nel tag Git `combat-pilot-approved`
 
 ## Sviluppo
 
@@ -24,6 +27,5 @@ npm run dev
 npm run build
 ```
 
-La migrazione funzionale e il combat pilot inizieranno soltanto dopo la scelta
-di una delle tre direzioni visuali.
-
+Direzione approvata: struttura **Tabacchi Terminale**, stampa imperfetta,
+segnaletica gambling leggibile e interazioni di grattata tattili/ASMR.

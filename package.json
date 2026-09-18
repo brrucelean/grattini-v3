@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "analyze": "ANALYZE=1 vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,7 +16,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^5.4.21"
   }
 }
-
