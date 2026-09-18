@@ -21,17 +21,21 @@ function getAudio() {
 function scratchSound(intensity = 0.4) {
   const audio = getAudio();
   if (!audio) return;
-  const length = Math.floor(audio.sampleRate * 0.045);
+  const length = Math.floor(audio.sampleRate * 0.075);
   const buffer = audio.createBuffer(1, length, audio.sampleRate);
   const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  let brown = 0;
+  for (let i = 0; i < length; i += 1) {
+    brown = brown * 0.82 + (Math.random() * 2 - 1) * 0.18;
+    data[i] = brown * (1 - i / length);
+  }
   const source = audio.createBufferSource();
   const filter = audio.createBiquadFilter();
   const gain = audio.createGain();
   filter.type = "bandpass";
-  filter.frequency.value = 2100 + Math.random() * 900;
-  filter.Q.value = 0.8;
-  gain.gain.value = 0.06 * intensity;
+  filter.frequency.value = 950 + Math.random() * 500;
+  filter.Q.value = 0.55;
+  gain.gain.value = 0.045 * intensity;
   source.buffer = buffer;
   source.connect(filter).connect(gain).connect(audio.destination);
   source.start();
@@ -65,6 +69,7 @@ function ScratchFoil({ type, label, symbol, onComplete }) {
   const completed = useRef(false);
   const lastSound = useRef(0);
   const moves = useRef(0);
+  const previousPoint = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -107,10 +112,19 @@ function ScratchFoil({ type, label, symbol, onComplete }) {
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
-    ctx.beginPath(); ctx.arc(x, y, 30, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.lineWidth = 54;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (previousPoint.current) ctx.moveTo(previousPoint.current.x, previousPoint.current.y);
+    else ctx.moveTo(x, y);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 27, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    previousPoint.current = { x, y };
     moves.current += 1;
     const now = performance.now();
-    if (now - lastSound.current > 42) {
+    if (now - lastSound.current > 58) {
       scratchSound(Math.min(1, 0.35 + moves.current / 35));
       lastSound.current = now;
     }
@@ -123,9 +137,9 @@ function ScratchFoil({ type, label, symbol, onComplete }) {
   };
 
   return <canvas ref={canvasRef} className="scratch-foil" aria-hidden="true"
-    onPointerDown={(event) => { scratching.current = true; event.currentTarget.setPointerCapture(event.pointerId); scratch(event); }}
-    onPointerMove={scratch} onPointerUp={() => { scratching.current = false; }}
-    onPointerCancel={() => { scratching.current = false; }} />;
+    onPointerDown={(event) => { scratching.current = true; previousPoint.current = null; event.currentTarget.setPointerCapture(event.pointerId); scratch(event); }}
+    onPointerMove={scratch} onPointerUp={() => { scratching.current = false; previousPoint.current = null; }}
+    onPointerCancel={() => { scratching.current = false; previousPoint.current = null; }} />;
 }
 
 function CombatTicket({ card, index, revealed, locked, onReveal }) {
@@ -159,6 +173,7 @@ function CombatFrame() {
   const [message, setMessage] = useState("Il Borseggiatore prepara una coltellata.");
   const [loot, setLoot] = useState(24);
   const [enemyHp, setEnemyHp] = useState(74);
+  const [activeNail, setActiveNail] = useState(1);
   const timingRef = useRef(null);
 
   const stopTiming = useCallback(() => {
@@ -196,7 +211,7 @@ function CombatFrame() {
     <main className="combat-body"><div className="ticket-grid" aria-label="Griglia fissa tre per tre">{CARDS.map((card, index) => <CombatTicket card={card} index={index} key={index} revealed={revealed.includes(index)} locked={revealed.length >= 3 || Boolean(timing)} onReveal={revealCard} />)}</div>
       <aside className="combat-diary"><div className="diary-title">SCONTRINO</div><dl><div><dt>TURNO</dt><dd>{turn}</dd></div><div><dt>GRATTATI</dt><dd>{revealed.length}/3</dd></div><div><dt>BOTTINO</dt><dd>€{loot}</dd></div></dl>
         <div className="message-box" aria-live="polite">{message}</div><div className="legend"><span><PixelIcon type="attack" /> BOTTA</span><span><PixelIcon type="defense" /> PARATA</span><span><PixelIcon type="money" /> PREMIO</span></div></aside></main>
-    <footer className="player-strip"><span className="player-label">LE TUE UNGHIE</span><div className="nails" aria-label="Cinque unghie, quattro sane e una sanguinante">{["hurt", "ok", "ok", "ok", "ok"].map((state, index) => <span className={`nail nail--${state}`} key={index}>{index + 1}</span>)}</div>
+    <footer className="player-strip"><div className="pixel-hand" aria-hidden="true"><i className="pixel-hand__palm" />{[0,1,2,3,4].map((finger) => <i className={`pixel-hand__finger pixel-hand__finger--${finger + 1} ${activeNail === finger ? "is-active" : ""}`} key={finger} />)}</div><span className="player-label">UNGHIA {activeNail + 1}</span><div className="nails" aria-label="Seleziona una delle cinque unghie">{["hurt", "ok", "ok", "ok", "ok"].map((state, index) => <button type="button" aria-pressed={activeNail === index} aria-label={`Unghia ${index + 1}, ${state === "hurt" ? "sanguinante" : "sana"}`} onClick={() => setActiveNail(index)} className={`nail nail--${state} ${activeNail === index ? "is-active" : ""}`} key={index}>{index + 1}</button>)}</div>
       <span className="turn-rule">GRATTA 3 BIGLIETTI</span><button className="next-turn" disabled={!finished} onClick={() => { setRevealed([]); setTurn((value) => value + 1); setMessage("Nuovo turno. Scegli con l'occhio, gratta con l'unghia."); }}>{finished ? "PROSSIMO TURNO" : "GRATTA UN SIMBOLO"}</button></footer>
     {timing && <TimingOverlay mode={timing} onStop={stopTiming} />}
   </section>;
