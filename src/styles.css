@@ -85,11 +85,35 @@ h1 {
 
 .lab-header a:hover { background: #65d8d1; color: #090b0f; }
 
-.direction-tabs {
+.direction-tabs,
+.design-pillars {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin: 16px 0;
+}
+
+.design-pillars span {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid #4c5058;
+  background: #11151b;
+  color: #f6eed8;
+  font-size: 16px;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.design-pillars b {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  background: #f2cf44;
+  color: #090b0f;
+  font-weight: 400;
 }
 
 .direction-tabs button {
@@ -284,6 +308,7 @@ h1 {
   cursor: pointer;
   box-shadow: 4px 4px 0 var(--black);
   text-align: left;
+  touch-action: none;
 }
 
 .combat-ticket--attack { --ticket-color: var(--attack); }
@@ -321,23 +346,40 @@ h1 {
 .ticket-title { position: absolute; left: 8px; bottom: 4px; font-size: 10px; }
 .ticket-serial { position: absolute; right: 5px; bottom: 4px; font-size: 8px; opacity: .75; }
 
-.combat-ticket:not(.is-revealed)::after {
-  content: "GRATTA";
+.scratch-foil {
   position: absolute;
   inset: 18px 7px 7px;
-  display: grid;
-  place-items: center;
+  z-index: 4;
+  width: calc(100% - 14px);
+  height: calc(100% - 25px);
   border: 2px dashed #585b5b;
-  background: #b9b8ad;
-  color: #353737;
-  font-size: 13px;
-  letter-spacing: 3px;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.combat-ticket:not(.is-revealed) .ticket-symbol,
+.combat-ticket:not(.is-revealed) .ticket-label,
+.combat-ticket:not(.is-revealed) .ticket-title,
+.combat-ticket:not(.is-revealed) .ticket-serial {
+  opacity: .22;
+}
+
+.combat-ticket.is-revealed {
+  animation: ticketReveal 180ms steps(3, end);
+}
+
+@keyframes ticketReveal {
+  0% { transform: scale(.94); filter: brightness(1.8); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
 
 .theme-notturno .combat-ticket { border-bottom-width: 5px; }
 .theme-notturno .ticket-kicker { color: var(--money); }
 .theme-registro .combat-ticket:nth-child(odd) { transform: translateX(1px); }
 .theme-registro .combat-ticket::before { content: ""; position: absolute; inset: 0; border-left: 2px solid rgba(0,184,181,.5); border-right: 2px solid rgba(231,58,45,.45); pointer-events: none; }
+
+.approved-note { border-left: 6px solid #f2cf44; }
 
 .combat-diary {
   border: 2px solid var(--ink);
@@ -456,4 +498,3 @@ h1 {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition: none !important; }
   .timing-cursor { left: 48%; }
 }
-
