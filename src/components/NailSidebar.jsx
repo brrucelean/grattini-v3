@@ -28,21 +28,6 @@ function NailSidebarImpl({ nails, activeNail, onSelectNail, locked=false, equipp
           <VintageBadge color={locked ? C.orange : C.gold} size="md">
             {locked ? "🔒 BLOCCATA" : "🖐 UNGHIE"}
           </VintageBadge>
-          <div style={{
-            width:"112px", height:"106px", margin:"7px auto 5px",
-            display:"grid", placeItems:"center",
-            border:`2px solid ${locked ? C.orange : C.gold}`,
-            background:C.card,
-            boxShadow:"4px 4px 0 #000",
-            position:"relative", overflow:"hidden",
-          }}>
-            <Asset id="hand-healthy-v3" emoji="🖐" size={96} style={{imageRendering:"pixelated"}} />
-            <span style={{
-              position:"absolute", left:4, bottom:3,
-              padding:"1px 4px", background:C.gold, color:"#000",
-              fontSize:"9px", letterSpacing:"1px",
-            }}>DITO {activeNail + 1}</span>
-          </div>
         </div>
       )}
       {nails.map((n, i) => {
