@@ -13,6 +13,7 @@ import { inset } from "../data/ticketLayout.js";
 // biglietto — a dimensione ridotta titolo e badge finivano uno sopra l'altro.
 export function TicketHeader({ card, accent, layout, compact = false }) {
   const headerRow = layout.header.dir === "row";
+  const printHeader = layout.header.print === true;
 
   // Alone cromatico "da sala giochi": neon accento + sfrangiatura ciano/magenta.
   const haloTitle = [
@@ -28,7 +29,7 @@ export function TicketHeader({ card, accent, layout, compact = false }) {
       background: bg, padding: "0.15em 0.6em", letterSpacing: "1px",
       whiteSpace: "nowrap", lineHeight: 1.5,
       border: `1px solid ${bg}`,
-      boxShadow: `0 0 8px ${bg}cc, 0 0 18px ${bg}55, 0 1px 2px #000`,
+      boxShadow: printHeader ? "none" : `0 0 8px ${bg}cc, 0 0 18px ${bg}55, 0 1px 2px #000`,
     }}>{label}</span>
   );
 
@@ -44,14 +45,14 @@ export function TicketHeader({ card, accent, layout, compact = false }) {
     }}>
       {/* Titolo — come un vero gratta e vinci, dentro al cartiglio dell'arte */}
       <div style={{
-        color: "#fff", fontWeight: "bold",
+        color: printHeader ? "#123f42" : "#fff", fontWeight: "bold",
         fontSize: compact
           ? (headerRow ? "clamp(7px, min(9cqw, 85cqh), 30px)" : "clamp(7px, min(12cqw, 70cqh), 30px)")
           : (headerRow ? "clamp(7px, min(6.5cqw, 62cqh), 30px)" : "clamp(7px, min(9.5cqw, 46cqh), 30px)"),
-        letterSpacing: "1.5px", lineHeight: 1.05,
-        WebkitTextStroke: `0.6px ${accent}`,
-        textShadow: haloTitle,
-        animation: "ticketNeon 3.2s ease-in-out infinite",
+        letterSpacing: printHeader ? "1px" : "1.5px", lineHeight: 1.05,
+        WebkitTextStroke: printHeader ? "0" : `0.6px ${accent}`,
+        textShadow: printHeader ? "none" : haloTitle,
+        animation: printHeader ? "none" : "ticketNeon 3.2s ease-in-out infinite",
         fontFamily: FONT, textAlign: "center",
         maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         textTransform: "uppercase",
