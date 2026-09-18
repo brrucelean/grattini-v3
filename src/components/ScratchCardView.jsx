@@ -1084,7 +1084,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       ))}
 
       {/* Grattatore indicator — Vintage tile */}
-      {toSide(equippedGrattatore && (
+      {!fit && toSide(equippedGrattatore && (
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "8px",
           background: "#001a22",
@@ -1285,7 +1285,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             border: `2px solid ${borderCol}`,
             padding: "12px 14px", marginBottom: "8px",
             boxShadow: `0 0 18px ${borderCol}66, inset 0 0 16px ${borderCol}18`,
-            animation: ANIM.pulseActive,
+            // Sopra il biglietto (modalità tavolo) resta pieno: il pulse di
+            // opacità lo rendeva quasi trasparente.
+            animation: fit ? "none" : ANIM.pulseActive,
             textAlign: "center",
           }}>
             {cornerBrackets(borderCol, 10, 4, false)}

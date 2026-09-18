@@ -81,51 +81,67 @@ function DossierImpl({ biome, player, gameStats }) {
 export const Dossier = memo(DossierImpl);
 
 // ── DESTRA (sopra): vassoio dei grattatori ──
-function ToolTrayImpl({ player, onEquipGrattatore }) {
+// Nero e oro come il resto del tavolo. Tessere tutte uguali che riempiono la
+// griglia; quella in mano ha il filo oro, il fondo caldo e la scritta
+// "IN MANO" al posto dei pallini degli usi (niente etichette sovrapposte).
+const TRAY_TONES = {
+  // tavolo del duello e soglia: bisca, nero e oro
+  dark:  { bg: "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px",
+           frame: "inset 0 0 0 2px #050304, inset 0 0 0 3px #3a3026, inset 0 0 0 5px #050304, 5px 5px 0 #050304",
+           accent: "#c9a24a", title: "#c9a24a", muted: "#8a7a5a", tile: "#0b090b", tileEdge: "#3a3026", hand: "#1d1810", ink: "#e8dcc0" },
+  // tavolo da grattata (chiaro): vassoio d'acciaio
+  steel: { bg: "repeating-conic-gradient(#39424a 0% 25%, #3f4952 0% 50%) 0 0 / 4px 4px",
+           frame: "inset 0 0 0 2px #1b2126, inset 2px 2px 0 3px #6b7883, inset -2px -2px 0 3px #262d33, 5px 5px 0 #3a1f0f",
+           accent: "#40c9c0", title: "#e8eef2", muted: "#b8c4cc", tile: "#20272d", tileEdge: "#12171b", hand: "#153f42", ink: "#dfe7ec" },
+};
+function ToolTrayImpl({ player, onEquipGrattatore, tone = "dark" }) {
+  const T = TRAY_TONES[tone] || TRAY_TONES.dark;
+  const TRAY_GOLD = T.accent;
   const tools = player.grattatori || [];
   return (
     <section aria-label="Vassoio dei grattatori" style={{
-      background: "repeating-conic-gradient(#39424a 0% 25%, #3f4952 0% 50%) 0 0 / 4px 4px",
-      boxShadow: "inset 0 0 0 2px #1b2126, inset 2px 2px 0 3px #6b7883, inset -2px -2px 0 3px #262d33, 5px 5px 0 #3a1f0f",
-      padding: "10px", display: "flex", flexDirection: "column", gap: "8px", flexShrink: 0,
+      background: T.bg, boxShadow: T.frame,
+      padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px", flexShrink: 0,
       fontFamily: FONT,
     }}>
-      <Label color="#e8eef2">GRATTATORI</Label>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span style={{ fontSize: "12px", letterSpacing: "2px", color: T.title }}>GRATTATORI</span>
+        {tools.length > 0 && <span style={{ fontSize: "11px", color: T.muted }}>clic per prendere o posare</span>}
+      </div>
       {tools.length === 0 ? (
-        <div style={{ fontSize: "11px", lineHeight: 1.5, color: "#c8d2d9" }}>
+        <div style={{ fontSize: "12px", lineHeight: 1.5, color: T.muted }}>
           Vassoio vuoto: gratti a unghia nuda. I grattatori si comprano al tabaccaio.
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(76px, 1fr))", gap: "8px" }}>
           {tools.map((g, idx) => {
             const def = GRATTATORE_DEFS[g.id];
             const inHand = player.equippedGrattatore?.inventoryIdx === idx;
             const uses = g.usesLeft || 0;
             return (
-              <Tooltip key={idx} text={`${g.name}\n${g.desc || def?.desc || ""}\n${uses} usi rimasti · clic per ${inHand ? "posarlo" : "prenderlo"}`} color={C.cyan}>
+              <Tooltip key={idx} text={`${g.name}\n${g.desc || def?.desc || ""}\n${uses} usi rimasti · clic per ${inHand ? "posarlo" : "prenderlo"}`} color={TRAY_GOLD}>
                 <button type="button" onClick={() => onEquipGrattatore?.(idx)}
                   aria-pressed={inHand} aria-label={`${g.name}, ${uses} usi, ${inHand ? "in mano" : "sul vassoio"}`}
                   style={{
-                    position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
-                    padding: "8px 4px 6px", cursor: "pointer", fontFamily: FONT,
-                    background: inHand ? "#153f42" : "#20272d",
-                    border: `2px solid ${inHand ? C.cyan : "#12171b"}`,
-                    boxShadow: inHand ? "none" : "2px 2px 0 #0c0f12",
-                    transform: inHand ? "translate(2px,2px)" : "none",
-                    color: inHand ? C.cyan : "#dfe7ec",
+                    width: "100%", height: "92px", boxSizing: "border-box",
+                    display: "grid", gridTemplateRows: "1fr auto auto", justifyItems: "center", alignItems: "center", gap: "4px",
+                    padding: "8px 4px 6px", cursor: "pointer", fontFamily: FONT, border: "none",
+                    background: inHand ? T.hand : T.tile,
+                    boxShadow: inHand ? `inset 0 0 0 2px ${TRAY_GOLD}` : `inset 0 0 0 1px ${T.tileEdge}`,
+                    color: inHand ? TRAY_GOLD : T.ink,
                   }}>
                   <Asset id={`item-${g.id}`} emoji={g.emoji} size={32} />
-                  <span style={{ fontSize: "10px", lineHeight: 1.2, textAlign: "center", width: "100%",
+                  <span style={{ fontSize: "10px", lineHeight: 1.1, textAlign: "center", width: "100%",
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.name}</span>
-                  <span aria-hidden style={{ display: "flex", gap: "2px", flexWrap: "wrap", justifyContent: "center" }}>
-                    {Array(Math.min(uses, 8)).fill(0).map((_, i) => (
-                      <span key={i} style={{ width: 6, height: 6, background: inHand ? C.cyan : "#9fb0bb" }} />
-                    ))}
-                    {uses > 8 && <span style={{ fontSize: "9px" }}>+{uses - 8}</span>}
-                  </span>
-                  {inHand && (
-                    <span style={{ position: "absolute", top: -8, right: -4, fontSize: "9px", letterSpacing: "1px",
-                      background: C.cyan, color: "#000", padding: "1px 4px" }}>IN MANO</span>
+                  {inHand ? (
+                    <span style={{ fontSize: "9px", letterSpacing: "1.5px", color: TRAY_GOLD, lineHeight: "8px" }}>IN MANO</span>
+                  ) : (
+                    <span aria-hidden style={{ display: "flex", gap: "2px", height: "8px", alignItems: "center" }}>
+                      {Array(Math.min(uses, 6)).fill(0).map((_, i) => (
+                        <span key={i} style={{ width: 5, height: 5, background: T.muted }} />
+                      ))}
+                      {uses > 6 && <span style={{ fontSize: "9px", color: T.muted }}>+{uses - 6}</span>}
+                    </span>
                   )}
                 </button>
               </Tooltip>
@@ -183,7 +199,7 @@ export function RightRail({ player, onEquipGrattatore, log, setGameHost }) {
   const hostRef = useCallback((el) => { setHost(el); setGameHost?.(el); }, [setGameHost]);
   return (
     <div style={{ width: RAIL_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: "12px", minHeight: 0, padding: "8px 0" }}>
-      <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} />
+      <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} tone="steel" />
       {/* Riquadro "in questo biglietto": appare solo se la meccanica ha
           qualcosa da mostrare (Banco, punteggio, jolly, trappole, contatori). */}
       <style>{`.table-game-body > * { margin: 0 !important; font-size: 12px !important; line-height: 1.45; }`}</style>
