@@ -13,7 +13,7 @@
 // riquadri sopra il biglietto e premi SALVA — questo file viene riscritto.
 // Vedi vite-plugin-ticket-layout.js e TicketLayoutEditor.jsx.
 export const TICKET_LAYOUT = {
-  fortunaFlash:     { play:{top:43.4, left:4.4, right:4.4, bottom:5.4}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
+  fortunaFlash:     { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
   setteEMezzo:      { play:{top:39.9, left:8, right:8.7, bottom:11.3}, header:{top:13.9, left:21.9, right:22.6, bottom:67, dir:"col"} },
   portaFortuna:     { play:{top:39.5, left:11.8, right:11.7, bottom:13.1}, header:{top:26.2, left:10, right:10, bottom:66, dir:"row"} },
   fintoMilionario:  { play:{top:40.6, left:11.2, right:11.5, bottom:14.3}, header:{top:21.1, left:25.7, right:25.1, bottom:67.5, dir:"col"} },
