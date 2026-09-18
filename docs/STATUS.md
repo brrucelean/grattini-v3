@@ -72,6 +72,10 @@ Regole:
    contenuto non entra, scrolla il pannello interno, non la scena.
 6. Vale per ogni schermata: 01-SHELL-HUD e 04-COMBAT la adottano già; il
    vincolo 640×360 dei documenti in archivio non è più in vigore.
+7. **Priorità desktop** (2026-09-18): si costruisce e rifinisce solo *wide*.
+   *medium* e *compact* restano nel disegno delle zone ma si implementano più
+   avanti; nel frattempo sotto i 1024 px basta che nulla si rompa (niente
+   scroll orizzontale, CTA raggiungibili).
 
 ### D-02 — Dimensione nativa dei ticket · **deciso: 320×240**
 
@@ -94,7 +98,7 @@ Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 
 | # | Schermata | Stato | Note |
 |---|---|:---:|---|
-| 01 | Shell e HUD | ⬜ | **prossima**: wireframe da approvare. Causa del problema "pannello incollato" su tutte le schermate |
+| 01 | Shell e HUD | ⬜ | **prossima**: wireframe desktop da approvare (artifact "Shell Grattini V3"). Causa del problema "pannello incollato" su tutte le schermate |
 | 02 | Titolo | ✅ | `TitleScreen.jsx`, verificato desktop, 390×844, 375×667 |
 | 02 | Tutorial unghie (3 pagine) | ⬜ | ancora nella UI legacy |
 | 03 | Mappa | ⬜ | |
@@ -137,7 +141,8 @@ Una schermata è ✅ solo se:
 4. mouse, tastiera e touch funzionano;
 5. nessun residuo legacy involontario (shell, HUD, cornici doppie);
 6. simboli e azioni leggibili senza colore;
-7. screenshot a 1366×768, 768×1024, 390×844 e 375×667 confrontati insieme;
+7. screenshot a 1280×720, 1366×768 e 1920×1080 confrontati insieme; più un
+   controllo a 390×844 che non ci siano rotture (non rifinitura);
 8. build superata e controllo visivo sulla schermata intera nel gioco reale.
 
 ## 7. Ordine di lavoro
