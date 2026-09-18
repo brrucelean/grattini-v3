@@ -1,6 +1,6 @@
 # V3 asset recreation manifest
 
-Status: approved scope. Replace every one of the **163 original raster assets** with purpose-built V3 pixel art. The generated hand experiment is not part of the production scope; the existing finger/nail interaction remains.
+Status: approved scope. Replace every one of the **163 original raster assets** with purpose-built V3 pixel art. The generated hand experiment is not part of the production scope; the existing finger/nail interaction remains. The complete scratch-ticket family is the first production priority; principal characters are deliberately last.
 
 ## Production rules
 
@@ -63,11 +63,11 @@ Four biome scenes plus `cella`, `combat`, `gameover`, `locanda`, `shop`, `title`
 
 ## Recommended production order
 
-1. Character style anchor: Tabaccaio, Sacerdote, Ladro, Boss.
-2. Nail states and finger cursors.
-3. Combat category assets and combat scene.
-4. Map sprites and four biome scenes.
-5. Common ticket template and scratch material.
-6. All seventeen ticket families, one mechanic at a time.
-7. Items, equipment and held-item cursors.
-8. Shop/inn rooms, remaining scenes and meta/HUD assets.
+1. Common ticket template, scratch material and ASMR scratch interaction.
+2. All seventeen full ticket families and their seventeen thumbnails, one mechanic at a time.
+3. Nail states and finger cursors.
+4. Combat category assets and combat scene.
+5. Four biome scenes and supporting map elements.
+6. Items, equipment and held-item cursors.
+7. Shop/inn rooms, remaining scenes and meta/HUD assets.
+8. All map characters, with Tabaccaio, Sacerdote, Ladro and Boss completed last.
