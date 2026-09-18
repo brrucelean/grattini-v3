@@ -215,7 +215,7 @@ export function TableTopBar({ card, nails, activeNail, money }) {
         </span>
       </div>
       <span style={{ flex: 1 }} />
-      <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "2px", alignItems: "flex-start" }}>
+      <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
         {nails.map((n, i) => <NailChip key={i} n={n} i={i} active={i === activeNail} />)}
       </div>
       <div aria-label={`Soldi: ${fmtMoney(money)} euro`} style={{
@@ -234,24 +234,22 @@ function NailChip({ n, i, active }) {
   const v3 = `nail-${n.state}-v3`;
   const spriteId = n.implant ? null : (hasAsset(v3) ? v3 : `nail-${n.state}`);
   const col = m.off ? m.off.borderCol : m.col;
+  // Solo il quadrato, alto quanto la pastiglia dei soldi: così stanno sulla
+  // stessa linea. Lo stato si legge dal bordo, dal tooltip e, per gli stati
+  // spenti, dal glifo nell'angolo (✕ morta, ◆ nera).
   return (
     <Tooltip text={`Dito ${i + 1}: ${m.info.label}${active ? " — in uso" : ""}`} color={col}>
-      <div role="listitem" aria-label={`Dito ${i + 1}, ${m.info.label}${active ? ", in uso" : ""}`}
-        // Colonna a larghezza fissa: le dita restano in fila e equidistanti
-        // qualunque sia la sigla sotto (SANA, GRAFFI, SANGUE…).
-        style={{ width: 48, display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", opacity: m.isDead ? 0.5 : 1 }}>
-        <span style={{
-          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-          background: m.isDead ? "repeating-linear-gradient(45deg, #2b2320 0 3px, #1b100a 3px 6px)" : "#1b100a",
-          boxShadow: active ? `inset 0 0 0 2px ${C.gold}, 0 0 0 2px #120904, 3px 3px 0 #120904` : `inset 0 0 0 2px ${col}`,
-        }}>
-          <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} />
-        </span>
-        <span style={{ fontSize: "9px", letterSpacing: "0.5px", color: active ? C.gold : col, whiteSpace: "nowrap",
-          width: "100%", textAlign: "center", lineHeight: 1 }}>
-          {m.glyph ? `${m.glyph} ` : ""}{m.shortLabel}
-        </span>
-      </div>
+      <span role="listitem" aria-label={`Dito ${i + 1}, ${m.info.label}${active ? ", in uso" : ""}`} style={{
+        position: "relative", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+        opacity: m.isDead ? 0.55 : 1,
+        background: m.isDead ? "repeating-linear-gradient(45deg, #2b2320 0 3px, #1b100a 3px 6px)" : "#1b100a",
+        boxShadow: active ? `inset 0 0 0 2px ${C.gold}, 2px 2px 0 #120904` : `inset 0 0 0 2px ${col}`,
+      }}>
+        <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} />
+        {m.glyph && (
+          <span aria-hidden style={{ position: "absolute", right: 2, top: 1, fontSize: "9px", color: col, lineHeight: 1 }}>{m.glyph}</span>
+        )}
+      </span>
     </Tooltip>
   );
 }
