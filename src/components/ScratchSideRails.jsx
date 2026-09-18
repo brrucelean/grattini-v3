@@ -21,10 +21,9 @@ function railBox(pal) {
     // Sticky: la fiancata resta a vista mentre il grattino scorre. alignSelf
     // flex-start (non stretch) altrimenti il box prende l'altezza della riga e
     // lo sticky non ha margine di scorrimento.
-    alignSelf: "flex-start", position: "sticky", top: 0,
-    // Altezza DEFINITA (non maxHeight): serve perché il LogSidebar interno usa
-    // height:100% + overflow per l'auto-scroll in fondo al log.
-    height: "calc(100dvh - 150px)",
+    // La schermata di grattata desktop non scorre più: la fiancata si stira
+    // sull'altezza della riga (definita), il contenuto scorre al suo interno.
+    alignSelf: "stretch", height: "auto", overflow: "hidden",
     display: "flex", flexDirection: "column", minHeight: 0,
     fontFamily: FONT,
     background: pal.panelBg,

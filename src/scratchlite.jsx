@@ -47,6 +47,7 @@ import { RunBar } from "./components/shell/RunBar.jsx";
 import { NailRail } from "./components/shell/NailRail.jsx";
 import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
+import { Dossier, RightRail, TABLE_BG, MAT_STYLE } from "./components/scratch/ScratchTable.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -664,13 +665,15 @@ export default function Grattini() {
             </div>
           </div>
 
-          {/* ── SCROLL AREA con la schedina ── */}
+          {/* ── SCROLL AREA con la schedina ── (desktop: niente scroll, tutto in vista) */}
           <div style={{
-            flex:1, overflowY:"auto", overflowX:"hidden",
+            flex:1, minHeight:0, overflowY: wideShell ? "hidden" : "auto", overflowX:"hidden",
             WebkitOverflowScrolling:"touch",
             display:"flex", justifyContent:"center",
-            padding:"10px 4px 32px",
-            backgroundImage:"repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
+            padding: wideShell ? "8px" : "10px 4px 32px",
+            // Desktop: il tavolo da grattata (bancone di legno) sotto tutto.
+            ...(wideShell ? { background: TABLE_BG } : {}),
+            backgroundImage: wideShell ? undefined : "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
             backgroundAttachment:"local",
           }}>
             {/* ── BANCO — su desktop largo la carta resta della sua dimensione
@@ -678,18 +681,22 @@ export default function Grattini() {
                  dal dossier della run e dal log dei colpi. Il tetto è W.content,
                  così su monitor enormi il banco non si sfilaccia. ── */}
             <div style={{
-              width:"100%", maxWidth: W.content, margin:"0 auto",
-              display:"flex", alignItems:"flex-start", justifyContent:"center",
+              width:"100%", maxWidth: wideShell ? "none" : W.content, margin:"0 auto",
+              display:"flex", alignItems: wideShell ? "stretch" : "flex-start", justifyContent:"center",
               gap: wideDesk ? "14px" : "0",
+              ...(wideShell ? { height:"100%", minHeight:0 } : {}),
             }}>
-            {wideDesk && (
+            {wideShell ? (
+              <Dossier biome={BIOMES[currentBiome]} player={player} gameStats={gameStats} />
+            ) : wideDesk && (
               <RunStatsRail biome={BIOMES[currentBiome]} palette={bioPal} player={player} gameStats={gameStats} onEquipGrattatore={handleRailEquipGrattatore} />
             )}
             {/* animation wrapper */}
-            <div style={{animation:"scratchCardSlideIn 0.28s ease-out both", flex:"1 1 auto", minWidth:0, display:"flex", justifyContent:"center", alignItems:"flex-start"}}>
+            <div style={{animation:"scratchCardSlideIn 0.28s ease-out both", flex:"1 1 auto", minWidth:0, display:"flex", justifyContent:"center", alignItems: wideShell ? "stretch" : "flex-start", ...(wideShell ? { minHeight:0, padding:"16px", ...MAT_STYLE } : {})}}>
               <Suspense fallback={<LazyFallback />}>
               <ScratchCardView
                 card={scratchingCard}
+                fit={wideShell}
                 nailState={getActiveNailState()}
                 nailImplant={player.nails[player.activeNail]?.implant || null}
                 grattaMania={player.grattaMania}
@@ -728,7 +735,9 @@ export default function Grattini() {
               />
               </Suspense>
             </div>
-            {wideDesk && log.length > 0 && (
+            {wideShell ? (
+              <RightRail player={player} onEquipGrattatore={handleRailEquipGrattatore} log={log} />
+            ) : wideDesk && log.length > 0 && (
               <ScratchLogRail log={log} palette={bioPal} />
             )}
             </div>

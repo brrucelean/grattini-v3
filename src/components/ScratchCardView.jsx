@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useEffect, useRef } from "react";
 import { C, FONT } from "../data/theme.js";
 import { NAIL_INFO } from "../data/nails.js";
@@ -34,7 +35,7 @@ const IMPLANT_PRIZE_MULT = {
 };
 
 // ─── SCRATCH CARD COMPONENT (per-cell nail damage + early stop) ───
-export function ScratchCardView({ card, onDone, nailState, nailImplant=null, grattaMania, equippedGrattatore, onCellScratch, onNailDamage=null, onItemFound=null, showFirstWarning, ambidestri=false, onCardActivate=null, lastWonPrize=0, extraTiles=[], onExtraTileUsed=null, relicEffects=[], onAdviceShown=null, layoutOverride=null }) {
+export function ScratchCardView({ card, onDone, nailState, nailImplant=null, grattaMania, equippedGrattatore, onCellScratch, onNailDamage=null, onItemFound=null, showFirstWarning, ambidestri=false, onCardActivate=null, lastWonPrize=0, extraTiles=[], onExtraTileUsed=null, relicEffects=[], onAdviceShown=null, layoutOverride=null, fit=false }) {
   // null, non l'id della carta montata: la vista si monta a ogni grattino, e con
   // l'id già impostato l'effetto di preparazione qui sotto non partiva mai
   // (Malocchio, Chiave d'Ottone e maledizione del Maledetto non si attivavano).
@@ -540,6 +541,11 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   // Ogni biglietto ha la SUA zona grattabile, misurata sul pannello scuro
   // dell'arte (ticketLayout.js): niente più gabbia unica per tutti.
   const playLayout = layout.play;
+  // Modalità tavolo (fit): gli esiti che compaiono durante la grattata vengono
+  // disegnati come cartellino sopra il fondo del biglietto, non sotto: il
+  // biglietto non cambia misura e non si deve mai scorrere.
+  const [overlayHost, setOverlayHost] = useState(null);
+  const toOverlay = (node) => (fit && overlayHost && node) ? createPortal(node, overlayHost) : node;
   // Griglia che RIEMPIE il pannello scuro dell'arte: righe e colonne in frazioni
   // uguali, le celle si stirano per occuparlo tutto. Niente fasce vuote, e ogni
   // biglietto detta la forma delle sue celle. Solo le griglie minuscole (1 cella)
@@ -682,6 +688,13 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       background: hasTicket ? "transparent" : `linear-gradient(180deg, ${panelBorder}08 0%, #05050b 18%)`,
       boxShadow: hasTicket ? "none" : `0 0 28px ${panelBorder}33, inset 0 0 32px ${panelBorder}0a, 4px 4px 0 #000`,
       padding: hasTicket ? "0" : undefined,
+      // fit = schermata di grattata desktop: il pannello riempie la colonna
+      // centrale in altezza e il biglietto prende lo spazio che resta, così
+      // niente scorrimento (docs/STATUS.md D-01).
+      ...(fit && hasTicket ? {
+        maxWidth: "none", width: "100%", height: "100%", margin: 0,
+        display: "flex", flexDirection: "column", overflow: "hidden",
+      } : {}),
       animation: winFound && !hasTicket ? "winFlash 1.5s ease-out" : "screenIn 0.25s ease-out",
       transition: "border-color 0.3s, box-shadow 0.3s",
     }}>
@@ -699,13 +712,23 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
 
       {/* ═══ BIGLIETTO AI — faccia 4:3 con header + griglia in overlay ═══ */}
       {hasTicket && (
+        <div style={fit
+          ? { flex: "1 1 0", minHeight: 0, containerType: "size", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "8px", position: "relative" }
+          : { display: "contents" }}>
+        {fit && (
+          <div ref={setOverlayHost} style={{
+            position: "absolute", left: "50%", bottom: "4%", transform: "translateX(-50%)",
+            width: "min(92%, 640px)", zIndex: 30, display: "flex", flexDirection: "column", gap: "6px",
+          }} />
+        )}
         <div data-ticket-face={card.id} style={{
           // Larghezza legata all'altezza disponibile: il biglietto resta 4:3
           // e non si deforma quando lo schermo è basso.
-          position: "relative", width: "min(100%, calc(66vh * 4 / 3))",
+          position: "relative",
+          width: fit ? "min(100cqw, calc(100cqh * 4 / 3))" : "min(100%, calc(66vh * 4 / 3))",
           aspectRatio: "4 / 3",
           isolation: "isolate",
-          margin: "0 auto 8px",
+          margin: fit ? "0 auto" : "0 auto 8px",
           backgroundImage: `url(${ticketUrl})`,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
@@ -727,12 +750,13 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             {playContent}
           </div>
         </div>
+        </div>
       )}
 
       {/* ═══ COME SI VINCE — il retro del biglietto, in breve ═══ */}
       {hasTicket && guide.how && !isMinigame && (
         <div style={{
-          width:"min(100%, calc(66vh * 4 / 3))", margin:"0 auto 10px", boxSizing:"border-box",
+          width: fit ? "min(100%, 900px)" : "min(100%, calc(66vh * 4 / 3))", margin:"0 auto 8px", boxSizing:"border-box", flexShrink: 0,
           display:"grid", gridTemplateColumns:"auto minmax(0,1fr)", gap:"4px 12px", alignItems:"baseline",
           padding:"8px 12px", textAlign:"left",
           background:"#fff3c4", color:"#153f42", border:"2px solid #ead56b",
@@ -1155,10 +1179,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
         </div>
       </div>
 
-      {revealMsg && (
+      {toOverlay(revealMsg && (
         <div style={{color:C.cyan, fontSize:"12px", textAlign:"center", margin:"4px 0", fontWeight:"bold",
           animation:ANIM.pulseOnce}}>{revealMsg}</div>
-      )}
+      ))}
 
       {/* Consiglio unghia sanguinante — MODAL centrato che blocca interazione */}
       {!finished && !winFound && !nailAdviceDismissed && !showFirstWarning &&
@@ -1225,7 +1249,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       </>}
 
       {/* WIN FOUND - CLAIM BUTTON — Vintage */}
-      {winFound && !finished && (() => {
+      {toOverlay(winFound && !finished && (() => {
         // Prima guardava solo "marcia": una vincita scontata per unghia
         // sanguinante (-50%) veniva mostrata come una vincita pulita, senza
         // il badge "VINCITA SPORCA" né lo strikethrough del prezzo pieno.
@@ -1312,7 +1336,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             </div>
           </div>
         );
-      })()}
+      })())}
 
       {/* 🩸 Promemoria persistente unghia danneggiata — resta visibile anche dopo
           la prima grattata, proprio quando compaiono i bottoni di decisione
@@ -1381,7 +1405,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       )}
 
       {/* QUASI-VINCITA */}
-      {nearWin && !winFound && !finished && !showNoWin && (
+      {toOverlay(nearWin && !winFound && !finished && !showNoWin && (
         <div style={{
           marginTop:"8px", padding:"8px 12px", borderRadius:"0",
           border:`1px solid ${C.gold}88`, background:"#1a1200",
@@ -1393,10 +1417,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             ✨ QUASI VINCITA! Manca solo 1 simbolo! ✨
           </span>
         </div>
-      )}
+      ))}
 
       {/* NO WIN — Vintage */}
-      {showNoWin && !finished && (
+      {toOverlay(showNoWin && !finished && (
         <div style={{
           position: "relative",
           marginTop: "6px", padding: "10px 14px",
@@ -1425,10 +1449,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             OK →
           </Btn>
         </div>
-      )}
+      ))}
 
       {/* FINISHED RESULT — Vintage hero */}
-      {finished && (() => {
+      {toOverlay(finished && (() => {
         const didWin = winFound && !cancelled;
         const resultCol = didWin ? C.green : C.red;
         const label = didWin ? `HAI VINTO €${winPrize}!`
@@ -1449,7 +1473,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             </div>
           </div>
         );
-      })()}
+      })())}
     </div>
   );
 }
