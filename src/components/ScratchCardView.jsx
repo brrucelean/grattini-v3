@@ -682,7 +682,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       background: hasTicket ? "transparent" : `linear-gradient(180deg, ${panelBorder}08 0%, #05050b 18%)`,
       boxShadow: hasTicket ? "none" : `0 0 28px ${panelBorder}33, inset 0 0 32px ${panelBorder}0a, 4px 4px 0 #000`,
       padding: hasTicket ? "0" : undefined,
-      animation: winFound ? "winFlash 1.5s ease-out" : "screenIn 0.25s ease-out",
+      animation: winFound && !hasTicket ? "winFlash 1.5s ease-out" : "screenIn 0.25s ease-out",
       transition: "border-color 0.3s, box-shadow 0.3s",
     }}>
       {/* Respiro neon dell'insegna — definito qui così vale anche fuori dal gioco. */}
@@ -692,6 +692,8 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           45%      { filter: brightness(1.16); }
           52%      { filter: brightness(0.97); }
         }
+        @keyframes printWin { 0% { filter: brightness(1.35); } 50% { filter: none; } }
+        @media (prefers-reduced-motion: reduce) { @keyframes printWin { from {} to {} } }
       `}</style>
       {!hasTicket && cornerBrackets(panelBorder, 12, 6, true)}
 
@@ -707,7 +709,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           backgroundImage: `url(${ticketUrl})`,
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
-          filter: winFound ? `drop-shadow(0 0 18px ${C.green}66)` : "none",
+          filter: "none",
           transition: "filter 0.3s",
         }}>
           {ticketHeaderOverlay}
@@ -717,9 +719,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             position: "absolute", inset: inset(playLayout), zIndex: 2,
             containerType: "size",
             display: "flex", alignItems: "center", justifyContent: "center",
-            border: `1px solid ${winFound ? C.green : accent}55`,
-            boxShadow: `0 0 12px ${winFound ? C.green : accent}44, inset 0 0 22px ${winFound ? C.green : accent}22`,
-            animation: "ticketNeon 3.2s ease-in-out infinite",
+            // Stampati: il pannello scuro è già nell'arte, niente alone al neon.
+            border: hasV3Ticket ? "none" : `1px solid ${winFound ? C.green : accent}55`,
+            boxShadow: hasV3Ticket ? "none" : `0 0 12px ${winFound ? C.green : accent}44, inset 0 0 22px ${winFound ? C.green : accent}22`,
+            animation: hasV3Ticket ? "none" : "ticketNeon 3.2s ease-in-out infinite",
           }}>
             {playContent}
           </div>

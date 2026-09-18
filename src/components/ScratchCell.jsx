@@ -234,12 +234,16 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
       outlineOffset: "-3px",
       borderRadius: printSkin ? "2px" : "0", overflow:"hidden",
       background: cell.scratched ? bg : "#111",
-      boxShadow: winAnim
+      // Biglietto stampato: la vincita è la casella gialla + lampeggio netto
+      // (printWin, due scatti). Niente aloni, anelli o coriandoli.
+      boxShadow: winAnim && printSkin
+        ? `inset 0 0 0 2px ${PRINT.winEdge}`
+        : winAnim
         ? `0 0 0 3px ${C.green}ee, 0 0 24px ${C.green}aa, 0 0 48px ${C.green}55, 3px 3px 0 #000`
         : cell.scratched && isBloody
           ? "inset 0 0 14px #ff000088, 0 0 10px #ff000055, 3px 3px 0 #000"
           : printSkin ? "none" : "3px 3px 0 #000000",
-      animation: winAnim ? "winFlash 0.9s ease-out forwards" : "none",
+      animation: winAnim ? (printSkin ? "printWin 0.5s steps(1) 3" : "winFlash 0.9s ease-out forwards") : "none",
       transition: `box-shadow ${T.instant}`,
     }}>
       {/* Sette e Mezzo: la carta vera (indici negli angoli, semi, figure) */}
@@ -336,7 +340,7 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
     </div>
 
     {/* ── CORIANDOLI: burst dal centro della cella vincente ── */}
-    {burst && (
+    {burst && !printSkin && (
       <div aria-hidden style={{position:"absolute", inset:0, pointerEvents:"none", zIndex:12}}>
         {/* Onda d'urto */}
         <span style={{
