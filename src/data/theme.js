@@ -1,23 +1,23 @@
-// ─── THEME & COLORS — CGA ARCADE / Pixel-art Dark ────────────
+// ─── THEME V3 — TABACCHI TERMINALE / STAMPA FUORI REGISTRO ───
 export const C = {
-  bg:      "#050508",   // void nero-blu — display CRT spento
-  card:    "#0a0a16",   // pannelli blu-abisso
-  cardHi:  "#141428",   // panel hover / selezionato
-  text:    "#dddddd",   // quasi-bianco, alta leggibilità su nero
-  bright:  "#ffffff",   // bianco puro
-  dim:     "#556677",   // grigio-azzurrato per bordi secondari
-  green:   "#00ff44",   // CGA green pieno — terminale verde
-  red:     "#ff2222",   // rosso CGA intenso — pericolo/sangue
-  gold:    "#ffdd00",   // oro caldo saturo — bonus/money
-  cyan:    "#00eeff",   // cyan CGA puro — UI/link
+  bg:      "#080a0b",
+  card:    "#11191a",
+  cardHi:  "#1b2928",
+  text:    "#f6eed8",
+  bright:  "#fffaf0",
+  dim:     "#84938e",
+  green:   "#55d66b",
+  red:     "#e5483d",
+  gold:    "#f2cf44",
+  cyan:    "#40c9c0",
   // Era #ff00ff (magenta CGA puro, tinta 300° = viola pieno): stonava con la
   // dominante ciano/oro della UI ed era la macchia viola dell'HUD. Spostato a
   // 340°, cioè rosa-rosso: stesso ruolo semantico (effetti speciali, reliquie,
   // zaino, scorciatoie) ma fuori dalla banda dei viola.
-  magenta: "#ff2e88",   // rosa acceso — effetti speciali
-  orange:  "#ff6600",   // arancio saturo — warning/elite
-  blue:    "#4488ff",   // blu elettrico — neutro positivo
-  pink:    "#ff44bb",   // rosa saturo — Kawaii / speciale
+  magenta: "#d85a92",
+  orange:  "#e57936",
+  blue:    "#4f84d8",
+  pink:    "#e87eb8",
 
   // ─── GERARCHIA TONALE ──────────────────────────────────────
   // La palette CGA sopra è tutta a piena saturazione: se ogni elemento urla,
@@ -59,8 +59,8 @@ export const TONE = {
 // FONT_TITLE → titoli e numeri-chiave. Grottesco condensato di sistema:
 //   nessun webfont da scaricare, ma un contrasto di voce netto rispetto al
 //   monospace (lettere strette + peso alto = insegna arcade, non listato).
-export const FONT = "'Courier New', Courier, monospace";
-export const FONT_TITLE = "'Haettenschweiler', 'Arial Narrow', 'Helvetica Neue Condensed', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+export const FONT = "'Tiny5', 'Courier New', monospace";
+export const FONT_TITLE = "'Tiny5', 'Arial Narrow', monospace";
 
 // ─── SCALA TIPOGRAFICA — 7 passi, minimo assoluto 10px ────────────────
 // Elimina i micro-testi 7-9px: più respiro, meno rumore.
