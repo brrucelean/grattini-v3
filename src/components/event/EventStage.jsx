@@ -4,6 +4,7 @@ import { normalizePortrait } from "../../utils/nail.js";
 import { hasAsset } from "../../assets/registry.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
+import { TABLE_BG } from "../scratch/ScratchTable.jsx";
 
 // ─── IL DIALOGO — evento / NPC su desktop ────────────────────────
 // Stesso linguaggio della soglia (node/NodeThreshold.jsx): fondo a righe del
@@ -13,19 +14,21 @@ import { Tooltip } from "../Tooltip.jsx";
 // Solo presentazione: testi, scelte, condizioni e callback arrivano da
 // EventView invariati.
 
-const GOLD = "#c9a24a", INK = "#e8dcc0", MUTED = "#8a7a5a";
-const RED = "#c0433a", EDGE = "#3a3026";
-const BLACK = "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px";
-const TABLE = "repeating-linear-gradient(0deg, #080b0b 0 12px, #0d1211 12px 16px)";
-const frame = (edge = GOLD) => `inset 0 0 0 2px #050304, inset 0 0 0 3px ${edge}, inset 0 0 0 5px #050304, 5px 5px 0 #050304`;
+// Chiaro come il tavolo della grattata (carta crema, inchiostro scuro, bancone
+// di legno): scura resta solo la lotta.
+const GOLD = "#8a5a12", INK = "#153f42", MUTED = "#5d6f68", CREAM = "#fff3c4", PAPER2 = "#fbeebc";
+const RED = "#a3161d", EDGE = "#d9c27a", SHADOW = "#3a1f0f";
+const BLACK = CREAM;
+const TABLE = TABLE_BG;
+const frame = (edge = INK) => `inset 0 0 0 2px ${EDGE}, inset 0 0 0 4px ${edge}, 5px 5px 0 ${SHADOW}`;
 
 // Colore del cartellino tipo: niente neon, stessa tavolozza della soglia.
 function tagColor(cat) {
   if (cat.danger >= 2) return RED;
-  if (cat.label === "EVENTO") return "#b0508a";
-  if (cat.danger === 1) return "#c08a3a";
+  if (cat.label === "EVENTO") return "#9a3a78";
+  if (cat.danger === 1) return "#b0661a";
   if (cat.label === "OGGETTO") return MUTED;
-  return GOLD;
+  return INK;
 }
 
 // Chip a destra: il costo in oro, i badge rischiosi in rosso, l'uscita spenta.
@@ -77,7 +80,7 @@ export function EventStage({
     <div ref={rootRef} style={{
       flex: "1 1 0", minWidth: 0, width: "100%", margin: "10px 0",
       height: height ? `${height}px` : "auto", boxSizing: "border-box",
-      background: TABLE, boxShadow: "inset 0 0 0 1px #050304",
+      background: TABLE, boxShadow: "none",
       overflowY: "auto", padding: compact ? "14px 20px" : "20px",
       justifyContent: "center",
       display: "flex", flexDirection: "column", alignItems: "center",
@@ -93,13 +96,13 @@ export function EventStage({
         <div style={{ display: "flex", flexDirection: compact ? "row" : "column", alignItems: "center", gap: compact ? "18px" : "12px",
           alignSelf: compact ? "stretch" : "center", textAlign: compact ? "left" : "center" }}>
         {/* Ritratto medio: padding perché il filo oro resti visibile su tutti i lati */}
-        <div style={{ width: pic, height: pic, padding: "4px", boxSizing: "border-box", background: "#0a0806",
-          boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 #050304`, flexShrink: 0,
+        <div style={{ width: pic, height: pic, padding: "4px", boxSizing: "border-box", background: "#1a1410",
+          boxShadow: `inset 0 0 0 2px ${INK}, 4px 4px 0 ${SHADOW}`, flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           {spriteId ? (
             <Asset id={spriteId} size={pic - 8} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : bigArt ? (
-            <pre style={{ margin: 0, color: GOLD, fontSize: "11px", lineHeight: 1.2, fontFamily: FONT, textAlign: "left" }}>
+            <pre style={{ margin: 0, color: "#e9c46a", fontSize: "11px", lineHeight: 1.2, fontFamily: FONT, textAlign: "left" }}>
               {normalizePortrait(bigArt).map((line, i) => {
                 const t = blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line;
                 return <span key={i}>{t}{"\n"}</span>;
@@ -113,30 +116,30 @@ export function EventStage({
         <div style={{ display: "flex", flexDirection: "column", alignItems: compact ? "flex-start" : "center", gap: "10px", minWidth: 0 }}>
         {/* Tipo + pericolo */}
         <div style={{ display: "flex", gap: "8px", justifyContent: compact ? "flex-start" : "center", alignItems: "center" }}>
-          <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: "#0b090b", background: tag }}>{cat.label}</span>
+          <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: CREAM, background: tag }}>{cat.label}</span>
           {cat.danger > 0 && (
             <span aria-label={`Pericolo ${cat.danger} su 3`} style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 6px", boxShadow: `inset 0 0 0 1px ${EDGE}` }}>
               <span style={{ fontSize: "10px", letterSpacing: "2px", color: MUTED, marginRight: "3px" }}>PERICOLO</span>
               {[1, 2, 3].map(i => (
-                <span key={i} style={{ width: "8px", height: "8px", background: i <= cat.danger ? RED : "#241e1a" }} />
+                <span key={i} style={{ width: "8px", height: "8px", background: i <= cat.danger ? RED : EDGE }} />
               ))}
             </span>
           )}
         </div>
 
-        <h2 style={{ margin: 0, fontSize: "30px", fontWeight: "normal", color: GOLD, letterSpacing: "1px", lineHeight: 1.1 }}>{ev.title}</h2>
+        <h2 style={{ margin: 0, fontSize: "30px", fontWeight: "normal", color: INK, letterSpacing: "1px", lineHeight: 1.1 }}>{ev.title}</h2>
         </div>
         </div>
 
         {/* Battuta: clic per saltare la scrittura */}
         <div onClick={onSkip} style={{
-          width: "100%", boxSizing: "border-box", padding: "12px 16px", background: "#0b090b",
+          width: "100%", boxSizing: "border-box", padding: "12px 16px", background: PAPER2,
           boxShadow: `inset 0 0 0 1px ${EDGE}`, cursor: typingDone ? "default" : "pointer",
           position: "relative", minHeight: compact ? "0" : "76px",
         }}>
           <p style={{ margin: "0 auto", maxWidth: "52ch", fontSize: "15px", lineHeight: 1.6, color: INK }}>
             {typedText}
-            {!typingDone && <span style={{ color: GOLD, animation: "evStageCursor 0.6s step-start infinite", marginLeft: "1px" }}>▌</span>}
+            {!typingDone && <span style={{ color: INK, animation: "evStageCursor 0.6s step-start infinite", marginLeft: "1px" }}>▌</span>}
           </p>
           {!typingDone && (
             <span style={{ position: "absolute", right: "8px", bottom: "4px", fontSize: "10px", letterSpacing: "1px", color: MUTED }}>clicca per saltare →</span>
@@ -150,7 +153,7 @@ export function EventStage({
             {choices.map((ch, i) => {
               const off = ch.isDisabled;
               const on = !off && hover === i;
-              const chipCol = off ? "#4a4032" : chipColor(ch.badge, !!ch.cost);
+              const chipCol = off ? "#b8a878" : chipColor(ch.badge, !!ch.cost);
               const act = () => { if (!off) onChoice(ch.action); };
               return (
                 <Tooltip key={i} text={ch.tooltip || (off && ch.disabledNote ? `⛔ ${ch.disabledNote}` : "")}>
@@ -163,24 +166,24 @@ export function EventStage({
                     style={{
                       display: "flex", alignItems: "center", gap: "12px", height: compact ? "100%" : undefined, minHeight: compact ? "48px" : "46px", padding: compact ? "4px 10px 4px 5px" : "6px 10px 6px 6px",
                       boxSizing: "border-box", textAlign: "left", userSelect: "none", outline: "none",
-                      background: on ? "#1d1810" : off ? "#0a0809" : "#0b090b",
-                      boxShadow: `inset 0 0 0 ${on ? 2 : 1}px ${on ? GOLD : off ? "#241e1a" : EDGE}${off ? "" : ", 3px 3px 0 #050304"}`,
+                      background: on ? "#fff9dc" : off ? "#f3e6b4" : PAPER2,
+                      boxShadow: `inset 0 0 0 ${on ? 2 : 1}px ${on ? INK : EDGE}${off ? "" : `, 3px 3px 0 ${EDGE}`}`,
                       cursor: off ? "not-allowed" : "pointer",
                     }}>
                     <span style={{
                       flexShrink: 0, width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "14px", color: off ? "#4a4032" : on ? "#0b090b" : GOLD, background: on ? GOLD : "#17130d",
-                      boxShadow: on ? "none" : `inset 0 0 0 1px ${off ? "#241e1a" : GOLD}`,
+                      fontSize: "14px", color: off ? "#b8a878" : on ? CREAM : INK, background: on ? INK : CREAM,
+                      boxShadow: on ? "none" : `inset 0 0 0 1px ${off ? EDGE : INK}`,
                     }}>{i + 1}</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: "14px", lineHeight: 1.4, color: off ? "#6a5e48" : INK }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: "14px", lineHeight: 1.4, color: off ? "#9a8a60" : INK }}>
                       {ch.label}
                       {off && ch.disabledNote && (
-                        <span style={{ display: "block", fontSize: "12px", marginTop: "3px", color: "#c9786a" }}>⛔ {ch.disabledNote}</span>
+                        <span style={{ display: "block", fontSize: "12px", marginTop: "3px", color: RED }}>⛔ {ch.disabledNote}</span>
                       )}
                     </span>
                     <span style={{
                       flexShrink: 0, minWidth: "48px", textAlign: "center", padding: "3px 8px", fontSize: "11px", letterSpacing: "1px",
-                      whiteSpace: "nowrap", color: chipCol, background: "#0b090b", boxShadow: `inset 0 0 0 1px ${chipCol}`,
+                      whiteSpace: "nowrap", color: chipCol, background: CREAM, boxShadow: `inset 0 0 0 1px ${chipCol}`,
                     }}>{ch.cost || ch.badge}</span>
                   </div>
                 </Tooltip>

@@ -4,16 +4,16 @@ import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
 
 // ─── LOCANDA (desktop) — insegna + listino delle stanze ──────────
-// Stesso linguaggio della soglia: pannelli neri a dithering con filo oro,
-// niente neon, glow o luccichii. Sul fondo resta il dipinto della locanda
+// Stesso linguaggio della soglia: schermata chiara, carta color crema con
+// inchiostro scuro (scura resta solo la lotta), niente neon, glow o luccichii. Sul fondo resta il dipinto della locanda
 // (scene-locanda, messo da scratchlite): richiesto dall'utente. In alto
 // l'insegna (oste, nome, frase, come stanno le tue unghie), sotto il listino:
 // cinque stanze affiancate, ognuna dice cosa cura A TE adesso, cosa rischi e
 // quanto costa. Stesse stanze, prezzi e callback della versione mobile.
 
-const GOLD = "#c9a24a", INK = "#e8dcc0", MUTED = "#8a7a5a", RED = "#e07a6a", GREEN = "#7fcf98", ROSE = "#d68ab4";
-const BLACK = "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px";
-const frame = (edge = GOLD) => `inset 0 0 0 2px #050304, inset 0 0 0 3px ${edge}, inset 0 0 0 5px #050304, 5px 5px 0 #050304`;
+const INK = "#153f42", MUTED = "#5d6f68", RED = "#a3161d", GREEN = "#2f7a4a", ROSE = "#b0407a", BRASS = "#b8862a";
+const CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#1a0c04";
+const frame = (edge = INK) => `inset 0 0 0 2px ${EDGE}, inset 0 0 0 4px ${edge}, 5px 5px 0 ${SHADOW}`;
 
 // Cosa fa ciascuna stanza, in parole semplici (le regole sono in useNodeHandlers.handleRest).
 const ROOM_COPY = {
@@ -39,21 +39,21 @@ function RoomCard({ room, player, onRest }) {
   const gap = room.cost - player.money;
   const canAfford = room.isFloor || gap <= 0;
   const changes = roomPreview(room, player.nails || []);
-  const edge = room.kawaii ? ROSE : room.name === "Suite" ? GOLD : "#3a3026";
+  const edge = room.kawaii ? ROSE : room.name === "Suite" ? BRASS : EDGE;
   const label = !canAfford ? `TI MANCANO €${fmtMoney(gap)}` : room.cost > 0 ? `DORMI · €${room.cost}` : "DORMI · GRATIS";
 
   return (
     <article aria-label={room.name} style={{
-      background: BLACK, boxShadow: frame(edge), padding: "14px 14px 16px", minWidth: 0,
+      background: CREAM, boxShadow: frame(edge), padding: "14px 14px 16px", minWidth: 0,
       display: "grid", gridTemplateRows: "auto auto auto 1fr auto auto", gap: "8px", textAlign: "center",
       opacity: canAfford ? 1 : 0.62,
     }}>
       {/* la stanza: sprite su un fondo incassato */}
-      <div style={{ height: 100, background: "#0a0806", boxShadow: "inset 3px 3px 0 #050304, inset -1px -1px 0 #2a241c",
+      <div style={{ height: 100, background: "#f3e2a2", boxShadow: `inset 3px 3px 0 ${EDGE}, inset -1px -1px 0 #fffbe6`,
         display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         <Asset id={room.img} emoji={room.emoji} size={88} style={{ width: 88, height: 88, objectFit: "contain" }} />
       </div>
-      <span style={{ fontSize: "17px", color: room.kawaii ? ROSE : GOLD, letterSpacing: "1px", lineHeight: 1.1 }}>{room.name}</span>
+      <span style={{ fontSize: "17px", color: room.kawaii ? ROSE : INK, fontWeight: "bold", letterSpacing: "1px", lineHeight: 1.1 }}>{room.name}</span>
       <span style={{ fontSize: "14px", color: INK }}>{copy.effect}</span>
       <span style={{ fontSize: "12px", color: MUTED, lineHeight: 1.45 }}>{copy.detail}</span>
       {/* riga rischio: sempre presente, così i bottoni restano allineati */}
@@ -67,8 +67,8 @@ function RoomCard({ room, player, onRest }) {
         <button type="button" onClick={canAfford ? () => onRest(room) : undefined} disabled={!canAfford} style={{
           height: "40px", fontFamily: FONT, fontSize: "14px", letterSpacing: "2px", border: "none",
           cursor: canAfford ? "pointer" : "default",
-          background: canAfford ? "#1d1810" : "#141013", color: canAfford ? GOLD : RED,
-          boxShadow: canAfford ? `inset 0 0 0 2px ${GOLD}, 3px 3px 0 #050304` : `inset 0 0 0 1px ${RED}66`,
+          background: canAfford ? INK : "#f3e2a2", color: canAfford ? CREAM : RED,
+          boxShadow: canAfford ? `3px 3px 0 ${SHADOW}` : `inset 0 0 0 1px ${RED}`,
         }}>{label}</button>
       </div>
     </article>
@@ -90,24 +90,24 @@ export function LocandaDesk({ rooms, player, onRest, onLeave }) {
     }}>
       {/* ══ L'insegna ══ */}
       <header style={{
-        width: "min(100%, 640px)", boxSizing: "border-box", background: BLACK, boxShadow: frame("#4f9a6a"),
+        width: "min(100%, 640px)", boxSizing: "border-box", background: CREAM, boxShadow: frame(GREEN),
         padding: "18px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center",
       }}>
-        <div style={{ width: 112, height: 112, padding: "4px", boxSizing: "border-box", background: "#0a0806",
-          boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 #050304`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ width: 112, height: 112, padding: "4px", boxSizing: "border-box", background: "#1a1410",
+          boxShadow: `inset 0 0 0 2px ${INK}, 4px 4px 0 ${SHADOW}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           <Asset id="spr-locanda" emoji="🏨" size={104} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
-        <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: "#0b090b", background: "#4f9a6a" }}>SICURO</span>
-        <span style={{ fontSize: "30px", color: GOLD, letterSpacing: "1px", lineHeight: 1 }}>Locanda</span>
+        <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: CREAM, background: GREEN }}>SICURO</span>
+        <span style={{ fontSize: "30px", color: INK, letterSpacing: "1px", lineHeight: 1 }}>Locanda</span>
         <span style={{ fontSize: "14px", lineHeight: 1.5, fontStyle: "italic" }}>«Riposati, viaggiatore. Le tue unghie ne hanno bisogno.»</span>
         <span style={{ fontSize: "12px", letterSpacing: "1px", color: MUTED }}>
-          Hai <b style={{ color: GOLD }}>€{fmtMoney(player.money)}</b> · unghie: <span style={{ color: damaged + dead ? RED : GREEN }}>{status}</span>
+          Hai <b>€{fmtMoney(player.money)}</b> · unghie: <span style={{ color: damaged + dead ? RED : GREEN }}>{status}</span>
         </span>
       </header>
 
       {/* ══ Il listino ══ */}
       <div style={{ width: "min(100%, 1180px)", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <span style={{ fontSize: "12px", letterSpacing: "3px", color: MUTED, textAlign: "center" }}>LISTINO DELLE STANZE</span>
+        <span style={{ fontSize: "12px", letterSpacing: "3px", color: CREAM, background: "#1a1410cc", padding: "3px 10px", alignSelf: "center", textAlign: "center" }}>LISTINO DELLE STANZE</span>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${rooms.length}, minmax(0,1fr))`, gap: "12px" }}>
           {rooms.map(room => <RoomCard key={room.name} room={room} player={player} onRest={onRest} />)}
         </div>
@@ -115,7 +115,7 @@ export function LocandaDesk({ rooms, player, onRest, onLeave }) {
 
       <button type="button" onClick={onLeave} style={{
         width: "min(100%, 240px)", height: "42px", flexShrink: 0, cursor: "pointer", fontFamily: FONT, fontSize: "15px", letterSpacing: "2px",
-        background: "transparent", color: MUTED, border: "none", boxShadow: `inset 0 0 0 2px ${MUTED}`,
+        background: CREAM, color: INK, border: "none", boxShadow: `inset 0 0 0 2px ${INK}, 3px 3px 0 ${SHADOW}`,
       }}>VAI VIA →</button>
     </div>
   );

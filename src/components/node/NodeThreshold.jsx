@@ -7,21 +7,23 @@ import { hasAsset } from "../../assets/registry.js";
 import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
-import { ToolTray } from "../scratch/ScratchTable.jsx";
+import { ToolTray, TABLE_BG } from "../scratch/ScratchTable.jsx";
 import { nodeFamily } from "../map/mapTheme.js";
 
 // ─── LA SOGLIA — sosta prima di entrare in un nodo (desktop) ─────
+// Chiara (carta su legno) come la grattata: scura è solo la lotta.
 // Prima era un riquadro quasi vuoto con "NESSUN GRATTINO". Ora è una colonna
 // centrata: il luogo (ritratto medio, tipo, nome, cosa ti aspetta, soglia del
 // boss, ENTRA) e sotto, su tre colonne, quello che puoi fare prima: grattare i
 // biglietti in tasca, prendere un grattatore, usare un consumabile.
 // Stesse azioni e regole di prima; cambia solo la presentazione.
 
-const GOLD = "#c9a24a", INK = "#e8dcc0", MUTED = "#8a7a5a";
-const BLACK = "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px";
-// Stesso fondo della schermata del titolo: nero con righe orizzontali.
-const TABLE = "repeating-linear-gradient(0deg, #080b0b 0 12px, #0d1211 12px 16px)";
-const frame = (edge = GOLD) => `inset 0 0 0 2px #050304, inset 0 0 0 3px ${edge}, inset 0 0 0 5px #050304, 5px 5px 0 #050304`;
+// Schermata chiara, come il tavolo della grattata: carta color crema con
+// inchiostro scuro sul bancone di legno. Scura resta solo la lotta.
+const INK = "#153f42", MUTED = "#5d6f68", CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#3a1f0f";
+const BLACK = CREAM; // pannelli: carta
+const TABLE = TABLE_BG;
+const frame = (edge = INK) => `inset 0 0 0 2px ${EDGE}, inset 0 0 0 4px ${edge}, 5px 5px 0 ${SHADOW}`;
 
 const NODE_NAMES = {
   tabaccaio: "Tabaccaio", locanda: "Locanda", spacciatore: "Spacciatore", chirurgo: "Chirurgo",
@@ -33,14 +35,14 @@ const NODE_NAMES = {
 const FAMILY_TAG = {
   danger: { label: "PERICOLO", col: "#c0433a" }, safe: { label: "SICURO", col: "#4f9a6a" },
   neutral: { label: "NEUTRO", col: "#8a78c0" }, event: { label: "EVENTO", col: "#b0508a" },
-  secret: { label: "SEGRETO", col: "#9aa6b0" }, boss: { label: "BOSS", col: "#c0433a" }, start: { label: "INIZIO", col: MUTED },
+  secret: { label: "SEGRETO", col: "#6f7a84" }, boss: { label: "BOSS", col: "#c0433a" }, start: { label: "INIZIO", col: MUTED },
 };
 
 function Section({ title, right, children }) {
   return (
-    <section style={{ background: BLACK, boxShadow: frame("#3a3026"), padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
+    <section style={{ background: BLACK, boxShadow: frame(EDGE), padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <span style={{ fontSize: "12px", letterSpacing: "2px", color: GOLD }}>{title}</span>
+        <span style={{ fontSize: "12px", letterSpacing: "2px", color: INK, fontWeight: "bold" }}>{title}</span>
         {right && <span style={{ fontSize: "11px", color: MUTED }}>{right}</span>}
       </div>
       {children}
@@ -71,40 +73,40 @@ export function NodeThreshold({ node, player, preScratchCount, onPreScratch, onE
       {/* ══ Il luogo: ritratto medio, poi tutto centrato ══ */}
       <article aria-label={`Prossima tappa: ${name}`} style={{
         width: "min(100%, 640px)", boxSizing: "border-box", background: BLACK,
-        boxShadow: frame(isBoss || node.elite ? GOLD : tag.col), padding: "20px 24px",
+        boxShadow: frame(isBoss || node.elite ? "#b8862a" : tag.col), padding: "20px 24px",
         display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", textAlign: "center",
       }}>
         <span style={{ fontSize: "11px", letterSpacing: "3px", color: MUTED }}>PROSSIMA TAPPA</span>
         {/* padding: l'immagine resta dentro il filo oro, che così si vede su tutti i lati */}
-        <div style={{ width: 188, height: 188, padding: "4px", boxSizing: "border-box", background: "#0a0806",
-          boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 #050304`,
+        <div style={{ width: 188, height: 188, padding: "4px", boxSizing: "border-box", background: "#1a1410",
+          boxShadow: `inset 0 0 0 2px ${INK}, 4px 4px 0 ${SHADOW}`,
           display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
           {spriteId
             ? <Asset id={spriteId} size={180} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <span style={{ fontSize: "80px", lineHeight: 1 }}>{icon}</span>}
         </div>
         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-          <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: "#0b090b", background: tag.col }}>{tag.label}</span>
-          {node.elite && <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: "#0b090b", background: GOLD }}>★ ÉLITE</span>}
+          <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: CREAM, background: tag.col }}>{tag.label}</span>
+          {node.elite && <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: "#1a1410", background: "#e9c46a" }}>★ ÉLITE</span>}
         </div>
-        <span style={{ fontSize: "30px", color: GOLD, letterSpacing: "1px", lineHeight: 1 }}>{name}</span>
+        <span style={{ fontSize: "30px", color: INK, letterSpacing: "1px", lineHeight: 1 }}>{name}</span>
         <span style={{ fontSize: "14px", lineHeight: 1.5, color: INK, maxWidth: "48ch" }}>{desc}</span>
         {bossGate && (
-          <div style={{ padding: "10px 14px", background: "#0b090b", boxShadow: `inset 0 0 0 2px ${bossGate.canEnter ? "#4f9a6a" : "#c0433a"}`, fontSize: "13px", lineHeight: 1.5 }}>
-            <span style={{ color: bossGate.canEnter ? "#7fcf98" : "#e07a6a", letterSpacing: "2px" }}>{bossGate.canEnter ? "ACCESSO CONSENTITO" : "ACCESSO NEGATO"}</span>
-            <br />Chiede almeno <b style={{ color: GOLD }}>€{bossGate.minMoney}</b>, tu hai <b style={{ color: GOLD }}>€{fmtMoney(player.money)}</b>.
-            {!bossGate.canEnter && <><br /><span style={{ color: "#e0a060" }}>Se entri ora vieni rispedito all'inizio della mappa.</span></>}
+          <div style={{ padding: "10px 14px", background: "#fbeebc", boxShadow: `inset 0 0 0 2px ${bossGate.canEnter ? "#2f7a4a" : "#a3161d"}`, fontSize: "13px", lineHeight: 1.5 }}>
+            <span style={{ color: bossGate.canEnter ? "#2f7a4a" : "#a3161d", letterSpacing: "2px" }}>{bossGate.canEnter ? "ACCESSO CONSENTITO" : "ACCESSO NEGATO"}</span>
+            <br />Chiede almeno <b>€{bossGate.minMoney}</b>, tu hai <b>€{fmtMoney(player.money)}</b>.
+            {!bossGate.canEnter && <><br /><span style={{ color: "#a3161d" }}>Se entri ora vieni rispedito all'inizio della mappa.</span></>}
           </div>
         )}
         <button type="button" onClick={onEnter} style={{
           width: "min(100%, 320px)", height: "52px", marginTop: "4px", cursor: "pointer", fontFamily: FONT, fontSize: "20px", letterSpacing: "3px",
-          background: "#1d1810", color: GOLD, border: "none", boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 #050304`,
+          background: INK, color: CREAM, border: "none", boxShadow: `4px 4px 0 ${SHADOW}`,
         }}>ENTRA →</button>
       </article>
 
       {/* ══ Prima di entrare: tre colonne uguali ══ */}
       <div style={{ width: "min(100%, 1040px)", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <span style={{ fontSize: "12px", letterSpacing: "3px", color: MUTED, textAlign: "center" }}>PRIMA DI ENTRARE</span>
+        <span style={{ fontSize: "12px", letterSpacing: "3px", color: CREAM, textAlign: "center" }}>PRIMA DI ENTRARE</span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: "12px", alignItems: "start" }}>
         <Section title="GRATTINI IN TASCA" right={cards.length ? `ancora ${left}/3` : null}>
           {cards.length === 0 ? (
@@ -117,7 +119,7 @@ export function NodeThreshold({ node, player, preScratchCount, onPreScratch, onE
                   return (
                     <Tooltip key={i} text={`${c.name} — ${c.desc || ""}`}>
                       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                        <div style={{ position: "relative", aspectRatio: String(TICKET_ART_ASPECT), overflow: "hidden", boxShadow: `inset 0 0 0 1px ${GOLD}` }}>
+                        <div style={{ position: "relative", aspectRatio: String(TICKET_ART_ASPECT), overflow: "hidden", boxShadow: `inset 0 0 0 2px ${INK}` }}>
                           <Asset id={`ticket-${c.id}-v3`} emoji={c.emoji || "🎫"} size="100%" style={{
                             position: "absolute", maxWidth: "none",
                             width: `${10000 / crop.width}%`, height: `${10000 / crop.height}%`,
@@ -132,14 +134,14 @@ export function NodeThreshold({ node, player, preScratchCount, onPreScratch, onE
               </div>
               <button type="button" onClick={canScratch ? onPreScratch : undefined} disabled={!canScratch} style={{
                 height: "38px", fontFamily: FONT, fontSize: "13px", letterSpacing: "2px", cursor: canScratch ? "pointer" : "default",
-                background: canScratch ? GOLD : "#1a1614", color: canScratch ? "#0b090b" : MUTED, border: "none",
-                boxShadow: "3px 3px 0 #050304",
+                background: canScratch ? INK : "#efe0a8", color: canScratch ? CREAM : MUTED, border: "none",
+                boxShadow: canScratch ? `3px 3px 0 ${SHADOW}` : `inset 0 0 0 1px ${EDGE}`,
               }}>{canScratch ? `GRATTANE UNO` : "GIÀ GRATTATI 3"}</button>
             </>
           )}
         </Section>
 
-        <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} />
+        <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} tone="steel" />
 
         <Section title="CONSUMABILI" right={`${player.items.length}/${maxItems}`}>
           {player.items.length === 0 ? (
@@ -153,7 +155,7 @@ export function NodeThreshold({ node, player, preScratchCount, onPreScratch, onE
                   <Tooltip key={idx} text={it.desc}>
                     <button type="button" onClick={() => onUseItem(idx)} style={{
                       display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 10px", cursor: "pointer",
-                      fontFamily: FONT, fontSize: "12px", color: INK, background: "#0b090b", border: "none", boxShadow: `inset 0 0 0 1px ${GOLD}`,
+                      fontFamily: FONT, fontSize: "12px", color: INK, background: "#fbeebc", border: "none", boxShadow: `inset 0 0 0 2px ${INK}, 2px 2px 0 ${EDGE}`,
                     }}><Asset id={`item-${id}`} emoji={it.emoji} size={18} />{it.name}</button>
                   </Tooltip>
                 );
