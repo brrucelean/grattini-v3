@@ -8,13 +8,13 @@
 - Cluster intenzionali da 2–6 px; vietati pixel casuali e pillow shading.
 - Massimo tre livelli di luce per materiale.
 - Dithering soltanto manuale 2×2/4×4 su superfici grandi.
-- `image-rendering: pixelated`; scaling 1×/2×/3×/4×, mai frazionario.
+- `image-rendering: pixelated`; scaling 1×/2×/3×/4×, mai frazionario. Il layout attorno è adattivo (D-01).
 
 ## Dimensioni native
 
 | Famiglia | Dimensione |
 |---|---|
-| Ticket | 320×240 o 384×288, scelta unica dopo il pilota |
+| Ticket | 320×240 (decisione D-02 in `STATUS.md`) |
 | Scene | 320×180 |
 | Room | 160×112 o 192×128 |
 | Personaggio | 64×96 |

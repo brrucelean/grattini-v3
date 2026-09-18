@@ -44,26 +44,48 @@ Ultimo aggiornamento: 2026-09-18 · riferimento codice: `4235144`
 10. **Asset:** i file V3 nascono come sibling `*-v3.png`; il V2 resta come
     fallback finché la sostituzione non è verificata nel gioco.
 
-## 3. Decisione aperta che blocca tutto il resto
+## 3. Decisioni di layout
 
-### D-01 — Modello del viewport
+### D-01 — Modello del viewport · **deciso: B, layout adattivo** (2026-09-18)
 
-I documenti precedenti si contraddicevano:
+Scartata l'opzione A (stage fisso 640×360 con scala intera e letterbox):
+con molto testo italiano e gioco su telefono in verticale diventerebbe
+illeggibile.
 
-| Opzione | Descrizione | Chi la sosteneva |
-|---|---|---|
-| **A. Risoluzione fissa** | stage logico 640×360, scala intera ×1/×2/×3, letterbox | Visual System v1, Phase 0 |
-| **B. Layout adattivo** | griglia CSS/container query, pannelli che si riorganizzano, niente `transform: scale()` | 01-SHELL-HUD, 04-COMBAT |
+Regole:
 
-Stato del codice: **nessuna delle due**. Oggi ci sono `maxWidth` + `vw`,
-`overflowY: auto` e `transform: scale()` in sei componenti più `animations.js`.
+1. **Il layout si riorganizza, i pixel no.** Pannelli e zone si dispongono con
+   CSS grid e container query; sprite, ticket e icone si mostrano solo a scala
+   intera (`image-rendering: pixelated`).
+2. **Griglia a 8 px** per spaziature, bordi e dimensioni dei pannelli.
+3. **Vietato `transform: scale()`** su scene, pannelli e canvas grattabili.
+   Ammesso solo in animazioni brevi di feedback che non spostano la geometria.
+4. **Breakpoint della shell:**
 
-**Raccomandazione: B con griglia a 8 px.** Il gioco ha molto testo italiano e va
-giocato anche su telefono in verticale (390×844): un 640×360 fisso diventerebbe
-illeggibile. La disciplina pixel si ottiene così: sprite e ticket a scala intera
-dentro pannelli adattivi; il layout si riorganizza, i pixel non si deformano.
+   | Nome | Larghezza | Disposizione |
+   |---|---|---|
+   | compact | < 600 px | HUD compresso simbolo+valore, stage, rail inferiore; log in drawer |
+   | medium | 600–1023 px | HUD completo, stage, rail inferiore |
+   | wide | ≥ 1024 px | HUD completo, stage, rail laterale; log sempre visibile |
 
-Fino a questa decisione non si inizia la shell.
+5. **Niente scroll verticale della pagina** nelle schermate di gioco: se il
+   contenuto non entra, scrolla il pannello interno, non la scena.
+6. Vale per ogni schermata: 01-SHELL-HUD e 04-COMBAT la adottano già; il
+   vincolo 640×360 dei documenti in archivio non è più in vigore.
+
+### D-02 — Dimensione nativa dei ticket · **deciso: 320×240**
+
+Con il layout B il ticket deve entrare a ×1 nella colonna di un telefono
+(390 px − 2×16 px di margine = 358 px). 384×288 non entra; 320×240 sì.
+
+| Contesto | Scala | Dimensione a schermo |
+|---|---:|---:|
+| compact | ×1 | 320×240 |
+| medium / wide | ×2 | 640×480 |
+| schermi grandi, se entra per intero | ×3 | 960×720 |
+
+Le miniature derivano dallo stesso master. La bible passa da
+"320×240 o 384×288" a 320×240.
 
 ## 4. Stato delle schermate
 
@@ -72,7 +94,7 @@ Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 
 | # | Schermata | Stato | Note |
 |---|---|:---:|---|
-| 01 | Shell e HUD | ⬜ | **prossima**, dopo D-01. Causa del problema "pannello incollato" su tutte le schermate |
+| 01 | Shell e HUD | ⬜ | **prossima**: wireframe da approvare. Causa del problema "pannello incollato" su tutte le schermate |
 | 02 | Titolo | ✅ | `TitleScreen.jsx`, verificato desktop, 390×844, 375×667 |
 | 02 | Tutorial unghie (3 pagine) | ⬜ | ancora nella UI legacy |
 | 03 | Mappa | ⬜ | |
@@ -91,7 +113,7 @@ Dettaglio in [V3-ASSET-RECREATION-MANIFEST.md](V3-ASSET-RECREATION-MANIFEST.md).
 
 | Famiglia | Totale | V3 integrati | Conformi alla bible |
 |---|---:|---:|---:|
-| Ticket completi | 17 | 17 | 0 — sono 364×273 (la bible chiede 320×240 o 384×288) e ridotti da raster, non disegnati nativi |
+| Ticket completi | 17 | 17 | 0 — sono 364×273 (D-02 fissa 320×240) e ridotti da raster, non disegnati nativi |
 | Miniature ticket | 17 | 17 | 0 — derivate dai ticket sopra |
 | Stati unghia | 9 | 5 | da verificare |
 | Cursori dito | 9 | 5 | da verificare |
@@ -102,8 +124,8 @@ Dettaglio in [V3-ASSET-RECREATION-MANIFEST.md](V3-ASSET-RECREATION-MANIFEST.md).
 | Categorie combat | 3 | 0 | — |
 | Scene e room | 16 | 0 | — |
 
-**Da decidere con la D-01:** la dimensione nativa unica dei ticket. Senza,
-rifare i 17 ticket adesso significherebbe rifarli due volte.
+Dimensione nativa dei ticket fissata a 320×240 (D-02): i 17 ticket vanno
+ridisegnati a quella misura.
 
 ## 6. Definition of done
 
@@ -120,8 +142,8 @@ Una schermata è ✅ solo se:
 
 ## 7. Ordine di lavoro
 
-1. **D-01** viewport + dimensione nativa ticket.
-2. **COPY-001**: correzione di una riga di testo, indipendente dal redesign.
+1. ~~D-01 viewport + D-02 dimensione ticket~~ — fatto.
+2. ~~COPY-001~~ — fatto.
 3. **Shell e HUD** (01): una sola macchina scenica proprietaria del viewport.
 4. **Combat** (04), sulla nuova shell.
 5. **Ticket** (05): rifacimento nativo, pilota Fortuna Flash, poi batch da quattro.

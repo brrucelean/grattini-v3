@@ -10,8 +10,11 @@ Stato: confermato su V2 `78d27a3`.
   l'unghia, la vincita viene ridotta al 25%;
 - il 25% appartiene allo stato `Marcia` (`mult: 0.25`).
 
-Correzione proposta: aggiornare soltanto il copy dell'avviso nella V3. Nessuna
-modifica al bilanciamento. La correzione resterà separata dai commit visuali.
+Stato: **corretto**. Solo copy, nessuna modifica al bilanciamento:
+
+- `src/data/art.js` → `first_warning`: "se la fai sanguinare" → "se la fai marcire";
+- `src/components/ScratchCardView.jsx`: il modale "abbandona ora", che compare
+  solo con unghia marcia, diceva "unghia insanguinata" → ora "unghia marcia".
 
 ## TEST-001 — Check di bilanciamento non allineato ai target
 

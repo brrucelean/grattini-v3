@@ -532,7 +532,7 @@ export const NPC_CARMELO_COMMENTS = {
       {t:"Gratta piano, figliolo. Il vecchio ti guarda.\n\n", c:"#e0e0e0"},
       {t:"Ogni tre celle grattate", c:"#ffcc00"},
       {t:" l'unghia si consuma di un livello. Se la fai ", c:"#ccc"},
-      {t:"sanguinare", c:"#ff8800"},
+      {t:"marcire", c:"#ff8800"},
       {t:", sporcherai il grattino — e la vincita sarà ridotta al ", c:"#ccc"},
       {t:"25%", c:"#ff8800"},
       {t:". Se muore del tutto, il biglietto si ", c:"#ccc"},

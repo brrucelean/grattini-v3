@@ -1152,7 +1152,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
               color:C.text, fontSize:"12px", lineHeight:"1.7",
               marginBottom:"18px", textAlign:"center",
             }}>
-              L'unghia <span style={{color:C.orange, fontWeight:"bold"}}>insanguinata</span> sporca la schedina:<br/>
+              L'unghia <span style={{color:C.red, fontWeight:"bold"}}>marcia</span> sporca la schedina:<br/>
               vinci solo il <strong style={{color:C.red}}>25%</strong> del premio.<br/>
               <br/>
               Abbandona, curati con disinfettante o cambia unghia.<br/>
