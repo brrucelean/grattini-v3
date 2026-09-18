@@ -8,13 +8,22 @@ Direzione creativa:
 
 ## Stato
 
-Il progetto si trova in **Fase 0 — baseline e audit**. Non contiene ancora il
-nuovo presentation layer e non sostituisce Grattini V2.
+Il progetto si trova in **Fase 1 — Visual System e style lab**. Il prototipo
+pubblico consente di confrontare tre direzioni sullo stesso combat frame. Non
+sostituisce ancora Grattini V2 e non usa il suo controller di gameplay.
 
 - V2 funzionale di riferimento: <https://github.com/brrucelean/grattini-v2-redesign>
-- audit e decisioni: [`docs/`](docs/)
+- audit, visual system e decisioni: [`docs/`](docs/)
 - stack previsto: React 18 + Vite 5
 
-La Fase 1 (`GRATTINI VISUAL SYSTEM v1`) inizierà soltanto dopo il checkpoint e
-l'approvazione dell'audit di Fase 0.
+## Sviluppo
+
+```bash
+npm ci
+npm run dev
+npm run build
+```
+
+La migrazione funzionale e il combat pilot inizieranno soltanto dopo la scelta
+di una delle tre direzioni visuali.
 
