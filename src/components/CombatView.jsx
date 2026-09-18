@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { C, FONT } from "../data/theme.js";
+import { C, FONT, W } from "../data/theme.js";
 import {
-  CAT_EMOJI_MAP, CAT_BG,
+  COMBAT_CARD_H, CAT_EMOJI_MAP, CAT_BG,
   ENEMY_STATS, DEFAULT_ENEMY_STATS, EFFECT_DAMAGE,
 } from "../data/combat.js";
 import { roll, pick } from "../utils/random.js";
@@ -19,7 +19,6 @@ import { ANIM } from "../styles/animations.js";
 
 // Nomi categoria abbreviati — COMBATTIMENTO è troppo lungo per le card strette
 const CAT_SHORT = { COMBATTIMENTO: "BOTTA", DIFESA: "PARATA", DENARO: "PREMIO" };
-const CAT_MARK = { COMBATTIMENTO: "⚔", DIFESA: "◆", DENARO: "€" };
 
 // Sprite ASCII del nemico (schermo "mostro" sopra le barre — come da bozza)
 function enemySpriteKey(enemy) {
@@ -52,7 +51,13 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
     const ctx = canvas.getContext("2d");
     // Patina argentata opaca da gratta e vinci, coerente con i biglietti V3.
     // Il colore di categoria resta nella gabbia stampata, non nella lamina.
-    ctx.fillStyle = "#b9b8ad";
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grad.addColorStop(0,   "#858982");
+    grad.addColorStop(0.3, "#c8c8bd");
+    grad.addColorStop(0.55,"#a5a9a2");
+    grad.addColorStop(0.8, "#d4d1c4");
+    grad.addColorStop(1,   "#8b8e88");
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     // Noise leggerissimo — quasi invisibile
     ctx.fillStyle = "rgba(255,255,230,0.22)";
@@ -69,15 +74,12 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + canvas.height, canvas.height); ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // Marchio ripetuto da biglietto popolare: resta leggibile mentre la lamina
-    // viene consumata, senza svelare in anticipo l'effetto della carta.
-    ctx.globalAlpha = 0.62;
+    // Marchio centrale della categoria, grande e leggibile anche senza colore.
+    ctx.globalAlpha = 0.55;
     ctx.fillStyle = "#243331";
-    ctx.font = "bold 18px monospace";
+    ctx.font = "bold 15px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`${CAT_MARK[cell.category] || "✦"} ${CAT_SHORT[cell.category] || "GRATTA"}`, canvas.width / 2, 31);
-    ctx.font = "bold 12px monospace";
-    ctx.fillText("GRATTA  GRATTA  GRATTA", canvas.width / 2, canvas.height - 15);
+    ctx.fillText(CAT_SHORT[cell.category] || "GRATTA", canvas.width / 2, canvas.height - 12);
     ctx.globalAlpha = 1;
     // Bordo interno scuro
     ctx.strokeStyle = catColors[cell.category] || C.gold;
@@ -105,7 +107,7 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
     const ctx = canvas.getContext("2d");
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(x, y, 34, 0, Math.PI * 2);
+    ctx.arc(x, y, 46, 0, Math.PI * 2);
     ctx.fill();
     // Polverina d'oro a ogni passata
     ParticleSystem.spawn(clientX, clientY, 18, false);
@@ -149,12 +151,13 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
   return (
     <div style={{
       position:"relative", borderRadius:"0", overflow:"hidden",
-      border: disabled ? `3px solid #333` : `4px solid ${catColors[cell.category] || C.gold}`,
+      border: disabled ? `3px solid #333` : `3px solid ${catColors[cell.category] || C.gold}`,
       // Sfondo OPACO scuro — niente bleeding del contenuto
       background: disabled ? "#111" : CAT_BG[cell.category] || "#0a0a12",
-      // Misura fissa del ticket nel frame logico 640×360.
-      height:"69px", minHeight:0,
-      boxShadow: disabled ? "none" : `4px 4px 0 #000, inset 0 0 0 2px #f4df83`,
+      // La griglia usa righe 1fr: la carta riempie la cella disponibile invece
+      // di restare fissa a COMBAT_CARD_H lasciando mezzo schermo vuoto sotto.
+      height:"100%", minHeight:`${COMBAT_CARD_H}px`,
+      boxShadow: disabled ? "none" : `3px 3px 0 #000, inset 0 0 0 2px #f4df83`,
       cursor: disabled ? "default" : "crosshair",
       touchAction: "none",
     }} {...evts}>
@@ -165,7 +168,7 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
           Il blocco "disabled" è puramente visivo (overlay sotto) + il check
           in doScratch, non tocca il DOM del canvas. */}
       {!isRevealed && (
-        <canvas ref={canvasRef} width={288} height={138}
+        <canvas ref={canvasRef} width={220} height={160}
           style={{
             position:"absolute", inset:0, width:"100%", height:"100%",
             display:"block", cursor: disabled ? "default" : combatNailCursor, touchAction:"none",
@@ -181,30 +184,25 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
         display:"flex", flexDirection:"column",
         alignItems:"center", justifyContent:"center",
         pointerEvents:"none", zIndex:3,
-        gap:"3px",
+        gap:"4px",
       }}>
         {disabled ? (
           <div style={{fontSize:"24px", opacity:0.2, color:C.dim}}>✕</div>
         ) : isRevealed ? (
           <>
             {/* Carta rivelata: mostra l'EFFETTO specifico (emoji + nome) */}
-            <div style={{
-              minWidth:"32px", height:"28px", display:"grid", placeItems:"center",
-              fontSize:"22px", lineHeight:1, background:"#f5e8bd",
-              border:`2px solid ${catColors[cell.category] || C.gold}`,
-              boxShadow:"2px 2px 0 #000",
-            }}>
+            <div style={{ fontSize:"30px", lineHeight:1 }}>
               <Asset
                 id={!cell.emoji && cell.category ? `combat-${cell.category.toLowerCase()}` : null}
                 emoji={cell.emoji || CAT_EMOJI_MAP[cell.category] || "?"}
-                size={25}
+                size={34}
               />
             </div>
             <div style={{
-              fontSize:"11px", fontWeight:"bold", letterSpacing:"1px",
-              color: "#fff7da", background:catColors[cell.category] || C.gold,
-              textAlign:"center", padding:"3px 8px", lineHeight:1,
-              border:"2px solid #090909", boxShadow:"2px 2px 0 #000",
+              fontSize:"12px", fontWeight:"bold", letterSpacing:"0.5px",
+              color: catColors[cell.category] || C.text,
+              textShadow:`0 0 6px ${catColors[cell.category] || C.text}aa`,
+              textAlign:"center", padding:"0 6px", lineHeight:1.15,
             }}>
               {cell.name}
             </div>
@@ -212,15 +210,22 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
         ) : (
           <>
             {/* Icona stampata sull'oro — colore scuro, ombra incisa */}
-            <div style={{fontSize:"25px", lineHeight:.8, color:"#173c3b", fontWeight:900}}>
-              {CAT_MARK[cell.category] || "✦"}
+            <div style={{
+              fontSize:"44px", lineHeight:1,
+              filter:"drop-shadow(2px 2px 0px rgba(255,255,220,0.55))",
+              opacity:0.95,
+            }}>
+              <Asset
+                id={cell.category ? `combat-${cell.category.toLowerCase()}` : null}
+                emoji={CAT_EMOJI_MAP[cell.category] || "?"}
+                size={52}
+              />
             </div>
             {/* Label stampata — abbreviata per evitare overflow nelle card strette */}
             <div style={{
-              fontSize:"13px", fontWeight:"900", letterSpacing:"1px",
+              fontSize:"15px", fontWeight:"900", letterSpacing:"2px",
               color: "#173c3b",
-              background:"rgba(255,255,225,.62)", padding:"2px 7px",
-              border:"2px solid rgba(23,60,59,.55)",
+              textShadow:"1px 1px 0 rgba(255,255,220,0.65)",
               textTransform:"uppercase",
             }}>
               {CAT_SHORT[cell.category] || cell.category}
@@ -342,32 +347,32 @@ function TimingBar({ mode = "attack", speed = 1.5, onResult, perfectWiden = 0 })
     <div style={{
       position: "absolute", inset: 0, zIndex: 40,
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "14px",
-      background: "rgba(4,5,5,0.92)",
+      background: "rgba(0,0,0,0.72)", backdropFilter: "blur(2px)",
     }}
       onClick={lock}
     >
-      <div style={{ color: accent, fontSize: "22px", fontWeight: "bold", letterSpacing: "2px", textShadow: "3px 3px 0 #000" }}>
+      <div style={{ color: accent, fontSize: "18px", fontWeight: "bold", letterSpacing: "1px", textShadow: `0 0 12px ${accent}` }}>
         {isAttack ? "⚔️ COLPISCI AL MOMENTO GIUSTO!" : "🛡 PARA L'ATTACCO!"}
       </div>
       {/* Barra */}
       <div style={{
         position: "relative", width: "min(80%, 460px)", height: "34px",
-        background: "#090b0b", border: `4px solid ${accent}`, borderRadius: "0", overflow: "hidden",
-        boxShadow: `5px 5px 0 #000, inset 0 0 0 2px #e9ddad33`,
+        background: "#0a0a12", border: `2px solid ${accent}88`, borderRadius: "6px", overflow: "hidden",
+        boxShadow: `0 0 18px ${accent}44, inset 0 0 18px #000`,
       }}>
         {/* zona buono */}
         <div style={{ position: "absolute", top: 0, bottom: 0, left: `${GOOD[0] * 100}%`, width: `${(GOOD[1] - GOOD[0]) * 100}%`, background: `${C.gold}33`, borderLeft: `1px solid ${C.gold}88`, borderRight: `1px solid ${C.gold}88` }} />
         {/* zona perfetto */}
-        <div style={{ position: "absolute", top: 0, bottom: 0, left: `${PERFECT[0] * 100}%`, width: `${(PERFECT[1] - PERFECT[0]) * 100}%`, background: C.green }} />
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: `${PERFECT[0] * 100}%`, width: `${(PERFECT[1] - PERFECT[0]) * 100}%`, background: `${C.green}55`, boxShadow: `0 0 12px ${C.green}88 inset` }} />
         {/* cursore */}
-        <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `calc(${pos * 100}% - 3px)`, width: "6px", background: result ? resultColor : "#fff", transition: doneRef.current ? "background 0.1s" : "none" }} />
+        <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `calc(${pos * 100}% - 3px)`, width: "6px", background: result ? resultColor : "#fff", boxShadow: `0 0 10px ${result ? resultColor : "#fff"}`, transition: doneRef.current ? "background 0.1s" : "none" }} />
       </div>
       {resultLabel ? (
-        <div style={{ color: resultColor, fontSize: "22px", fontWeight: "bold", textShadow: "3px 3px 0 #000" }}>{resultLabel}</div>
+        <div style={{ color: resultColor, fontSize: "22px", fontWeight: "bold", textShadow: `0 0 16px ${resultColor}` }}>{resultLabel}</div>
       ) : (
         <div style={{
           padding: "10px 30px", background: accent, color: "#000", fontWeight: "bold", fontSize: "16px",
-          border: `3px solid #f7e9b7`, borderRadius: "0", boxShadow: "4px 4px 0 #000", cursor: "pointer",
+          border: `2px solid ${accent}`, borderRadius: "6px", boxShadow: `0 0 18px ${accent}aa`, cursor: "pointer",
           letterSpacing: "1px",
         }}>
           {isAttack ? "COLPISCI!" : "PARA!"} <span style={{ fontSize: "11px", opacity: 0.7 }}>(spazio / tap)</span>
@@ -860,23 +865,36 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
   // ─── RENDER ───────────────────────────────────────────────
   return (
     <div style={{
-      width:"min(640px, calc(100vw - 32px))",
-      height:"min(360px, calc((100vw - 32px) * .5625))",
-      margin:"0 auto", flex:"0 0 auto", overflow:"visible",
-    }}>
-    <div style={{
-      position: "relative", flex: "0 0 auto", width: "640px", height: "360px",
-      margin: "0 auto", fontFamily: FONT, color: "#fff0d6", overflow: "hidden",
-      transformOrigin:"top left", transform:"scale(min(1, calc((100vw - 32px) / 640px)))",
-      border: "4px solid #fff0d6", outline: "2px solid #ff4b45", outlineOffset: "3px",
-      background: "#100a19", boxShadow: "0 0 0 6px #ffd02e, 10px 10px 0 #000",
+      position: "relative", flex: 1, minHeight: 0, width: "100%",
+      // Il cabinet si porta dietro il proprio tetto W.content invece di dipendere
+      // da chi lo monta: così il combattimento usa la larghezza desktop anche se
+      // in futuro viene montato altrove (tutorial, galleria, test).
+      maxWidth: W.content, marginLeft: "auto", marginRight: "auto",
+      display: "flex", flexDirection: "column", gap: "8px",
+      fontFamily: FONT, color: C.text, padding: "14px 16px", overflow: "hidden",
+      /* Cabinet ottone-oro — cornice CRT che racchiude tutto il duello */
+      border: `2px solid ${C.gold}77`, borderRadius: "6px",
+      background: "linear-gradient(180deg, rgba(12,10,20,0.68) 0%, rgba(4,3,8,0.82) 100%)",
+      boxShadow: `0 0 0 1px #000, 0 0 26px ${C.gold}22, inset 0 0 40px rgba(0,0,0,0.55)`,
       animation: shake === "heavy" ? "screenShake 0.38s"
         : shake === "light" ? "screenShakeLight 0.24s"
         : "none",
     }}>
+      {/* Angoli ottone del cabinet */}
+      {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
+        <div key={i} aria-hidden style={{
+          position:"absolute", [v]:6, [h]:6, width:"16px", height:"16px", zIndex:6, pointerEvents:"none",
+          [`border${v[0].toUpperCase()+v.slice(1)}`]:`2px solid ${C.gold}`,
+          [`border${h[0].toUpperCase()+h.slice(1)}`]:`2px solid ${C.gold}`,
+          filter:`drop-shadow(0 0 4px ${C.gold}88)`,
+        }} />
+      ))}
+      {/* Pain flash overlay */}
       {painFlash > 0 && (
         <div style={{ position: "absolute", inset: 0, background: `rgba(255,0,0,${painFlash})`, pointerEvents: "none", zIndex: 50, transition: "background 0.1s" }} />
       )}
+
+      {/* Numeri/testi fluttuanti (danno, soldi, cura, parata) */}
       {floaters.map(f => {
         const a = FLOATER_ANCHOR[f.zone] || FLOATER_ANCHOR.enemy;
         return (
@@ -887,122 +905,267 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
             pointerEvents: "none", whiteSpace: "nowrap",
             color: f.color, fontWeight: "bold",
             fontSize: f.big ? "26px" : "17px",
-            textShadow: "2px 2px 0 #000",
+            textShadow: `0 0 8px ${f.color}, 0 1px 2px #000`,
             animation: "combatFloat 1.1s ease-out forwards",
           }}>{f.text}</div>
         );
       })}
 
-      {/* Strip nemico: 624×64, grammatica del pilot approvato. */}
+      {/* ── SCHEDA NEMICO — readout CRT compatto orizzontale ── */}
       <div style={{
-        position:"absolute", left:8, top:8, width:624, height:64,
-        display:"grid", gridTemplateColumns:"56px 1fr", gap:8,
-        border:`2px solid ${perfectHit ? "#fff" : "#ff4b45"}`, background:"#1c1028",
-        boxShadow:"4px 4px 0 #09050e", padding:4,
+        display: "flex", alignItems: "stretch", gap: "12px",
+        border: `2px solid ${perfectHit ? "#ffffff" : C.red}`, borderRadius: "4px", padding: "9px 12px",
+        background: "#160308",
+        boxShadow: perfectHit
+          ? `0 0 34px #ffffffcc, 0 0 60px ${C.red}88, inset 0 0 24px rgba(255,255,255,0.18)`
+          : `0 0 18px ${C.red}44, inset 0 0 24px rgba(0,0,0,0.6)`,
         transform: enemyHitFlash ? "translateX(4px)" : "none",
-        transition:"transform .1s", zIndex:2,
+        transition: "transform 0.1s, box-shadow 0.12s, border-color 0.12s",
       }}>
+        {/* Schermo "mostro" CRT — ritratto sprite del nemico, riquadro compatto a sinistra */}
         <div style={{
-          width:52, height:52, background:"#09050e", border:"2px solid #fff0d6",
-          overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center", position:"relative",
+          flexShrink: 0, width: "150px", minHeight: "150px", alignSelf: "stretch",
+          background: "#0a0400", border: `2px solid ${C.red}88`, borderRadius: "4px",
+          padding: "5px", boxShadow: `inset 0 0 22px #000, 0 0 12px ${C.red}33`,
+          overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+          position: "relative",
         }}>
+          {/* scanline CRT interno */}
+          <div aria-hidden style={{
+            position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2, opacity: 0.5,
+            backgroundImage: "repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, transparent 1px, transparent 3px)",
+          }} />
+          {/* Onda d'urto del colpo perfetto — anello bianco che si espande */}
+          {perfectHit > 0 && (
+            <div key={`ring-${perfectHit}`} aria-hidden style={{
+              position: "absolute", inset: "6px", zIndex: 3, pointerEvents: "none",
+              border: "3px solid #ffffff", borderRadius: "3px",
+              boxShadow: "0 0 20px #ffffffcc, inset 0 0 20px #ffffff66",
+              animation: "perfectRing 0.6s ease-out forwards",
+            }} />
+          )}
           {hasAsset(`spr-${enemySpriteKey(enemy)}`) ? (
-            <Asset id={`spr-${enemySpriteKey(enemy)}`} size={48}
-              style={{width:48, height:48, objectFit:"contain", display:"block", imageRendering:"pixelated",
-                animation: perfectHit ? "perfectHitFlash 0.6s ease-out" : "none"}} />
+            <Asset id={`spr-${enemySpriteKey(enemy)}`} size={140}
+              style={{width:"100%", height:"auto", display:"block",
+                filter:`drop-shadow(0 0 6px ${C.red}aa)`,
+                animation: perfectHit ? "perfectHitFlash 0.6s ease-out"
+                  : enemyHitFlash ? "none" : "neonText 2.4s infinite"}} />
           ) : (
             <pre style={{
-              margin:0, textAlign:"center", color:"#ff4b45", fontFamily:FONT,
-              fontSize:"4px", lineHeight:1, whiteSpace:"pre",
+              margin: 0, textAlign: "center", color: "#ff6a6a", fontFamily: FONT,
+              fontSize: "10px", lineHeight: "1.05", whiteSpace: "pre",
+              textShadow: `0 0 6px ${C.red}aa`,
+              animation: perfectHit ? "perfectHitFlash 0.6s ease-out"
+                : enemyHitFlash ? "none" : "neonText 2.4s infinite",
             }}>
               {(SPR_BIG[enemySpriteKey(enemy)] || SPR_BIG.miniboss).join("\n")}
             </pre>
           )}
         </div>
-        <div style={{minWidth:0, padding:"0 4px 0 0"}}>
-          <div style={{height:18, display:"flex", justifyContent:"space-between", alignItems:"center", gap:8}}>
-            <span style={{color:"#ff4b45", fontSize:15, letterSpacing:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-              {enemy.isBoss ? "♛ " : ""}{enemyLabel.toUpperCase()}
-            </span>
+        {/* Colonna stat — nome + barre HP/scudo */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "7px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+            <div style={{ fontWeight: "bold", fontSize: "15px", color: C.red, letterSpacing: "1px",
+              textShadow: `0 0 8px ${C.red}66`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {enemy.isBoss ? "👑 " : ""}{enemyLabel}
+            </div>
             {inFury && (
-              <span style={{flexShrink:0, fontSize:11, padding:"1px 6px", color:"#09050e", background:"#ff4b45"}}>FURIA {turn}</span>
+              <div style={{
+                flexShrink: 0,
+                fontSize: "12px", fontWeight: "bold", padding: "2px 10px", borderRadius: "3px",
+                color: "#000", background: C.orange, letterSpacing: "1px",
+                boxShadow: `0 0 14px ${C.orange}, 0 0 4px ${C.red} inset`,
+                animation: "telePulse 0.7s ease-in-out infinite",
+              }}>
+                🔥 FURIA
+              </div>
             )}
           </div>
-          <div style={{height:16, display:"grid", gridTemplateColumns:"18px 1fr 48px", alignItems:"center", gap:5, color:"#9e80ad", fontSize:11}}>
-            <span>HP</span>
-            <div style={{height:8, border:"2px solid #fff0d6", background:"#09050e"}}>
-              <div style={{width:`${hpPct}%`, height:"100%", background:"#ff4b45", transition:"width 80ms steps(2,end)"}} />
+          {/* Barra HP rossa */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px" }}>❤️</span>
+            <div style={{ flex: 1, height: "14px", background: "#3a0000", borderRadius: "3px", overflow: "hidden", border: "1px solid #550000" }}>
+              <div style={{ width: `${hpPct}%`, height: "100%", background: `linear-gradient(90deg, ${C.red}, #ff5555)`, transition: "width 0.4s ease", boxShadow: `0 0 8px ${C.red}` }} />
             </div>
-            <b style={{color:"#fff0d6", fontWeight:400, textAlign:"right"}}>{enemyHp}/{enemyMaxHp}</b>
+            <span style={{ fontSize: "11px", color: C.red, minWidth: "54px", textAlign: "right" }}>{enemyHp}/{enemyMaxHp}</span>
           </div>
-          <div style={{height:18, display:"flex", alignItems:"center", gap:5, color:"#9e80ad", fontSize:10}}>
-            <span>IN ARRIVO</span>
-            {enemyPlan.slice(0,3).map((ec,i) => {
-              const col=ec.category==="COMBATTIMENTO"?"#ff4b45":ec.category==="DIFESA"?"#3eb9ff":"#ffd02e";
-              const lb=ec.category==="COMBATTIMENTO"?"BOTTA":ec.category==="DIFESA"?"SCUDO":"FURTO";
-              const activeEx=currentExchange>=0?currentExchange:revealedIdxs.length;
-              return <span key={i} style={{padding:"1px 4px", border:`${i===activeEx?2:1}px solid ${i===activeEx?col:"#654275"}`, color:i<activeEx?"#654275":col}}>{i<activeEx?"✓ ":""}{lb}</span>;
-            })}
-            <span style={{marginLeft:"auto", color:"#3eb9ff"}}>SC {enemyShield}</span>
+          {/* Barra scudo blu */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px" }}>🛡</span>
+            <div style={{ flex: 1, height: "10px", background: "#001428", borderRadius: "3px", overflow: "hidden", border: "1px solid #003355" }}>
+              <div style={{ width: `${Math.min(100, enemyShield)}%`, height: "100%", background: `linear-gradient(90deg, ${C.blue}, #55aaff)`, transition: "width 0.4s ease" }} />
+            </div>
+            <span style={{ fontSize: "11px", color: C.blue, minWidth: "54px", textAlign: "right" }}>{enemyShield}</span>
           </div>
         </div>
       </div>
 
-      {/* Corpo fisso 448 + 168. */}
-      <div style={{position:"absolute", left:8, top:80, width:624, height:224, display:"grid", gridTemplateColumns:"448px 168px", gap:8}}>
-        <div style={{position:"relative", overflow:"hidden"}}>
-          {phase === "player" && (
-            <div style={{display:"grid", gridTemplateColumns:"repeat(3,144px)", gridTemplateRows:"repeat(3,69px)", gap:8}}>
-              {hand.map((cell,i) => {
-                const isRevealed=revealedIdxs.includes(i);
-                const locked=(revealedIdxs.length>=3||busy)&&!isRevealed;
-                return <CombatCardScratch key={`${turn}-${i}`} cell={cell} catColors={CAT_COLORS}
-                  onRevealed={()=>onCellRevealed(i)} disabled={locked} nailState={activeNailState} onDeadAttempt={warnDeadNail}/>;
+      {/* ── HUD player: unghie (vita) + bottino — striscia ottone ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px",
+        padding: "5px 12px", border: `1px solid ${C.gold}44`, borderRadius: "4px",
+        background: "linear-gradient(180deg, rgba(40,30,4,0.5), rgba(10,8,2,0.5))",
+        boxShadow: `inset 0 0 14px rgba(0,0,0,0.5)` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "10px", color: C.gold, letterSpacing: "1.5px", fontWeight: "bold" }}>UNGHIE</span>
+          <NailDisplay nails={player.nails} activeNail={-1} />
+        </div>
+        <div style={{ position: "relative", fontSize: "15px", fontWeight: "bold", color: C.gold, letterSpacing: "0.5px" }}>
+          💰 €{loot}
+          {/* Monete che volano */}
+          {coins.map(c => (
+            <span key={c.id} style={{
+              position: "absolute", left: "50%", top: "0",
+              animation: "coinFly 1s ease-out forwards",
+              "--dx": `${c.dx}px`, "--dy": `${c.dy}px`, "--rot": `${c.rot}deg`,
+              fontSize: "16px", pointerEvents: "none",
+            }}>🪙</span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── AREA CENTRALE per fase ── */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: "8px", overflow: "hidden" }}>
+
+        {phase === "intro" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", textAlign: "center" }}>
+            <div style={{ fontSize: "40px" }}>{enemy.isBoss ? "👑" : "🗡️"}</div>
+            <div style={{ color: C.red, fontSize: "20px", fontWeight: "bold" }}>{enemyLabel} ti sfida!</div>
+            {/* Regole del duello: erano incolonnate a 360px anche su un monitor
+                1440px. Il tetto è W.readable, ulteriormente stretto a 640px perché
+                a 900px di monospace 13px la riga supererebbe i 110 caratteri. */}
+            {/* Gerarchia tonale (Fase 1 dell'audit): 5 colori a piena saturazione
+                nello stesso paragrafo (rosso/blu/oro/verde/arancio) non hanno un
+                punto d'ingresso naturale per l'occhio. La legenda ATTACCO/DIFESA/
+                DENARO e i richiami VERDE/HP sono informativi, non urgenti: vanno
+                sulle varianti Mid. L'unico elemento che descrive un pericolo attivo
+                — l'avviso FURIA — resta a piena saturazione. */}
+            <div style={{ color: C.dim, fontSize: "13px", maxWidth: `min(${W.readable}, 640px)`, lineHeight: 1.6 }}>
+              Ogni turno gratti <strong style={{ color: C.text }}>3 delle 9 carte</strong>:
+              <br /><span style={{ color: C.redMid }}>🗡️ ATTACCO</span> (danno) · <span style={{ color: C.blueMid }}>🛡 DIFESA</span> (parata) · <span style={{ color: C.goldMid }}>💰 DENARO</span> (bottino).
+              <br />Ferma il cursore nel <strong style={{ color: C.greenMid }}>VERDE</strong> per colpire/parare al meglio. Porta i suoi <strong style={{ color: C.redMid }}>HP a 0</strong> prima che le tue unghie finiscano.
+              <br /><span style={{ color: C.orange }}>⚠ Dal turno {FURY_TURN} va in 🔥 FURIA: niente cure, più danno. Chiudi in fretta!</span>
+            </div>
+            <Btn variant="danger" onClick={startCombat} style={{ fontSize: "16px", padding: "12px 32px" }}>⚔️ COMBATTI!</Btn>
+          </div>
+        )}
+
+        {phase === "player" && (
+          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: "6px", overflowY: "auto" }}>
+            <div style={{ textAlign: "center", fontSize: "12px", color: C.gold, letterSpacing: "1px" }}>
+              TURNO {turn} — GRATTA 3 DELLE 9 CARTE <span style={{ color: C.dim }}>({revealedIdxs.length}/3)</span>
+            </div>
+            {/* Telegrafo: cosa farà il nemico ad ogni scambio (attacca / difende / cura) */}
+            <div style={{
+              display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", fontSize: "11px",
+              padding: "6px 8px", borderRadius: "6px",
+              background: "#0c0c14", border: `1px solid ${C.dim}44`,
+            }}>
+              <span style={{ color: C.dim, letterSpacing: "1px", fontWeight: "bold" }}>IN ARRIVO ▸</span>
+              {enemyPlan.slice(0, 3).map((ec, i) => {
+                const tel = ec.category === "COMBATTIMENTO" ? { ic: "🗡️", lb: "ATTACCO", col: C.red }
+                  : ec.category === "DIFESA" ? { ic: "🛡", lb: "DIFESA", col: C.blue }
+                  : { ic: "💰", lb: "DENARO", col: C.orange };
+                const activeEx = currentExchange >= 0 ? currentExchange : revealedIdxs.length;
+                const done = i < activeEx;      // scambi già passati
+                const active = i === activeEx;  // PROSSIMA mossa del nemico (evidenziata + pulsa)
+                return (
+                  <span key={i} style={{
+                    padding: active ? "4px 12px" : "4px 9px", borderRadius: "4px",
+                    border: `2px solid ${active ? tel.col : done ? "#333" : tel.col + "55"}`,
+                    background: active ? tel.col + "33" : "transparent",
+                    color: done ? C.dim : tel.col,
+                    opacity: done ? 0.4 : 1,
+                    boxShadow: active ? `0 0 14px ${tel.col}aa, 0 0 4px ${tel.col} inset` : "none",
+                    fontWeight: active ? "bold" : "normal",
+                    textShadow: active ? `0 0 8px ${tel.col}` : "none",
+                    textDecoration: done ? "line-through" : "none",
+                    animation: active ? "telePulse 1s ease-in-out infinite" : "none",
+                  }}>
+                    {done ? "✓ " : active ? "▸ " : ""}{tel.ic} {tel.lb}
+                  </span>
+                );
               })}
             </div>
-          )}
-          {phase === "intro" && (
-            <div style={{height:"100%", display:"grid", placeItems:"center", border:"2px solid #fff0d6", background:"#1c1028", textAlign:"center", padding:16}}>
-              <div><div style={{color:"#ff4b45", fontSize:22, letterSpacing:2}}>{enemyLabel.toUpperCase()} TI SFIDA</div>
-                <p style={{color:"#9e80ad", fontSize:11, lineHeight:1.4, maxWidth:380}}>Gratta 3 biglietti su 9. BOTTA infligge danno, PARATA prepara la difesa, PREMIO aumenta il bottino. Dal turno {FURY_TURN} il nemico entra in FURIA.</p>
-                <Btn variant="danger" onClick={startCombat} style={{fontSize:14, padding:"6px 20px", borderRadius:0, boxShadow:"4px 4px 0 #09050e"}}>COMBATTI</Btn></div>
+            {deadNailWarn && (
+              <div style={{
+                margin: "0 0 8px", padding: "8px 14px", textAlign: "center",
+                border: `2px solid ${C.red}`, background: "#1a0005",
+                color: C.red, fontWeight: "bold", letterSpacing: "0.5px",
+                boxShadow: `0 0 14px ${C.red}88, inset 0 0 10px ${C.red}22`,
+                animation: ANIM.pulseUrgent,
+              }}>
+                ✝ UNGHIA MORTA — seleziona un'unghia sana dalla colonna UNGHIE per grattare
+              </div>
+            )}
+            <div style={{
+              display: "grid",
+              // minmax(0,160px): sotto quella soglia le colonne si comportano
+              // come 1fr (si dividono lo spazio disponibile, comportamento
+              // identico a prima su mobile). Sopra, il tetto di 160px impedisce
+              // alle carte di diventare lastre sproporzionate su desktop largo
+              // (il canvas nativo è 220×160, ~1.4:1 — 160px di colonna resta
+              // vicino a quella proporzione data l'altezza riga ~94-110px).
+              // justifyContent centra la griglia invece di stirarla sull'intero
+              // cabinet (fino a 1280px via W.content).
+              gridTemplateColumns: "repeat(3, minmax(0, 160px))", gridTemplateRows: "repeat(3, 1fr)",
+              justifyContent: "center",
+              gap: "10px", flex: "1 1 auto", minHeight: `${COMBAT_CARD_H * 3 + 20}px`,
+            }}>
+              {hand.map((cell, i) => {
+                const isRevealed = revealedIdxs.includes(i);
+                // Bloccate se: hai già giocato 3 carte, OPPURE uno scambio è in
+                // risoluzione (evita di grattare la carta successiva "a raffica"
+                // mentre quella precedente non è ancora stata conteggiata).
+                const locked = (revealedIdxs.length >= 3 || busy) && !isRevealed;
+                return (
+                  <CombatCardScratch
+                    key={`${turn}-${i}`}
+                    cell={cell}
+                    catColors={CAT_COLORS}
+                    onRevealed={() => onCellRevealed(i)}
+                    disabled={locked}
+                    nailState={activeNailState}
+                    onDeadAttempt={warnDeadNail}
+                  />
+                );
+              })}
             </div>
-          )}
-          {(phase === "turnEnd" || phase === "win") && (
-            <div ref={logScrollRef} style={{height:"100%", overflowY:"auto", border:"2px solid #fff0d6", background:"#1c1028", padding:10, fontSize:12}}>
-              {phase === "win" && <div style={{color:"#ffd02e", fontSize:20, letterSpacing:2, marginBottom:8}}>HAI VINTO · €{loot}</div>}
-              {log.map((l,i)=><div key={i} style={{color:l.color}}>{l.text}</div>)}
+            {/* Log live dello scambio (cresce man mano) */}
+            <div ref={logScrollRef} style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "11px", maxHeight: "160px", overflowY: "auto" }}>
+              {log.map((l, i) => (
+                <div key={i} style={{ color: l.color }}>{l.text}</div>
+              ))}
             </div>
-          )}
-          {deadNailWarn && <div style={{position:"absolute", left:8, right:8, bottom:8, padding:5, zIndex:8, border:"2px solid #ff4b45", background:"#09050e", color:"#ff4b45", textAlign:"center", fontSize:11, animation:ANIM.pulseUrgent}}>UNGHIA MORTA · SCEGLINE UNA SANA</div>}
-        </div>
+          </div>
+        )}
 
-        {/* Scontrino laterale persistente. */}
-        <aside style={{border:"2px solid #fff0d6", background:"#1c1028", boxShadow:"4px 4px 0 #09050e", overflow:"hidden"}}>
-          <div style={{height:22, padding:"3px 7px", background:"#fff0d6", color:"#09050e", fontSize:15, letterSpacing:2}}>SCONTRINO</div>
-          <div style={{padding:"6px 7px", fontSize:11}}>
-            {[["TURNO",turn],["GRATTATI",`${revealedIdxs.length}/3`],["BOTTINO",`€${loot}`],["SCUDO",enemyShield]].map(([k,v])=><div key={k} style={{display:"flex", justifyContent:"space-between", borderBottom:"1px dashed #654275"}}><span style={{color:"#9e80ad"}}>{k}</span><span style={{color:"#ffd02e"}}>{v}</span></div>)}
+        {(phase === "turnEnd" || phase === "win") && (
+          <div ref={logScrollRef} style={{
+            flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px",
+            background: "#0a0a12", border: `1px solid ${C.dim}44`, borderRadius: "3px", padding: "8px", fontSize: "12px",
+          }}>
+            {log.map((l, i) => (
+              <div key={i} style={{ color: l.color }}>{l.text}</div>
+            ))}
           </div>
-          <div ref={logScrollRef} style={{height:82, margin:"4px 7px", padding:6, overflowY:"auto", borderLeft:"4px solid #ff4b45", background:"#2b1431", color:"#fff0d6", fontSize:10, lineHeight:1.15}}>
-            {log.length ? log.slice(-5).map((l,i)=><div key={i} style={{color:l.color}}>{l.text}</div>) : "Scegli con l'occhio. Gratta con l'unghia."}
-          </div>
-          <div style={{display:"grid", gap:3, padding:"2px 7px", color:"#9e80ad", fontSize:9}}>
-            <span style={{color:"#ff4b45"}}>▲ BOTTA</span><span style={{color:"#3eb9ff"}}>◆ PARATA</span><span style={{color:"#ffd02e"}}>€ PREMIO</span>
-          </div>
-        </aside>
+        )}
       </div>
 
-      {/* Footer unghie del pilot, senza mano aggiuntiva. */}
-      <footer style={{position:"absolute", left:8, bottom:8, width:624, height:40, display:"flex", alignItems:"center", gap:6, padding:"4px 6px", border:"2px solid #fff0d6", background:"#2b1431", boxShadow:"4px 4px 0 #09050e"}}>
-        <span style={{width:54, color:"#fff0d6", fontSize:10, textAlign:"center"}}>UNGHIE</span>
-        <NailDisplay nails={player.nails} activeNail={player.activeNail} />
-        <span style={{marginLeft:"auto", color:"#ffd02e", fontSize:10}}>GRATTA 3 BIGLIETTI</span>
-        {coins.map(c=><span key={c.id} style={{position:"absolute", right:120, top:0, animation:"coinFly 1s ease-out forwards", "--dx":`${c.dx}px`, "--dy":`${c.dy}px`, "--rot":`${c.rot}deg`, pointerEvents:"none"}}>€</span>)}
-        {phase === "turnEnd" && <Btn onClick={nextTurn} style={{width:132, height:28, padding:0, borderRadius:0, border:"2px solid #ffd02e", background:"#ffd02e", color:"#09050e", boxShadow:"none"}}>PROSSIMO TURNO</Btn>}
-        {phase === "win" && <Btn variant="success" onClick={finishWin} style={{width:132, height:28, padding:0, borderRadius:0, border:"2px solid #ffd02e", boxShadow:"none"}}>INCASSA €{loot}</Btn>}
-        {(phase === "intro" || phase === "player") && <div style={{width:132, height:28, display:"grid", placeItems:"center", border:"2px solid #654275", background:"#09050e", color:"#9e80ad", fontSize:10}}>{phase === "intro" ? "PRONTO?" : `${revealedIdxs.length}/3 GRATTATI`}</div>}
-      </footer>
+      {/* ── BARRA AZIONE INFERIORE ── */}
+      {phase === "turnEnd" && (
+        <Btn onClick={nextTurn} style={{ fontSize: "15px", padding: "10px 28px", alignSelf: "center" }}>
+          PROSSIMO TURNO →
+        </Btn>
+      )}
+      {phase === "win" && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+          <div style={{ color: C.green, fontSize: "22px", fontWeight: "bold", textShadow: `0 0 14px ${C.green}99` }}>🏆 HAI VINTO!</div>
+          <div style={{ color: C.gold, fontSize: "14px" }}>Bottino: €{loot}</div>
+          <Btn variant="success" onClick={finishWin} style={{ fontSize: "15px", padding: "10px 28px" }}>INCASSA →</Btn>
+        </div>
+      )}
 
+      {/* ── OVERLAY MINIGIOCO TEMPISMO (attacco / parata) ── */}
       {activeTiming && (
         <TimingBar
           mode={activeTiming.mode}
@@ -1011,7 +1174,6 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
           perfectWiden={activeTiming.perfectWiden || 0}
         />
       )}
-    </div>
     </div>
   );
 }

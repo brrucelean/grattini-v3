@@ -9,7 +9,6 @@ export const AudioEngine = (() => {
   let currentTheme = null;
   let pendingTheme = null;      // tema in attesa nel debounce (fix race A→B→A)
   let masterVolume = 0.7;
-  let lastScratchAt = 0;
 
   const getCtx = () => {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -28,13 +27,7 @@ export const AudioEngine = (() => {
       scratchBufferPool = Array.from({ length: 6 }, () => {
         const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
         const data = buf.getChannelData(0);
-        // Rumore marrone: la reference approvata aveva un raschio cartaceo
-        // basso e morbido, non il sibilo metallico del rumore bianco.
-        let brown = 0;
-        for (let i = 0; i < bufSize; i++) {
-          brown = brown * 0.82 + (Math.random() * 2 - 1) * 0.18;
-          data[i] = brown * (1 - i / bufSize);
-        }
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random()*2-1) * 0.25;
         return buf;
       });
     }
@@ -98,28 +91,15 @@ export const AudioEngine = (() => {
   return {
     scratch: () => {
       if (masterVolume === 0) return;
-      // Una passata continua deve sembrare carta raschiata, non una raffica di
-      // click: limitiamo i transienti ma li sovrapponiamo abbastanza da creare
-      // un fruscio omogeneo durante il drag.
-      const nowMs = performance.now();
-      if (nowMs - lastScratchAt < 28) return;
-      lastScratchAt = nowMs;
       try {
         const ac = getCtx();
-        const t = ac.currentTime;
         const src = ac.createBufferSource();
         src.buffer = getScratchBuffer();
-        src.playbackRate.value = 0.86 + Math.random() * 0.24;
         const filt = ac.createBiquadFilter();
-        filt.type = "bandpass";
-        filt.frequency.value = 950 + Math.random() * 500;
-        filt.Q.value = 0.55;
-        const gain = ac.createGain();
-        gain.gain.setValueAtTime(0.001, t);
-        gain.gain.linearRampToValueAtTime(0.055, t + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.078);
+        filt.type = "bandpass"; filt.frequency.value = 2500 + Math.random()*2000; filt.Q.value = 0.5;
+        const gain = ac.createGain(); gain.gain.value = 0.4;
         src.connect(filt); filt.connect(gain); gain.connect(getMaster());
-        src.start(t); src.stop(t + 0.082);
+        src.start(); src.stop(ac.currentTime + 0.09);
       } catch(e) {}
     },
     win: () => {
