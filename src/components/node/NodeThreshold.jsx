@@ -19,7 +19,8 @@ import { nodeFamily } from "../map/mapTheme.js";
 
 const GOLD = "#c9a24a", INK = "#e8dcc0", MUTED = "#8a7a5a";
 const BLACK = "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px";
-const TABLE = "repeating-conic-gradient(#1a0f09 0% 25%, #1e120a 0% 50%) 0 0 / 4px 4px";
+// Stesso fondo della schermata del titolo: nero con righe orizzontali.
+const TABLE = "repeating-linear-gradient(0deg, #080b0b 0 12px, #0d1211 12px 16px)";
 const frame = (edge = GOLD) => `inset 0 0 0 2px #050304, inset 0 0 0 3px ${edge}, inset 0 0 0 5px #050304, 5px 5px 0 #050304`;
 
 const NODE_NAMES = {
