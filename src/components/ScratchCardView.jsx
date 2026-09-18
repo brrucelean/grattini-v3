@@ -527,8 +527,11 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
 
   // ── Biglietto AI: se esiste ticket-<id> uso l'immagine come faccia del biglietto
   //    (proporzione 4:3 fissa) con griglia in overlay; altrimenti layout classico.
-  const hasTicket = hasAsset(`ticket-${card.id}`);
-  const ticketUrl = hasTicket ? assetUrl(`ticket-${card.id}`) : null;
+  const v3TicketId = `ticket-${card.id}-v3`;
+  const legacyTicketId = `ticket-${card.id}`;
+  const ticketAssetId = hasAsset(v3TicketId) ? v3TicketId : legacyTicketId;
+  const hasTicket = hasAsset(ticketAssetId);
+  const ticketUrl = hasTicket ? assetUrl(ticketAssetId) : null;
   // layoutOverride = anteprima dal vivo dell'editor dev (?edit=1)
   const layout = layoutOverride || ticketLayout(card.id);
   // Griglia che RIEMPIE il pannello scuro dell'arte: righe e colonne in frazioni

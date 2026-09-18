@@ -25,7 +25,10 @@ export function TicketThumb({ card, width = 190, style }) {
   const accent = card.theme?.border || C.gold;
   const layout = ticketLayout(card.id);
   const { cols, rows } = gridOf(card);
-  const hasArt = hasAsset(`ticket-${card.id}`);
+  const v3TicketId = `ticket-${card.id}-v3`;
+  const legacyTicketId = `ticket-${card.id}`;
+  const ticketAssetId = hasAsset(v3TicketId) ? v3TicketId : legacyTicketId;
+  const hasArt = hasAsset(ticketAssetId);
 
   // Alcune carte (doppioOnulla, ruota) hanno insets NEGATIVI: in partita è voluto,
   // il pannello da grattare deborda oltre il biglietto. In miniatura però le celle
@@ -66,7 +69,7 @@ export function TicketThumb({ card, width = 190, style }) {
       ...style,
     }}>
       {hasArt && (
-        <Asset id={`ticket-${card.id}`} size={width} style={{
+        <Asset id={ticketAssetId} size={width} style={{
           position: "absolute", inset: 0,
           width: "100%", height: "100%", objectFit: "cover", display: "block",
         }} />

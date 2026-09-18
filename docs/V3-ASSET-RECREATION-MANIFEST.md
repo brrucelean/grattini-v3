@@ -45,9 +45,13 @@ These will follow the approved large redundant symbols and remain recognizable w
 
 `boccaDrago`, `doppioOnulla`, `fintoMilionario`, `fortunaFlash`, `grattaCombina`, `jackpotMix`, `labirinto`, `mahjong`, `maledetto`, `mappaTesor0`, `miliardario`, `portaFortuna`, `puzzle`, `ruota`, `setteEMezzo`, `tredici`, `turistaPerSempre`.
 
+Progress: `fortunaFlash` V3 artwork is integrated and supplies its live thumbnail.
+
 ## 8. Full ticket artwork — 18
 
 The seventeen named tickets above plus `_template`. Each ticket keeps its unique grid and win logic.
+
+Progress: `fortunaFlash` completed as the first visual benchmark; original 2×3 grid, cost, maximum prize and match mechanic are unchanged.
 
 ## 9. Rooms — 5
 
