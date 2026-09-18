@@ -48,6 +48,7 @@ import { NailRail } from "./components/shell/NailRail.jsx";
 import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
+import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -1479,6 +1480,22 @@ export default function Grattini() {
         const nodeIcon = currentNode.secret ? "🔮" : NODE_ICONS[currentNode.type] || "?";
         const isBoss = currentNode.type === "boss";
         const isElite = !!currentNode.elite;
+
+        // Desktop: la soglia — carta del luogo + cosa fare prima di entrare.
+        if (wideShell) {
+          const bn = currentNode.bossName || "Il Broker";
+          const minMoney = isBoss ? BOSS_MIN_MONEY[bn] : undefined;
+          return (
+            <div style={{ flex: 1, minHeight: 0, width: "100%", display: "flex" }}>
+              <NodeThreshold
+                node={currentNode} player={player} preScratchCount={preScratchCount}
+                onPreScratch={handlePreScratch} onEnter={enterNode}
+                bossGate={minMoney !== undefined ? { minMoney, canEnter: player.money >= minMoney } : null}
+                onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} maxItems={MAX_ITEMS}
+              />
+            </div>
+          );
+        }
 
         // Corner brackets helper
         const CornerBrackets = ({ color = accent, size = 14, inset = 10, shadow = true }) => (
