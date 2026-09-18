@@ -11,6 +11,19 @@ import { inset } from "../data/ticketLayout.js";
 // scritti nel pannello informativo accanto) così il titolo si prende tutta la
 // fascia. Su cartigli bassi come quello di Doppio o Nulla — alto il 7,5% del
 // biglietto — a dimensione ridotta titolo e badge finivano uno sopra l'altro.
+// Corpo del titolo: il più grande tra "tutto su una riga" e "su due righe
+// bilanciate", senza mai spezzare una parola. Tiny5 ≈ 0,78 em per carattere.
+function titleSize(name, compact, headerRow) {
+  if (headerRow) return "clamp(7px, min(6.5cqw, 62cqh), 30px)";
+  const words = name.toUpperCase().split(/\s+/);
+  const longest = Math.max(...words.map(w => w.length));
+  const W = compact ? 118 : 100, H = compact ? 70 : 46;
+  const one = `min(${(W / (name.length * 0.78)).toFixed(1)}cqw, ${H}cqh)`;
+  const perLine2 = Math.max(longest, Math.ceil(name.length / 2));
+  const two = `min(${(W / (perLine2 * 0.78)).toFixed(1)}cqw, ${(H / 2.1).toFixed(1)}cqh)`;
+  return `clamp(7px, max(${one}, ${two}), 34px)`;
+}
+
 export function TicketHeader({ card, accent, layout, compact = false }) {
   const headerRow = layout.header.dir === "row";
   const printHeader = layout.header.print === true;
@@ -46,15 +59,16 @@ export function TicketHeader({ card, accent, layout, compact = false }) {
       {/* Titolo — come un vero gratta e vinci, dentro al cartiglio dell'arte */}
       <div style={{
         color: printHeader ? "#123f42" : "#fff", fontWeight: "bold",
-        fontSize: compact
-          ? (headerRow ? "clamp(7px, min(9cqw, 85cqh), 30px)" : "clamp(7px, min(12cqw, 70cqh), 30px)")
-          : (headerRow ? "clamp(7px, min(6.5cqw, 62cqh), 30px)" : "clamp(7px, min(9.5cqw, 46cqh), 30px)"),
+        // Titoli lunghi ("La Mappa del Tesoro", "Turista per Sempre") vanno a
+        // capo su due righe bilanciate invece di uscire dal cartiglio o finire
+        // con i puntini. Corpo scelto sulla parola più lunga: mai tagliata.
+        fontSize: titleSize(card.name, compact, headerRow),
         letterSpacing: printHeader ? "1px" : "1.5px", lineHeight: 1.05,
         WebkitTextStroke: printHeader ? "0" : `0.6px ${accent}`,
         textShadow: printHeader ? "none" : haloTitle,
         animation: printHeader ? "none" : "ticketNeon 3.2s ease-in-out infinite",
         fontFamily: FONT, textAlign: "center",
-        maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        maxWidth: "100%", whiteSpace: "normal", textWrap: "balance", overflowWrap: "normal",
         textTransform: "uppercase",
       }}>
         {card.name}

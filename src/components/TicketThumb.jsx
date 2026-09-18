@@ -35,9 +35,7 @@ export function TicketThumb({ card, width = 190, style }) {
   // il pannello da grattare deborda oltre il biglietto. In miniatura però le celle
   // coprirebbero l'illustrazione, che è proprio la cosa da mostrare: qui il rect
   // viene riportato dentro i bordi.
-  const rawPlayRect = hasV3Art
-    ? { top:47, left:7.5, right:7.5, bottom:11 }
-    : layout.play;
+  const rawPlayRect = layout.play;
   const playRect = Object.fromEntries(
     Object.entries(rawPlayRect).map(([k, v]) =>
       [k, typeof v === "number" ? Math.max(v, 3) : v])

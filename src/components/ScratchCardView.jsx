@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { C, FONT } from "../data/theme.js";
 import { NAIL_INFO } from "../data/nails.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../data/items.js";
-import { CARD_SYMBOLS } from "../data/cards.js";
+import { CARD_SYMBOLS, lossLine } from "../data/cards.js";
 import { AudioEngine } from "../audio.js";
 import { roll, pick, shuffle } from "../utils/random.js";
 import { S } from "../utils/styles.js";
@@ -251,7 +251,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     if (card.mechanic === "doppioOnulla") return "🎲 DOPPIO O NULLA: ❌ niente raddoppio.";
     if (busted) return card.mechanic === "setteemezzo" ? "💥 SBALLATO! Hai superato 7½." : "💥 BUST! Sei andato oltre 13.";
     if (hitStop) return "🛑 STOP! Hai perso l'accumulato.";
-    if (scratched >= totalCells) return "Niente… prossima volta!";
+    if (scratched >= totalCells) return lossLine(card);
     return "Hai abbandonato il gratta.";
   };
 
@@ -536,11 +536,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   const ticketUrl = hasTicket ? assetUrl(ticketAssetId) : null;
   // layoutOverride = anteprima dal vivo dell'editor dev (?edit=1)
   const layout = layoutOverride || ticketLayout(card.id);
-  // I biglietti V3 condividono una gabbia interna conservativa: la zona
-  // grattabile non deve mai toccare la cornice illustrata, anche sulle 4×4.
-  const playLayout = hasV3Ticket
-    ? { top:47, left:7.5, right:7.5, bottom:11 }
-    : layout.play;
+  // Ogni biglietto ha la SUA zona grattabile, misurata sul pannello scuro
+  // dell'arte (ticketLayout.js): niente più gabbia unica per tutti.
+  const playLayout = layout.play;
   // Griglia che RIEMPIE il pannello scuro dell'arte: righe e colonne in frazioni
   // uguali, le celle si stirano per occuparlo tutto. Niente fasce vuote, e ogni
   // biglietto detta la forma delle sue celle. Solo le griglie minuscole (1 cella)
@@ -585,14 +583,14 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
                 fontSize:"10px", letterSpacing:"1px",
                 color: cell.scratched ? (isMatch ? C.gold : C.dim) : C.text,
               }}>
-                {cell.scratched ? (isMatch ? "STOP!" : "STOP") : "▶ CLICK"}
+                {cell.scratched ? (isMatch ? "JACKPOT" : "FERMO") : "▶ FERMA"}
               </div>
             </div>
           );
         })}
       </div>
       <div style={{fontSize:"10px", color:C.dim, letterSpacing:"1px"}}>
-        {cells.filter(c=>c.scratched).length === 0 && "Clicca per fermare ogni rullo"}
+        {cells.filter(c=>c.scratched).length === 0 && "Ferma i rulli uno alla volta"}
         {cells.filter(c=>c.scratched).length === 1 && "2 rulli ancora in giro..."}
         {cells.filter(c=>c.scratched).length === 2 && (nearWin ? `⚡ QUASI! Ferma l'ultimo!` : "Ultimo rullo — dai!")}
         {cells.every(c=>c.scratched) && (winFound ? "🎰 JACKPOT!" : "Niente...")}
@@ -657,7 +655,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   return (
     <div className={tier >= 3 && !hasTicket ? "holo" : undefined} style={{
       ...S.panel, textAlign:"center",
-      maxWidth: hasTicket ? "620px" : "440px", margin:"8px auto",
+      maxWidth: hasTicket ? "760px" : "440px", margin:"8px auto",
       position: "relative",
       // Con biglietto AI: nessuna cornice CSS (la fornisce l'immagine); solo contenitore trasparente.
       border: hasTicket ? "none" : `2px solid ${panelBorder}`,
@@ -680,10 +678,11 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       {/* ═══ BIGLIETTO AI — faccia 4:3 con header + griglia in overlay ═══ */}
       {hasTicket && (
         <div data-ticket-face={card.id} style={{
-          position: "relative", width: "100%",
+          // Larghezza legata all'altezza disponibile: il biglietto resta 4:3
+          // e non si deforma quando lo schermo è basso.
+          position: "relative", width: "min(100%, calc(66vh * 4 / 3))",
           aspectRatio: "4 / 3",
           isolation: "isolate",
-          maxHeight: "62vh",
           margin: "0 auto 8px",
           backgroundImage: `url(${ticketUrl})`,
           backgroundSize: "100% 100%",

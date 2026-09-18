@@ -13,23 +13,26 @@
 // riquadri sopra il biglietto e premi SALVA — questo file viene riscritto.
 // Vedi vite-plugin-ticket-layout.js e TicketLayoutEditor.jsx.
 export const TICKET_LAYOUT = {
-  fortunaFlash:     { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  setteEMezzo:      { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  portaFortuna:     { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  fintoMilionario:  { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  puzzle:           { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  boccaDrago:       { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  miliardario:      { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  tredici:          { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  maledetto:        { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  ruota:            { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  labirinto:        { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  grattaCombina:    { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  mappaTesor0:      { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  doppioOnulla:     { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  mahjong:          { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  jackpotMix:       { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
-  turistaPerSempre: { play:{top:45.2, left:5.5, right:5.5, bottom:9.2}, header:{top:10.5, left:42, right:8.5, bottom:65.5, dir:"col", print:true} },
+  // Misurate sui pixel dell'arte V3 (2026-09-18): header = interno crema del
+  // cartiglio meno 2,5% ai lati e 2% sopra/sotto; play = pannello scuro meno
+  // 2% ai lati e 2,5% sopra/sotto, così le celle non toccano mai la cornice.
+  boccaDrago:        { play:{top:46.1, left:6.9, right:6.7, bottom:12}, header:{top:12.6, left:56.9, right:8, bottom:65.7, dir:"col", print:true} },
+  doppioOnulla:      { play:{top:44.6, left:6.1, right:6.1, bottom:11.7}, header:{top:6.8, left:47.3, right:6.1, bottom:65, dir:"col", print:true} },
+  fintoMilionario:   { play:{top:52, left:6.4, right:6.7, bottom:12.8}, header:{top:11.9, left:50.6, right:6.1, bottom:59.9, dir:"col", print:true} },
+  fortunaFlash:      { play:{top:46.8, left:5.6, right:6.1, bottom:11.3}, header:{top:14.8, left:44.3, right:12.4, bottom:69.4, dir:"col", print:true} },
+  grattaCombina:     { play:{top:41.7, left:6.7, right:6.7, bottom:10.2}, header:{top:9.7, left:50, right:8, bottom:68.3, dir:"col", print:true} },
+  jackpotMix:        { play:{top:46.8, left:8.6, right:8.6, bottom:14.2}, header:{top:9, left:49.2, right:6.9, bottom:66.8, dir:"col", print:true} },
+  labirinto:         { play:{top:46.1, left:7.5, right:7.8, bottom:14.2}, header:{top:11.2, left:50.9, right:9.6, bottom:71.2, dir:"col", print:true} },
+  mahjong:           { play:{top:48.3, left:6.7, right:6.7, bottom:11.3}, header:{top:8.2, left:54.1, right:8.3, bottom:64.3, dir:"col", print:true} },
+  maledetto:         { play:{top:49, left:7.2, right:7.2, bottom:12}, header:{top:16.3, left:45.9, right:6.6, bottom:64.6, dir:"col", print:true} },
+  mappaTesor0:       { play:{top:46.1, left:6.9, right:7.2, bottom:12}, header:{top:8.2, left:52.8, right:9.6, bottom:66.5, dir:"col", print:true} },
+  miliardario:       { play:{top:46.8, left:8.3, right:8.3, bottom:12.4}, header:{top:13.4, left:49.8, right:6.1, bottom:64.6, dir:"col", print:true} },
+  portaFortuna:      { play:{top:46.5, left:7.8, right:7.8, bottom:13.5}, header:{top:7.9, left:48.9, right:8.3, bottom:66.5, dir:"col", print:true} },
+  puzzle:            { play:{top:47.6, left:7.5, right:7.5, bottom:11.3}, header:{top:8.6, left:49.5, right:6.1, bottom:64.6, dir:"col", print:true} },
+  ruota:             { play:{top:46.5, left:8.6, right:8.6, bottom:13.1}, header:{top:11.9, left:55, right:6.9, bottom:67.2, dir:"col", print:true} },
+  setteEMezzo:       { play:{top:45.4, left:6.9, right:6.9, bottom:11.3}, header:{top:9.7, left:44.3, right:7.4, bottom:67.2, dir:"col", print:true} },
+  tredici:           { play:{top:50.1, left:6.1, right:6.1, bottom:10.9}, header:{top:15.2, left:52.8, right:8.5, bottom:60.6, dir:"col", print:true} },
+  turistaPerSempre:  { play:{top:51.2, left:8.6, right:8.6, bottom:13.5}, header:{top:13.7, left:54.7, right:10.2, bottom:62.1, dir:"col", print:true} },
 };
 
 export const TICKET_LAYOUT_FALLBACK = {

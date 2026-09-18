@@ -178,20 +178,43 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
   const isItem = cell.isItem;
   const isStop = cell.isStop;
   const isCard = cell.isRed !== undefined; // carta da gioco (sette e mezzo)
+  // Biglietti V3 stampati: la cella scoperta è carta, non schermo CGA.
+  // Vincita = casella gialla jackpot, coppia in corso = filo oro doppio,
+  // trappola/stop = inchiostro rosso su rosa, jolly = oro, oggetto = verde acqua.
+  const PRINT = {
+    paper: "#fff3c4", ink: "#153f42",
+    win: "#ffd84a", winInk: "#0d3a1c", winEdge: "#1c7a3a",
+    partialEdge: "#c8901f",
+    trap: "#f6c9c0", trapInk: "#a3161d",
+    jolly: "#ffe27a", jollyInk: "#6a4a00",
+    item: "#c9efe8", itemInk: "#0c5a55",
+  };
   // CGA: colori piatti puri, niente mezzi toni
-  const borderColor = isTrap ? C.red : isJolly ? C.gold : isItem ? C.cyan : isStop ? C.red :
+  const borderColor = printSkin ? (
+    isTrap || isStop ? PRINT.trapInk : isJolly ? "#c8901f" : isItem ? PRINT.itemInk :
+    isWinSymbol ? PRINT.winEdge : isPartialMatch ? PRINT.partialEdge : "#ead56b"
+  ) : isTrap ? C.red : isJolly ? C.gold : isItem ? C.cyan : isStop ? C.red :
     isCard ? (isWinSymbol ? C.green : C.text) :
     isWinSymbol ? C.green : isPartialMatch ? C.gold : C.dim;
-  const bg = isTrap ? "#550000" : isJolly ? "#555500" : isItem ? "#005555" : isStop ? "#550000" :
+  const bg = printSkin && !isCard ? (
+    isTrap || isStop ? PRINT.trap : isJolly ? PRINT.jolly : isItem ? PRINT.item :
+    isWinSymbol ? PRINT.win : PRINT.paper
+  ) : isTrap ? "#550000" : isJolly ? "#555500" : isItem ? "#005555" : isStop ? "#550000" :
     isCard ? "#FFFFFF" :
     isWinSymbol ? "#005500" : isPartialMatch ? "#555500" : printSkin ? "#fff0b5" : "#000033";
-  const color = isTrap ? C.red : isJolly ? C.gold : isItem ? C.cyan : isStop ? C.red :
+  const color = printSkin && !isCard ? (
+    isTrap || isStop ? PRINT.trapInk : isJolly ? PRINT.jollyInk : isItem ? PRINT.itemInk :
+    isWinSymbol ? PRINT.winInk : PRINT.ink
+  ) : isTrap ? C.red : isJolly ? C.gold : isItem ? C.cyan : isStop ? C.red :
     isCard ? (cell.isRed ? "#FF0000" : "#000000") :
     isWinSymbol ? C.green : isPartialMatch ? C.gold : printSkin ? "#153f42" : C.text;
   // CGA: cella non grattata = nero con bordo più visibile (aspetto "moneta CGA")
   const unrevealedBorder = themeColor || "#778899";
-  const symFontSize = isCard ? "20px" : (cell.value !== undefined || isStop) ? "16px" :
-    printSkin ? "clamp(34px, 4vw, 52px)" : "24px";
+  // Sui biglietti stampati il simbolo occupa la cella (container query):
+  // numeri e valori grandi come su una schedina, non 16px sperduti.
+  const symFontSize = isCard ? "20px"
+    : printSkin ? ((cell.value !== undefined || isStop) ? "min(60cqh, 34cqw)" : "min(78cqh, 50cqw)")
+    : (cell.value !== undefined || isStop) ? "16px" : "24px";
 
   return (
     // Wrapper senza overflow: i coriandoli devono poter uscire dai bordi della
@@ -202,11 +225,12 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
       position:"relative",
     }}>
     <div style={{
-      position:"absolute", inset:0,
+      position:"absolute", inset:0, containerType:"size",
       border: printSkin && !cell.scratched
         ? "2px solid #ead56b"
         : `${printSkin ? 2 : 3}px solid ${cell.scratched && isBloody ? "#ff2030" : (cell.scratched ? borderColor : unrevealedBorder)}`,
-      outline: printSkin && !cell.scratched ? "1px solid #6f1d24" : "none",
+      outline: printSkin && !cell.scratched ? "1px solid #6f1d24"
+        : printSkin && cell.scratched && isPartialMatch ? `2px solid ${PRINT.partialEdge}` : "none",
       outlineOffset: "-3px",
       borderRadius: printSkin ? "2px" : "0", overflow:"hidden",
       background: cell.scratched ? bg : "#111",
@@ -227,7 +251,8 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
         <div style={{
           position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
           fontSize:symFontSize, fontWeight:"bold", color,
-          textShadow: isWinSymbol ? `0 0 8px ${C.green}` : isJolly ? `0 0 8px #ffd700` : isItem ? `0 0 8px #00cccc` : "none",
+          lineHeight: 1,
+          textShadow: printSkin ? "none" : isWinSymbol ? `0 0 8px ${C.green}` : isJolly ? `0 0 8px #ffd700` : isItem ? `0 0 8px #00cccc` : "none",
         }}>
           {cell.symbol}
         </div>

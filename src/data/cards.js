@@ -33,6 +33,13 @@ export const CARD_SYMBOLS = {
   ruota:           ["🍒","🍋","🔔","💎","7️⃣","🍀"],
   doppioOnulla:    ["✅","❌"],
   mahjong:         ["🀄","🎴","🏮","🧧","🐲","🐉"],
+  // Set a tema per i biglietti che usavano quello generico (SYMBOLS).
+  // Sempre 8 simboli come SYMBOLS: stessa distribuzione, cambia solo il disegno.
+  jackpotMix:       ["⚙️","🔩","🪙","🔧","💰","🧲","🪛","🔨"],
+  turistaPerSempre: ["✈️","🌴","🍹","🧳","🌺","🏖️","📸","🗺️"],
+  labirinto:        ["🗝️","🧭","🐍","🕯️","🗿","💎","🏺","🦂"],
+  grattaCombina:    ["🍒","🍋","🍇","🍉","🍊","💎","🔔","⭐"],
+  mappaTesor0:      ["💰","🧭","🗝️","⚓","🦜","💎","🏴‍☠️","🗺️"],
 };
 
 export const CARD_TYPES = [
@@ -133,3 +140,33 @@ export const CARD_BALANCE = {
   jackpotMix:      { winChance: 0.24, evTarget:  0.00, prizeMin: 45,  prizeMax: 120,  tier: 3 },
   turistaPerSempre:{ winChance: 0.20, evTarget: -0.14, prizeMin: 85,  prizeMax: 260,  tier: 3 },
 };
+
+// ─── BATTUTE DI SCONFITTA PER BIGLIETTO ──────────────────────
+// Solo testo: quando un biglietto finisce senza vincita. Una per carta,
+// scelta in modo stabile (non cambia mentre il giocatore la legge).
+export const LOSS_LINES = {
+  fortunaFlash:     ["Cinquanta centesimi ben spesi. Nel cestino.", "Il borsellino piange. Tu pure.", "Poveraccio eri, poveraccio resti."],
+  setteEMezzo:      ["Il banco ride. Il banco ride sempre.", "Carte sbagliate, mano sbagliata, serata sbagliata."],
+  portaFortuna:     ["Il gatto nero è passato. Due volte.", "Quadrifoglio a tre foglie.", "La fortuna aveva la porta chiusa."],
+  fintoMilionario:  ["Milionario per finta, povero per davvero.", "I soldi erano stampati sul biglietto. Solo lì."],
+  puzzle:           ["Manca sempre un pezzo.", "Incastro sbagliato. Riprova, geometra."],
+  boccaDrago:       ["Il drago ha sbadigliato. Tutto qui.", "Solo cenere, niente oro."],
+  miliardario:      ["Lo yacht salpa. Senza di te.", "Il caveau resta chiuso. A doppia mandata."],
+  tredici:          ["Tredici? Neanche dodici.", "Il bersaglio era lì. Tu no."],
+  maledetto:        ["Te l'avevano detto.", "La maledizione ringrazia per l'offerta.", "Il diavolo incassa. Tu no."],
+  ruota:            ["La ruota gira. Tu no.", "Tre rulli, zero idee."],
+  mahjong:          ["Il drago di giada non ti guarda nemmeno.", "Tessere sbagliate, lanterna spenta."],
+  jackpotMix:       ["Solo bulloni e rimpianti.", "Il jackpot era in manutenzione."],
+  turistaPerSempre: ["Vacanza annullata. Si torna al tabacchi.", "Il volo è in ritardo. Per sempre."],
+  labirinto:        ["Strada chiusa. Anche quella dopo.", "Il minotauro ringrazia."],
+  grattaCombina:    ["Combinazione sbagliata.", "Frutta sì, premio no."],
+  mappaTesor0:      ["La X era da un'altra parte.", "Il pappagallo sapeva. Non ha parlato."],
+};
+export function lossLine(card) {
+  const lines = LOSS_LINES[card?.id];
+  if (!lines) return "Niente… prossima volta!";
+  // scelta stabile: hash dei simboli della carta → stessa carta, stessa battuta
+  let h = 0;
+  for (const ch of (card.cells || []).map(c => c.symbol).join("|")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return lines[h % lines.length];
+}
