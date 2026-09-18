@@ -10,6 +10,7 @@ import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
 import { Tooltip } from "./Tooltip.jsx";
 import { Asset } from "./Asset.jsx";
+import { ticketArtCrop, TICKET_ART_ASPECT } from "../data/ticketLayout.js";
 import { VintageBadge } from "./Vintage.jsx";
 import { ANIM } from "../styles/animations.js";
 import { useIsMobile } from "../hooks/useIsMobile.js";
@@ -84,8 +85,12 @@ function ScrollRow({ children, bg = "#05050b" }) {
 }
 
 // ─── ProductTile: card App-Store style ───────────────────────
-function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, canAfford, onClick, tooltip, badgeLabel, shimmer = false, disabled = false, ticketPreview = false }) {
+function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, canAfford, onClick, tooltip, badgeLabel, shimmer = false, disabled = false, ticketPreview = false, cardId = null }) {
   const cantPay = !canAfford || disabled;
+  // Biglietti: si mostra solo l'illustrazione (ritaglio da ticketArtCrop),
+  // con il riquadro nelle sue proporzioni — niente fascia vuota al centro.
+  const crop = ticketPreview ? ticketArtCrop(cardId) : null;
+  const cropAspect = crop ? String(TICKET_ART_ASPECT) : null;
   return (
     <Tooltip text={tooltip}>
       <div
@@ -122,7 +127,7 @@ function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, c
       >
         {/* Preview area */}
         <div style={{
-          position: "relative", height: "62px",
+          position: "relative", ...(crop ? { aspectRatio: cropAspect } : { height: "62px" }),
           background: `linear-gradient(135deg, ${accent.c}18, ${accent.c}05)`,
           borderBottom: `1px solid ${accent.c}44`,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -150,7 +155,13 @@ function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, c
             width: ticketPreview ? "100%" : "auto", height: ticketPreview ? "100%" : "auto",
             textShadow: `0 0 12px ${accent.c}`,
             filter: cantPay ? "grayscale(0.6) brightness(0.7)" : "none",
-          }}><Asset id={assetId} emoji={emoji} size={ticketPreview ? "100%" : 28} style={ticketPreview ? {width:"100%", height:"100%", objectFit:"cover"} : {}} /></div>
+          }}>{crop
+            ? <Asset id={assetId} emoji={emoji} size="100%" style={{
+                position:"absolute", maxWidth:"none",
+                width:`${10000 / crop.width}%`, height:`${10000 / crop.height}%`,
+                left:`${-crop.left * 100 / crop.width}%`, top:`${-crop.top * 100 / crop.height}%`,
+              }} />
+            : <Asset id={assetId} emoji={emoji} size={28} />}</div>
           {/* Shimmer foil per rarità alta */}
           {shimmer && !cantPay && (
             <div style={{
@@ -504,6 +515,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
                 emoji={c.emoji || "🎫"}
                 assetId={`ticket-${c.id}-v3`}
                 ticketPreview
+                cardId={c.id}
                 name={c.name}
                 subtitle={accent.label}
                 cost={price}
@@ -610,6 +622,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
                       emoji={c.emoji || "🎫"}
                       assetId={`ticket-${c.id}-v3`}
                       ticketPreview
+                      cardId={c.id}
                       name={c.name}
                       subtitle="VIP"
                       cost={price}

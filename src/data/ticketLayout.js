@@ -44,3 +44,28 @@ export function ticketLayout(cardId) {
 
 // inset CSS da un rect in percentuali
 export const inset = r => `${r.top}% ${r.right}% ${r.bottom}% ${r.left}%`;
+
+// ─── RITAGLIO DELL'ILLUSTRAZIONE ─────────────────────────────
+// In tutti i 17 biglietti V3 l'elemento distintivo (drago, dadi, ruota…) sta
+// in alto a sinistra, prima del cartiglio. Le miniature (negozio) mostrano
+// solo questo, invece della fascia centrale che cadeva sull'area da grattare.
+// Tutte le miniature hanno le stesse proporzioni (le righe restano allineate):
+// per ogni biglietto si sceglie solo quanta larghezza dell'arte prendere
+// (percentuale), l'altezza ne discende. Verificato uno per uno a 3×.
+export const TICKET_ART_ASPECT = 160 / 109;
+const ART_W = 364, ART_H = 273;
+const CROP_WIDTH = {
+  default: 44,
+  // qui il cartiglio o la cornice del pannello arrivano prima
+  fortunaFlash: 40,
+  doppioOnulla: 40,
+  maledetto: 40,
+  grattaCombina: 40,
+  jackpotMix: 40,
+  setteEMezzo: 40,
+};
+export function ticketArtCrop(cardId) {
+  const width = CROP_WIDTH[cardId] ?? CROP_WIDTH.default;
+  const height = (width * ART_W / ART_H) / TICKET_ART_ASPECT;
+  return { left: 0, top: 0, width, height };
+}
