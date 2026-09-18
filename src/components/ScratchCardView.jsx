@@ -608,7 +608,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
         ...(hasTicket ? {
           // Overlay sul biglietto AI: la griglia riempie il pannello scuro dell'arte.
           gridTemplateRows: `repeat(${gridRows}, 1fr)`,
-          gap: "2.4%",
+          gap: hasAsset(v3TicketId) ? "1.2%" : "2.4%",
           width: gridSize, height: gridSize, margin: "auto",
         } : {
           gap: "4px", maxWidth: "min(340px, 94vw)", width: "100%", margin: "6px auto 8px",
@@ -631,6 +631,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
               isBloody={bloodyCells.has(idx)}
               blocked={nailState === "morta"} onBlockedAttempt={warnDeadNail}
               ambidestri={ambidestri} themeColor={card.theme?.border} fill={hasTicket}
+              printSkin={hasAsset(v3TicketId)}
               /* Scala la festa dei coriandoli col valore del biglietto:
                  la LEGGENDARIA merita più della COMUNE. */
               winTier={tier} />

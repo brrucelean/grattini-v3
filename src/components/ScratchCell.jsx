@@ -33,7 +33,7 @@ function cellBurstPieces(tier, seed) {
   });
 }
 
-export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPartialMatch, ambidestri=false, bloodMode=false, isBloody=false, themeColor=null, blocked=false, onBlockedAttempt=null, fill=false, winTier=1 }) {
+export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPartialMatch, ambidestri=false, bloodMode=false, isBloody=false, themeColor=null, blocked=false, onBlockedAttempt=null, fill=false, winTier=1, printSkin=false }) {
   const canvasRef = useRef(null);
   const rootRef = useRef(null);
   const drawing = useRef(false);
@@ -102,21 +102,22 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    // Silver gradient — più brillante, stile CGA coin
+    // Patina da vero gratta e vinci: opaca, stampata e leggermente irregolare.
+    // I biglietti V3 evitano il vecchio effetto "pannello cromato".
     const grad = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-    grad.addColorStop(0,   "#aaaaaa");
-    grad.addColorStop(0.3, "#d4d4d4");
-    grad.addColorStop(0.5, "#e8e8e8");
-    grad.addColorStop(0.7, "#c0c0c0");
-    grad.addColorStop(1,   "#888888");
+    grad.addColorStop(0,   printSkin ? "#8f928c" : "#aaaaaa");
+    grad.addColorStop(0.3, printSkin ? "#c5c6bc" : "#d4d4d4");
+    grad.addColorStop(0.55,printSkin ? "#a7aaa3" : "#e8e8e8");
+    grad.addColorStop(0.78,printSkin ? "#d2d0c4" : "#c0c0c0");
+    grad.addColorStop(1,   printSkin ? "#858982" : "#888888");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     // Shimmer highlights
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
-    for (let i=0; i<55; i++) ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
+    ctx.fillStyle = printSkin ? "rgba(255,255,230,0.24)" : "rgba(255,255,255,0.5)";
+    for (let i=0; i<55; i++) ctx.fillRect((i * 37 + idx * 11) % canvas.width, (i * 19 + idx * 7) % canvas.height, printSkin ? 1 : 1.5, printSkin ? 1 : 1.5);
     // Dark grit
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    for (let i=0; i<25; i++) ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+    ctx.fillStyle = printSkin ? "rgba(42,48,45,0.18)" : "rgba(0,0,0,0.2)";
+    for (let i=0; i<25; i++) ctx.fillRect((i * 29 + idx * 17) % canvas.width, (i * 31 + idx * 5) % canvas.height, printSkin ? 1 : 2, printSkin ? 1 : 2);
     // Diagonal texture lines
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 0.5;
@@ -126,7 +127,14 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
       ctx.lineTo(0, i*(canvas.height/7));
       ctx.stroke();
     }
-  }, []);
+    if (printSkin) {
+      ctx.fillStyle = "rgba(35,55,52,0.48)";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("★", canvas.width / 2, canvas.height / 2);
+    }
+  }, [idx, printSkin]);
 
   const doScratch = (e) => {
     if (blocked) { onBlockedAttempt?.(); return; }
@@ -175,13 +183,14 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
     isWinSymbol ? C.green : isPartialMatch ? C.gold : C.dim;
   const bg = isTrap ? "#550000" : isJolly ? "#555500" : isItem ? "#005555" : isStop ? "#550000" :
     isCard ? "#FFFFFF" :
-    isWinSymbol ? "#005500" : isPartialMatch ? "#555500" : "#000033";
+    isWinSymbol ? "#005500" : isPartialMatch ? "#555500" : printSkin ? "#fff0b5" : "#000033";
   const color = isTrap ? C.red : isJolly ? C.gold : isItem ? C.cyan : isStop ? C.red :
     isCard ? (cell.isRed ? "#FF0000" : "#000000") :
-    isWinSymbol ? C.green : isPartialMatch ? C.gold : C.text;
+    isWinSymbol ? C.green : isPartialMatch ? C.gold : printSkin ? "#153f42" : C.text;
   // CGA: cella non grattata = nero con bordo più visibile (aspetto "moneta CGA")
   const unrevealedBorder = themeColor || "#778899";
-  const symFontSize = isCard ? "20px" : (cell.value !== undefined || isStop) ? "16px" : "24px";
+  const symFontSize = isCard ? "20px" : (cell.value !== undefined || isStop) ? "16px" :
+    printSkin ? "clamp(34px, 4vw, 52px)" : "24px";
 
   return (
     // Wrapper senza overflow: i coriandoli devono poter uscire dai bordi della
@@ -193,14 +202,18 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
     }}>
     <div style={{
       position:"absolute", inset:0,
-      border:`3px solid ${cell.scratched && isBloody ? "#ff2030" : (cell.scratched ? borderColor : unrevealedBorder)}`,
-      borderRadius:"0", overflow:"hidden",
+      border: printSkin && !cell.scratched
+        ? "2px solid #ead56b"
+        : `${printSkin ? 2 : 3}px solid ${cell.scratched && isBloody ? "#ff2030" : (cell.scratched ? borderColor : unrevealedBorder)}`,
+      outline: printSkin && !cell.scratched ? "1px solid #6f1d24" : "none",
+      outlineOffset: "-3px",
+      borderRadius: printSkin ? "2px" : "0", overflow:"hidden",
       background: cell.scratched ? bg : "#111",
       boxShadow: winAnim
         ? `0 0 0 3px ${C.green}ee, 0 0 24px ${C.green}aa, 0 0 48px ${C.green}55, 3px 3px 0 #000`
         : cell.scratched && isBloody
           ? "inset 0 0 14px #ff000088, 0 0 10px #ff000055, 3px 3px 0 #000"
-          : "3px 3px 0 #000000",
+          : printSkin ? "none" : "3px 3px 0 #000000",
       animation: winAnim ? "winFlash 0.9s ease-out forwards" : "none",
       transition: `box-shadow ${T.instant}`,
     }}>
@@ -215,7 +228,7 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
         </div>
       )}
       {/* ASCII texture underneath canvas */}
-      {!cell.scratched && (
+      {!cell.scratched && !printSkin && (
         <div style={{
           position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
           fontSize:"10px", color:"#444", fontFamily:FONT, lineHeight:"1",
