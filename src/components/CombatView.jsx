@@ -16,6 +16,7 @@ import { NailDisplay } from "./NailDisplay.jsx";
 import { Asset } from "./Asset.jsx";
 import { hasAsset } from "../assets/registry.js";
 import { ANIM } from "../styles/animations.js";
+import { ToolTray, Receipt, TABLE_BG, MAT_STYLE } from "./scratch/ScratchTable.jsx";
 
 // Nomi categoria abbreviati — COMBATTIMENTO è troppo lungo per le card strette
 const CAT_SHORT = { COMBATTIMENTO: "BOTTA", DIFESA: "PARATA", DENARO: "PREMIO" };
@@ -35,8 +36,26 @@ function enemySpriteKey(enemy) {
 }
 
 
+// ─── CORNICI TCG — BISCA CLANDESTINA ─────────────────────────
+// Carte nere e oro; la categoria è un filo sottile e una gemma, non una
+// cornice satura. Avorio spento per i testi. Dithering netto, niente sfumature.
+// Tavolo da bisca: legno quasi nero, panno verde bottiglia con filo d'oro.
+const DUEL_BG = "repeating-conic-gradient(#1a0f09 0% 25%, #1e120a 0% 50%) 0 0 / 4px 4px";
+const DUEL_MAT = {
+  background: "repeating-conic-gradient(#0c1f15 0% 25%, #0f2419 0% 50%) 0 0 / 4px 4px",
+  boxShadow: "inset 0 0 0 2px #06100a, inset 0 0 0 3px #7a6230, inset 0 0 0 6px #06100a, 6px 6px 0 #050304",
+};
+const TCG_PARCH = "repeating-conic-gradient(#cfc3a3 0% 25%, #c8bb99 0% 50%) 0 0 / 4px 4px";
+const TCG_BLACK = "repeating-conic-gradient(#121014 0% 25%, #17141a 0% 50%) 0 0 / 4px 4px";
+const TCG_GOLD = "#c9a24a";
+const TCG_FRAME = {
+  COMBATTIMENTO: { title: "BOTTA", sigil: "▲", type: "Colpo — Botta", gem: "#9e2626", edge: "#9e2626", dark: "#2a0a0a", frame: TCG_BLACK, art: "#0b090b" },
+  DIFESA:        { title: "PARATA", sigil: "◆", type: "Difesa — Parata", gem: "#2d4f9a", edge: "#2d4f9a", dark: "#0a1228", frame: TCG_BLACK, art: "#0b090b" },
+  DENARO:        { title: "PREMIO", sigil: "€", type: "Tesoro — Premio", gem: "#a8862a", edge: "#a8862a", dark: "#241a06", frame: TCG_BLACK, art: "#0b090b" },
+};
+
 // ─── COMBAT CARD SCRATCH ─────────────────────────────────────
-export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailState = "sana", onDeadAttempt }) {
+export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailState = "sana", onDeadAttempt, tcg = false }) {
   const canvasRef = useRef(null);
   const drawing = useRef(false);
   const revealed = useRef(false);
@@ -79,11 +98,12 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
     ctx.fillStyle = "#243331";
     ctx.font = "bold 15px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(CAT_SHORT[cell.category] || "GRATTA", canvas.width / 2, canvas.height - 12);
+    if (canvas.dataset.tcg !== "1") ctx.fillText(CAT_SHORT[cell.category] || "GRATTA", canvas.width / 2, canvas.height - 12);
     ctx.globalAlpha = 1;
-    // Bordo interno scuro
-    ctx.strokeStyle = catColors[cell.category] || C.gold;
-    ctx.lineWidth = 5;
+    // Bordo interno: sulle carte TCG solo un filo scuro (la cornice è già sulla carta)
+    const isTcg = canvas.dataset.tcg === "1";
+    ctx.strokeStyle = isTcg ? "#2a2420" : (catColors[cell.category] || C.gold);
+    ctx.lineWidth = isTcg ? 2 : 5;
     ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
     ctx.strokeStyle = "rgba(25,35,34,0.65)";
     ctx.lineWidth = 2;
@@ -147,6 +167,64 @@ export function CombatCardScratch({ cell, onRevealed, catColors, disabled, nailS
     onTouchMove: (e) => { if (drawing.current) doScratch(e); e.preventDefault(); },
     onTouchEnd:  () =>  { drawing.current = false; },
   };
+
+  // ── Resa "biglietto da bisca" (tavolo da duello): grattino orizzontale nero
+  // con filo d'oro, etichetta di categoria, patina argentata al centro e
+  // numero di serie. Grattato mostra icona, nome ed effetto, leggibili.
+  // Il contenitore esterno fa da container: le misure interne (cqw/cqh) sono
+  // relative al biglietto, non alla griglia.
+  if (tcg) {
+    const F = TCG_FRAME[cell.category] || TCG_FRAME.DENARO;
+    const serial = String(((cell.name || "").length * 97 + (cell.category || "").length * 13) % 9000 + 1000);
+    return (
+      <div {...evts} style={{
+        position: "relative", width: "100%", height: "100%", containerType: "size",
+        cursor: disabled ? "default" : "crosshair", touchAction: "none", fontFamily: FONT,
+        filter: disabled && !isRevealed ? "brightness(0.45) grayscale(0.6)" : "none",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0, boxSizing: "border-box", padding: "4cqh 3.5cqw",
+          display: "grid", gridTemplateRows: "auto minmax(0,1fr) auto", gap: "3cqh",
+          background: TCG_BLACK,
+          boxShadow: `inset 0 0 0 2px #050304, inset 0 0 0 3px ${TCG_GOLD}, inset 0 0 0 5px #050304, 4px 4px 0 #050304`,
+        }}>
+          {/* intestazione: categoria + nome */}
+          <div style={{ display: "flex", alignItems: "center", gap: "2.5cqw", minWidth: 0 }}>
+            <span style={{ padding: "0.6cqh 1.6cqw", fontSize: "max(10px, 11cqh)", letterSpacing: "0.3cqw",
+              color: "#f0e6cc", background: F.gem, lineHeight: 1.1, whiteSpace: "nowrap" }}>{F.sigil} {F.title}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: "max(10px, 11cqh)", color: TCG_GOLD, whiteSpace: "nowrap",
+              overflow: "hidden", textOverflow: "ellipsis" }}>{isRevealed ? cell.name : "GRATTA E VINCI"}</span>
+          </div>
+          {/* area centrale: patina da grattare, poi l'effetto */}
+          <div style={{ position: "relative", minHeight: 0, background: "#0b090b", boxShadow: `inset 0 0 0 1px ${F.edge}`,
+            display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", alignItems: "center", gap: "3cqw", padding: "0 4cqw" }}>
+            {isRevealed && (<>
+              <Asset id={!cell.emoji && cell.category ? `combat-${cell.category.toLowerCase()}` : null}
+                emoji={cell.emoji || CAT_EMOJI_MAP[cell.category] || "?"} size="min(34cqh, 22cqw)" />
+              <span style={{ fontSize: "max(10px, 10cqh)", lineHeight: 1.3, color: "#e8dcc0" }}>{cell.desc || ""}</span>
+            </>)}
+            {!isRevealed && (
+              <canvas ref={canvasRef} data-tcg="1" width={220} height={100} style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", display: "block",
+                cursor: disabled ? "default" : combatNailCursor, touchAction: "none",
+              }} />
+            )}
+            {!isRevealed && (
+              <span aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: "34cqh", color: "#2a2420", opacity: 0.55 }}>{F.sigil}</span>
+            )}
+          </div>
+          {/* piede: serie + valore */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "max(9px, 8cqh)", color: "#7a6a4a" }}>
+            <span>N° {serial}</span>
+            {isRevealed && cell.value != null
+              ? <span style={{ color: TCG_GOLD, fontSize: "max(10px, 10cqh)" }}>{cell.category === "DENARO" ? `€${cell.value}` : cell.value}</span>
+              : <span>{F.type}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -384,7 +462,7 @@ function TimingBar({ mode = "attack", speed = 1.5, onResult, perfectWiden = 0 })
 
 
 // ─── COMBAT COMPONENT — DUELLO HP ────────────────────────────
-export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onCellScratch, onGrattatoreConsumed, onCombo, onVariantRevealed }) {
+export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onCellScratch, onGrattatoreConsumed, onCombo, onVariantRevealed, table = false, onEquipGrattatore }) {
   // Nome mostrato all'utente: usa il flavor (displayName) se presente, altrimenti
   // la specie. Le lookup stats/pool/sprite restano su enemy.name (la specie).
   const enemyLabel = enemy.displayName || enemy.name;
@@ -861,6 +939,188 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
     loot: { left: "88%", top: "24%" },
     player: { left: "16%", top: "24%" },
   };
+
+  // ─── RENDER: TAVOLO DA DUELLO (desktop) ────────────────────
+  // Stessa logica, altra messa in scena: locandina del nemico, mosse in
+  // arrivo, 9 carte grandi e ferme, riga fissa con turno/bottino/azione,
+  // vassoio dei grattatori e scontrino del duello a destra. Nessuno scroll.
+  if (table) {
+    const PAPER = "#fff3c4", INK = "#153f42", WOOD = "#1b100a", GOLDL = "#e9c46a";
+    const segBar = (pct, fill, back) => ({
+      position: "relative", height: "16px", background: back, overflow: "hidden",
+      boxShadow: "inset 0 0 0 2px #0c0704",
+    });
+    const intent = (ec) => ec.category === "COMBATTIMENTO" ? { ic: "▲", lb: "BOTTA", col: "#c0433a" }
+      : ec.category === "DIFESA" ? { ic: "◆", lb: "PARATA", col: "#5b82d6" }
+      : { ic: "€", lb: "PREMIO", col: "#c9a24a" };
+    const activeEx = currentExchange >= 0 ? currentExchange : revealedIdxs.length;
+    const showGrid = phase !== "intro" && hand.length > 0;
+    const receiptLog = log.map((l, i) => ({ id: i + 1, text: l.text }));
+    return (
+      <div style={{
+        position: "relative", flex: 1, minHeight: 0, width: "100%", height: "100%",
+        display: "grid", gridTemplateColumns: "minmax(0,1fr) 248px", gap: "12px", padding: "8px",
+        background: DUEL_BG, fontFamily: FONT, color: C.text, overflow: "hidden",
+        animation: shake === "heavy" ? "screenShake 0.38s" : shake === "light" ? "screenShakeLight 0.24s" : "none",
+      }}>
+        {painFlash > 0 && (
+          <div style={{ position: "absolute", inset: 0, background: `rgba(255,0,0,${painFlash})`, pointerEvents: "none", zIndex: 50 }} />
+        )}
+
+        {/* ══ CENTRO: tappetino del duello ══ */}
+        <div style={{ ...DUEL_MAT, position: "relative", minHeight: 0, padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {floaters.map(f => {
+            const a = FLOATER_ANCHOR[f.zone] || FLOATER_ANCHOR.enemy;
+            return (
+              <div key={f.id} style={{
+                position: "absolute", left: `calc(${a.left} + ${f.dx || 0}px)`, top: `calc(${a.top} + ${f.dy || 0}px)`,
+                zIndex: 55, pointerEvents: "none", whiteSpace: "nowrap", color: f.color, fontWeight: "bold",
+                fontSize: f.big ? "28px" : "19px", textShadow: "2px 2px 0 #000",
+                animation: "combatFloat 1.1s ease-out forwards",
+              }}>{f.text}</div>
+            );
+          })}
+
+          {/* Nemico in alto: striscia nera e oro — ritratto, nome, vita, scudo, mosse */}
+          <div style={{
+            flexShrink: 0, display: "grid", gridTemplateColumns: "88px minmax(0,1fr) auto", gap: "16px", alignItems: "center",
+            padding: "10px 14px", background: TCG_BLACK,
+            boxShadow: `inset 0 0 0 2px #050304, inset 0 0 0 3px ${perfectHit ? "#fff" : TCG_GOLD}, inset 0 0 0 5px #050304, inset 0 0 0 6px ${enemy.isBoss ? TCG_GOLD : "#6e1d1d"}, 5px 5px 0 #050304`,
+            transform: enemyHitFlash ? "translateX(4px)" : "none", transition: "transform 0.1s", fontFamily: FONT,
+          }}>
+            <div style={{ width: 88, height: 88, background: "#0a0604", boxShadow: `inset 0 0 0 1px ${TCG_GOLD}`, overflow: "hidden",
+              display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {hasAsset(`spr-${enemySpriteKey(enemy)}`) ? (
+                <Asset id={`spr-${enemySpriteKey(enemy)}`} size={88}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", animation: perfectHit ? "perfectHitFlash 0.6s ease-out" : "none" }} />
+              ) : (
+                <pre style={{ margin: 0, color: "#ff6a6a", fontFamily: FONT, fontSize: "6px", lineHeight: 1.05 }}>
+                  {(SPR_BIG[enemySpriteKey(enemy)] || SPR_BIG.miniboss).join("\n")}
+                </pre>
+              )}
+            </div>
+            <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "12px", minWidth: 0 }}>
+                <span style={{ fontSize: "20px", color: TCG_GOLD, letterSpacing: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {enemy.isBoss ? "♛ " : ""}{enemyLabel}
+                </span>
+                <span style={{ fontSize: "11px", color: "#8a7a5a", whiteSpace: "nowrap" }}>
+                  {enemy.isBoss ? "Boss del quartiere" : "Teppista di quartiere"}
+                </span>
+                {inFury && <span style={{ fontSize: "11px", color: C.orange, boxShadow: `inset 0 0 0 1px ${C.orange}`, padding: "2px 8px", letterSpacing: "2px" }}>FURIA</span>}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", gap: "12px", alignItems: "center" }}>
+                <div aria-label={`Vita ${enemyHp} su ${enemyMaxHp}`} style={{ position: "relative", height: "14px", background: "#2a0a0a", boxShadow: "inset 0 0 0 1px #050304" }}>
+                  <div style={{ width: `${hpPct}%`, height: "100%", background: "#9e2626", transition: "width 0.4s steps(8)" }} />
+                  <div aria-hidden style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(90deg, transparent 0 18px, #050304 18px 20px)" }} />
+                </div>
+                <span style={{ fontSize: "14px", color: "#e0b0a0", fontVariantNumeric: "tabular-nums" }}>{enemyHp}/{enemyMaxHp}</span>
+                <span style={{ fontSize: "13px", color: "#9cb4e8", fontVariantNumeric: "tabular-nums" }}>◆ {enemyShield}</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+              <span style={{ fontSize: "11px", letterSpacing: "2px", color: "#8a7a5a" }}>TURNO {turn} · {inFury ? "in furia" : `furia al ${FURY_TURN}`}</span>
+              {phase !== "intro" && enemyPlan.length > 0 && (
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {enemyPlan.slice(0, 3).map((ec, i) => {
+                    const t = intent(ec);
+                    const done = phase === "player" && i < activeEx;
+                    const active = phase === "player" && i === activeEx;
+                    return (
+                      <span key={i} title={`Mossa ${i + 1}: ${t.lb.toLowerCase()}`} style={{
+                        display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", fontSize: "11px",
+                        background: active ? t.col : "#0b090b", color: active ? "#0b090b" : done ? "#4a4038" : t.col,
+                        boxShadow: `inset 0 0 0 1px ${done ? "#2a2420" : t.col}`, textDecoration: done ? "line-through" : "none",
+                      }}>{t.ic} {t.lb}</span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Carte del turno — misura fissa, calcolata sullo spazio disponibile */}
+          <div style={{ flex: 1, minHeight: 0, containerType: "size", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            {phase === "intro" && (
+              <div style={{ background: PAPER, color: INK, padding: "20px 24px", maxWidth: "560px", textAlign: "center",
+                boxShadow: `inset 0 0 0 2px #d9c27a, 5px 5px 0 #0c0704`, display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div style={{ fontSize: "20px" }}>{enemyLabel} ti sfida!</div>
+                <div style={{ fontSize: "13px", lineHeight: 1.6 }}>
+                  Ogni turno gratti <b>3 delle 9 carte</b>: <span style={{ color: C.red }}>▲ BOTTA</span> fa danno, <span style={{ color: C.blue }}>◆ PARATA</span> ti protegge, <span style={{ color: "#8a5a00" }}>€ PREMIO</span> va nel bottino.
+                  Ferma il cursore nel <b>verde</b> per colpire o parare al meglio. Porta la sua vita a zero prima che finiscano le tue unghie.
+                </div>
+                <div style={{ fontSize: "12px", color: "#a3161d" }}>Dal turno {FURY_TURN} va in FURIA: niente cure, più danno.</div>
+              </div>
+            )}
+            {showGrid && (
+              <div style={{
+                // biglietti orizzontali (8:5) grandi quanto lo spazio permette
+                "--cw": "min(calc((100cqw - 24px) / 3), calc((100cqh - 24px) / 3 * 1.6))",
+                display: "grid", gap: "12px",
+                gridTemplateColumns: "repeat(3, var(--cw))", gridTemplateRows: "repeat(3, calc(var(--cw) / 1.6))",
+              }}>
+                {hand.map((cell, i) => {
+                  const isRevealed = revealedIdxs.includes(i);
+                  const locked = (phase !== "player" || revealedIdxs.length >= 3 || busy) && !isRevealed;
+                  return (
+                    <CombatCardScratch key={`${turn}-${i}`} cell={cell} catColors={CAT_COLORS}
+                      onRevealed={() => onCellRevealed(i)} disabled={locked} tcg
+                      nailState={activeNailState} onDeadAttempt={warnDeadNail} />
+                  );
+                })}
+              </div>
+            )}
+            {deadNailWarn && (
+              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 20,
+                padding: "8px 14px", background: "#1a0005", color: C.red, boxShadow: `inset 0 0 0 2px ${C.red}`, whiteSpace: "nowrap" }}>
+                ✝ UNGHIA MORTA — scegline una sana dalla colonna UNGHIE
+              </div>
+            )}
+            {phase === "win" && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 30 }}>
+                <div style={{ background: PAPER, color: INK, padding: "20px 28px", textAlign: "center", boxShadow: `inset 0 0 0 3px #1c7a3a, 6px 6px 0 #0c0704`,
+                  display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+                  <span style={{ fontSize: "26px", color: "#1c7a3a" }}>HAI VINTO!</span>
+                  <span style={{ fontSize: "15px" }}>Bottino: €{loot}</span>
+                  <Btn variant="success" onClick={finishWin} style={{ fontSize: "15px", padding: "10px 28px" }}>INCASSA →</Btn>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Riga fissa: turno · bottino · azione */}
+          <div style={{ flexShrink: 0, height: "48px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "13px", color: PAPER, letterSpacing: "1px" }}>
+              {phase === "player" ? <>GRATTA 3 CARTE <b style={{ color: GOLDL }}>{revealedIdxs.length}/3</b></> : phase === "turnEnd" ? "FINE TURNO" : phase === "intro" ? "PRONTO?" : ""}
+            </span>
+            <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "8px", height: "36px", padding: "0 14px",
+              background: WOOD, color: C.gold, boxShadow: `inset 0 0 0 2px ${C.gold}`, fontSize: "18px", fontVariantNumeric: "tabular-nums" }}>
+              BOTTINO €{loot}
+              {coins.map(c => (
+                <span key={c.id} style={{ position: "absolute", left: "50%", top: 0, animation: "coinFly 1s ease-out forwards",
+                  "--dx": `${c.dx}px`, "--dy": `${c.dy}px`, "--rot": `${c.rot}deg`, fontSize: "16px", pointerEvents: "none" }}>🪙</span>
+              ))}
+            </span>
+            <span style={{ justifySelf: "end" }}>
+              {phase === "intro" && <Btn variant="danger" onClick={startCombat} style={{ fontSize: "15px", padding: "10px 24px" }}>COMBATTI!</Btn>}
+              {phase === "turnEnd" && <Btn onClick={nextTurn} style={{ fontSize: "15px", padding: "10px 24px" }}>PROSSIMO TURNO →</Btn>}
+            </span>
+          </div>
+        </div>
+
+        {/* ══ DESTRA: grattatori + scontrino del duello ══ */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", minHeight: 0 }}>
+          <ToolTray player={player} onEquipGrattatore={onEquipGrattatore} />
+          <Receipt log={receiptLog} />
+        </div>
+
+        {activeTiming && (
+          <TimingBar mode={activeTiming.mode} speed={enemy.isBoss ? 1.75 : 1.45}
+            onResult={activeTiming.onResult} perfectWiden={activeTiming.perfectWiden || 0} />
+        )}
+      </div>
+    );
+  }
 
   // ─── RENDER ───────────────────────────────────────────────
   return (

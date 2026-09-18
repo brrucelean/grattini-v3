@@ -2034,9 +2034,11 @@ export default function Grattini() {
            centrato "a isola" con margini vuoti su entrambi i lati. */}
       {screen === "combat" && player && combatEnemy && (
         <div style={{flex:1, minHeight:0, width:"100%", display:"flex", justifyContent: wideDesk ? "flex-start" : "center", overflow:"hidden"}}>
-        <div style={{flex:1, minHeight:0, width:"100%", maxWidth:W.content, display:"flex", flexDirection:"column", overflow:"hidden"}}>
+        <div style={{flex:1, minHeight:0, width:"100%", maxWidth: wideShell ? "none" : W.content, display:"flex", flexDirection:"column", overflow:"hidden"}}>
           <Suspense fallback={<LazyFallback />}>
           <CombatView
+            table={wideShell}
+            onEquipGrattatore={handleRailEquipGrattatore}
             enemy={combatEnemy}
             player={player}
             onEnd={handleCombatEnd}
@@ -2074,7 +2076,7 @@ export default function Grattini() {
         </div>
         {/* Stessa fiancata ZAINO del negozio/evento — a schermo largo il
             duello (maxWidth W.content) lascia spazio a destra della sidebar. */}
-        {wideDesk && (
+        {wideDesk && !wideShell && (
           <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
         )}
         </div>
