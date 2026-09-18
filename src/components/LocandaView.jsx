@@ -2,6 +2,7 @@ import { C, FONT, T } from "../data/theme.js";
 import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
 import { Asset } from "./Asset.jsx";
+import { LocandaDesk } from "./locanda/LocandaDesk.jsx";
 
 // ─── RoomTile: card per singola stanza della locanda ──────────
 function RoomTile({ room, canAfford, onClick }) {
@@ -127,7 +128,7 @@ function RoomTile({ room, canAfford, onClick }) {
   );
 }
 
-export function LocandaView({ player, onRest, onLeave }) {
+export function LocandaView({ player, onRest, onLeave, table = false }) {
   const rooms = [
     { name: "Per Terra", emoji: "🛏️", img: "room-perterra", cost: 0, heals: 0, risk: "pavimento", desc: "Dormi sul pavimento lurido. Recuperi metà stato unghie. 50% chance ladro ti sveglia!", isFloor: true, accent: "#6a6a7a" },
     { name: "Bettola", emoji: "🍺", img: "room-bettola", cost: 6, heals: 1, risk: "ladri", desc: "Recuperi 1 unghia (anche morta). Rischio ladri!", accent: C.cyan },
@@ -135,6 +136,9 @@ export function LocandaView({ player, onRest, onLeave }) {
     { name: "Suite", emoji: "🏨", img: "room-suite", cost: 110, heals: 5, risk: null, desc: "Recuperi TUTTE le unghie a Sana!", kawaii: false, accent: C.gold },
     { name: "Manicure Kawaii", emoji: "💅", img: "room-kawaii", cost: 175, heals: 5, risk: null, desc: "✨ Tutte le unghie diventano KAWAII (x2 premio)!", kawaii: true, accent: C.pink },
   ];
+
+  // Desktop: insegna + listino, stile della soglia.
+  if (table) return <LocandaDesk rooms={rooms} player={player} onRest={onRest} onLeave={onLeave} />;
 
   return (
     <div style={{...S.panel, maxWidth: "540px", margin: "10px auto", background: "#05050b", border: `2px solid ${C.pink}55`, boxShadow: `0 0 22px ${C.pink}22, inset 0 0 28px ${C.pink}08`}}>

@@ -2000,9 +2000,10 @@ export default function Grattini() {
           Resta centrata (non flex-start): richiesto esplicitamente
           dall'utente dopo un tentativo di allinearla come Shop/Event/Combat. */}
       {screen === "locanda" && player && (
-        <div style={{maxWidth:W.content, width:"100%"}}>
+        <div style={wideShell ? { flex:1, minHeight:0, width:"100%", display:"flex" } : {maxWidth:W.content, width:"100%"}}>
           <Suspense fallback={<LazyFallback />}>
           <LocandaView
+            table={wideShell}
             player={player}
             onRest={handleRest}
             onLeave={() => setScreen("map")}
@@ -2018,20 +2019,15 @@ export default function Grattini() {
            prima solo il negozio faceva così, evento e combattimento restavano
            centrati "a isola" con più spazio morto ai lati. */}
       {screen === "event" && player && currentNode && (
-        <div style={{width:"100%", display:"flex", justifyContent: wideDesk ? "flex-start" : "center", gap: wideDesk ? "14px" : "0"}}>
+        <div style={{width:"100%", display:"flex", justifyContent:"center"}}>
           <Suspense fallback={<LazyFallback />}>
           <EventView
             node={currentNode}
             player={player}
             onChoice={handleEventChoice}
           />
-          {/* Aganciando il pannello alla sidebar (vedi sopra) resta spazio vuoto
-              a destra su schermo largo — stessa fiancata ZAINO già usata nel
-              negozio, richiesta esplicitamente anche qui. ShopZainoRail è un
-              lazy import: deve restare dentro lo stesso Suspense di EventView. */}
-          {wideDesk && (
-            <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
-          )}
+          {/* Niente fiancata ZAINO qui: duplicava il bottone ZAINO della barra
+              in alto (richiesto dall'utente). Lo stage resta centrato. */}
           </Suspense>
         </div>
       )}
