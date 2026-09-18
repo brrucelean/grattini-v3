@@ -35,7 +35,7 @@ export const CARD_SYMBOLS = {
   mahjong:         ["🀄","🎴","🏮","🧧","🐲","🐉"],
   // Set a tema per i biglietti che usavano quello generico (SYMBOLS).
   // Sempre 8 simboli come SYMBOLS: stessa distribuzione, cambia solo il disegno.
-  jackpotMix:       ["⚙️","🔩","🪙","🔧","💰","🧲","🪛","🔨"],
+  jackpotMix:       ["⚙️","🗜️","🪙","🔧","💰","🧲","🪛","🔨"],
   turistaPerSempre: ["✈️","🌴","🍹","🧳","🌺","🏖️","📸","🗺️"],
   labirinto:        ["🗝️","🧭","🐍","🕯️","🗿","💎","🏺","🦂"],
   grattaCombina:    ["🍒","🍋","🍇","🍉","🍊","💎","🔔","⭐"],

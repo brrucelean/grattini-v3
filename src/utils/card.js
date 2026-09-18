@@ -70,12 +70,28 @@ function _makeWinningSetteEMezzoCells(count, bancoTotal) {
   return shuffle(["J", "A", "2", "4"]).map(_makePlayingCard);
 }
 
-// Mano perdente per Sette e Mezzo, garantita da _isLosingSetteEMezzoHand.
+// Il giocatore gratta le carte nell'ORDINE CHE VUOLE: una mano è davvero
+// perdente solo se nessun sottoinsieme di carte ha somma tra banco (escluso)
+// e 7½ (incluso). Prima si controllava solo l'ordine di generazione e il 75%
+// delle mani perdenti si poteva "vincere" grattando in un altro ordine,
+// incassando €0 (verificato su 20.000 biglietti, 2026-09-18).
+export function _isUnwinnableSetteEMezzoHand(cells, bancoTotal) {
+  const vals = cells.map(c => c.value);
+  for (let mask = 1; mask < (1 << vals.length); mask++) {
+    let s = 0;
+    vals.forEach((v, k) => { if (mask & (1 << k)) s += v; });
+    s = Math.round(s * 10) / 10;
+    if (s > bancoTotal && s <= 7.5) return false;
+  }
+  return true;
+}
+
+// Mano perdente per Sette e Mezzo, imbattibile in qualunque ordine.
 export function _makeLosingSetteEMezzoCells(count, bancoTotal) {
   const pool = ["5","6","7","A","2","3","4"];
-  for (let att = 0; att < 60; att++) {
+  for (let att = 0; att < 200; att++) {
     const cells = Array.from({length: count}, () => _makePlayingCard(pick(pool)));
-    if (_isLosingSetteEMezzoHand(cells, bancoTotal)) return cells;
+    if (_isUnwinnableSetteEMezzoHand(cells, bancoTotal)) return cells;
   }
   // Fallback deterministico: prima carta ≤ banco (quindi non si può stare),
   // poi dei 7 che fanno sballare subito al secondo scoperto.
@@ -171,9 +187,15 @@ export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
     const playerCells = isWinner
       ? _makeWinningSetteEMezzoCells(playerCount, bancoTotal)
       : _makeLosingSetteEMezzoCells(playerCount, bancoTotal);
+    let banco = { cards: bancoCards, total: bancoTotal };
+    // Perdente senza mano imbattibile contro questo banco: il banco fa 7½
+    // (7 + figura), che nessuna mano può superare senza sballare.
+    if (!isWinner && !_isUnwinnableSetteEMezzoHand(playerCells, bancoTotal)) {
+      banco = { cards: ["7", "K"].map(_makePlayingCard), total: 7.5 };
+    }
     prize = isWinner ? Math.max(type.cost*2, rollPrize()) : 0;
     cells = playerCells.map(c => ({...c, scratched:false}));
-    return { ...type, isWinner, prize, cells, symbols:cells.map(c=>c.symbol), scratchCount:0, bancoCards, bancoTotal };
+    return { ...type, isWinner, prize, cells, symbols:cells.map(c=>c.symbol), scratchCount:0, bancoCards: banco.cards, bancoTotal: banco.total };
   }
 
   // ── sum13 mechanic (Tredici) ─────────────────────────────────
