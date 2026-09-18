@@ -123,7 +123,7 @@ Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 | 01 | Shell e HUD | 🟡 | desktop fatto (barra, rail unghie modulare, scontrino, ticker); aperti combat, zaino shop, finali, tablet/telefono — vedi 01-SHELL-HUD |
 | 02 | Titolo | ✅ | `TitleScreen.jsx`, verificato desktop, 390×844, 375×667 |
 | 02 | Tutorial unghie (3 pagine) | ⬜ | ancora nella UI legacy |
-| 03 | Mappa | ⬜ | |
+| 03 | Mappa | 🟡 | mappa-slot orizzontale su desktop con pedina; aperti sprite nodi, altri biomi in partita, mascotte — vedi 03-MAP |
 | 04 | Combat | ⬜ | pilot revertito; piano valido in [04-COMBAT.md](redesign/04-COMBAT.md) |
 | 05 | Overlay grattata e ticket | 🟡 | artwork V3 per le 17 famiglie integrato, ma non conforme alla bible (vedi §5) |
 | 06 | Dita, unghie, strumenti | 🟡 | 5 stati su 9 |

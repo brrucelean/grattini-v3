@@ -60,6 +60,7 @@ const ScratchCardView  = lazy(() => import("./components/ScratchCardView.jsx").t
 const TicketGallery    = lazy(() => import("./components/TicketGallery.jsx").then(m => ({ default: m.TicketGallery })));
 const DoppioONullaView = lazy(() => import("./components/DoppioONullaView.jsx").then(m => ({ default: m.DoppioONullaView })));
 const MapView          = lazy(() => import("./components/MapView.jsx").then(m => ({ default: m.MapView })));
+const MapBoard         = lazy(() => import("./components/map/MapBoard.jsx").then(m => ({ default: m.MapBoard })));
 const ShopView         = lazy(() => import("./components/ShopView.jsx").then(m => ({ default: m.ShopView })));
 const ShopZainoRail    = lazy(() => import("./components/ShopView.jsx").then(m => ({ default: m.ShopZainoRail })));
 const LocandaView      = lazy(() => import("./components/LocandaView.jsx").then(m => ({ default: m.LocandaView })));
@@ -1830,6 +1831,17 @@ export default function Grattini() {
         }}>
           {/* Mappa — occupa tutto lo spazio disponibile */}
           <Suspense fallback={<LazyFallback />}>
+          {wideShell ? (
+          <MapBoard
+            map={map}
+            currentRow={currentRow}
+            visitedNodes={visitedNodes}
+            reachableNodes={getReachableNodes()}
+            onSelectNode={selectNode}
+            currentBiome={currentBiome}
+            playerFortuna={effectiveFortune || player.fortune || 0}
+          />
+          ) : (
           <MapView
             map={map}
             currentRow={currentRow}
@@ -1839,6 +1851,7 @@ export default function Grattini() {
             currentBiome={currentBiome}
             playerFortuna={effectiveFortune || player.fortune || 0}
           />
+          )}
           </Suspense>
 
           {/* Striscia inventario compatta — flexShrink:0, NON toglie spazio alla mappa */}
