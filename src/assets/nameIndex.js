@@ -10,7 +10,7 @@ import { assetUrl } from "./registry.js";
 
 const NAME_TO_ID = {};
 // Carte → card-<id>
-for (const c of CARD_TYPES) if (c?.name) NAME_TO_ID[c.name] = `card-${c.id}`;
+for (const c of CARD_TYPES) if (c?.name) NAME_TO_ID[c.name] = `ticket-${c.id}-v3`;
 // Consumabili / grattatori / reliquie (defs a oggetto) → item-<id>
 for (const [id, d] of Object.entries(ITEM_DEFS))       if (d?.name) NAME_TO_ID[d.name] = `item-${id}`;
 for (const [id, d] of Object.entries(GRATTATORE_DEFS)) if (d?.name) NAME_TO_ID[d.name] = `item-${id}`;

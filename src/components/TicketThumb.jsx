@@ -28,6 +28,7 @@ export function TicketThumb({ card, width = 190, style }) {
   const v3TicketId = `ticket-${card.id}-v3`;
   const legacyTicketId = `ticket-${card.id}`;
   const ticketAssetId = hasAsset(v3TicketId) ? v3TicketId : legacyTicketId;
+  const hasV3Art = ticketAssetId === v3TicketId;
   const hasArt = hasAsset(ticketAssetId);
 
   // Alcune carte (doppioOnulla, ruota) hanno insets NEGATIVI: in partita è voluto,
@@ -45,15 +46,17 @@ export function TicketThumb({ card, width = 190, style }) {
       display: "grid",
       gridTemplateColumns: `repeat(${cols}, 1fr)`,
       gridTemplateRows: `repeat(${rows}, 1fr)`,
-      gap: "4%",
+      gap: hasV3Art ? "2%" : "4%",
     }}>
       {Array(cols * rows).fill(0).map((_, i) => (
         <div key={i} style={{
           // Stessa patina argento e stesso bordo-accento delle celle non grattate
           // in partita (ScratchCell: unrevealedBorder = themeColor).
-          background: "linear-gradient(160deg, #e8e8e8 0%, #c0c0c0 70%, #9a9aa4 100%)",
-          border: `1px solid ${accent}`,
-          boxShadow: "inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.3)",
+          background: hasV3Art
+            ? "linear-gradient(150deg, #92958e 0%, #cac8bc 42%, #a5a8a1 66%, #d1cec0 100%)"
+            : "linear-gradient(160deg, #e8e8e8 0%, #c0c0c0 70%, #9a9aa4 100%)",
+          border: hasV3Art ? "1px solid #ead56b" : `1px solid ${accent}`,
+          boxShadow: hasV3Art ? "none" : "inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.3)",
         }} />
       ))}
     </div>

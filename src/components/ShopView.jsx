@@ -84,7 +84,7 @@ function ScrollRow({ children, bg = "#05050b" }) {
 }
 
 // ─── ProductTile: card App-Store style ───────────────────────
-function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, canAfford, onClick, tooltip, badgeLabel, shimmer = false, disabled = false }) {
+function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, canAfford, onClick, tooltip, badgeLabel, shimmer = false, disabled = false, ticketPreview = false }) {
   const cantPay = !canAfford || disabled;
   return (
     <Tooltip text={tooltip}>
@@ -147,9 +147,10 @@ function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, c
           })}
           <div style={{
             fontSize: "28px", position: "relative", zIndex: 2,
+            width: ticketPreview ? "100%" : "auto", height: ticketPreview ? "100%" : "auto",
             textShadow: `0 0 12px ${accent.c}`,
             filter: cantPay ? "grayscale(0.6) brightness(0.7)" : "none",
-          }}><Asset id={assetId} emoji={emoji} size={28} /></div>
+          }}><Asset id={assetId} emoji={emoji} size={ticketPreview ? "100%" : 28} style={ticketPreview ? {width:"100%", height:"100%", objectFit:"cover"} : {}} /></div>
           {/* Shimmer foil per rarità alta */}
           {shimmer && !cantPay && (
             <div style={{
@@ -501,7 +502,8 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
               <ProductTile
                 key={c.id}
                 emoji={c.emoji || "🎫"}
-                assetId={`card-${c.id}`}
+                assetId={`ticket-${c.id}-v3`}
+                ticketPreview
                 name={c.name}
                 subtitle={accent.label}
                 cost={price}
@@ -606,7 +608,8 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
                     <ProductTile
                       key={c.id}
                       emoji={c.emoji || "🎫"}
-                      assetId={`card-${c.id}`}
+                      assetId={`ticket-${c.id}-v3`}
+                      ticketPreview
                       name={c.name}
                       subtitle="VIP"
                       cost={price}
