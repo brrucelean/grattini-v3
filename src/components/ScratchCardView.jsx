@@ -711,6 +711,8 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           52%      { filter: brightness(0.97); }
         }
         @keyframes printWin { 0% { filter: brightness(1.35); } 50% { filter: none; } }
+        @keyframes crtWinFlicker { 0% { filter: brightness(1); } 8% { filter: brightness(1.45); } 12% { filter: brightness(0.9); } 16% { filter: brightness(1.2); } 22%, 100% { filter: brightness(1); } }
+        @media (prefers-reduced-motion: reduce) { @keyframes crtWinFlicker { from {} to {} } }
         @media (prefers-reduced-motion: reduce) { @keyframes printWin { from {} to {} } }
       `}</style>
       {!hasTicket && cornerBrackets(panelBorder, 12, 6, true)}
@@ -1285,9 +1287,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             border: `2px solid ${borderCol}`,
             padding: "12px 14px", marginBottom: "8px",
             boxShadow: `0 0 18px ${borderCol}66, inset 0 0 16px ${borderCol}18`,
-            // Sopra il biglietto (modalità tavolo) resta pieno: il pulse di
-            // opacità lo rendeva quasi trasparente.
-            animation: fit ? "none" : ANIM.pulseActive,
+            // Sopra il biglietto (modalità tavolo) niente pulse di opacità (lo
+            // rendeva quasi trasparente): sfarfallio CRT, solo luminosità a scatti.
+            animation: fit ? "crtWinFlicker 1.6s steps(1) infinite" : ANIM.pulseActive,
             textAlign: "center",
           }}>
             {cornerBrackets(borderCol, 10, 4, false)}
