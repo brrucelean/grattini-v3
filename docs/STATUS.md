@@ -98,7 +98,7 @@ Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 
 | # | Schermata | Stato | Note |
 |---|---|:---:|---|
-| 01 | Shell e HUD | ⬜ | **prossima**: wireframe desktop da approvare (artifact "Shell Grattini V3"). Causa del problema "pannello incollato" su tutte le schermate |
+| 01 | Shell e HUD | 🟡 | desktop fatto (barra, rail unghie modulare, scontrino, ticker); aperti combat, zaino shop, finali, tablet/telefono — vedi 01-SHELL-HUD |
 | 02 | Titolo | ✅ | `TitleScreen.jsx`, verificato desktop, 390×844, 375×667 |
 | 02 | Tutorial unghie (3 pagine) | ⬜ | ancora nella UI legacy |
 | 03 | Mappa | ⬜ | |

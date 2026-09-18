@@ -43,6 +43,10 @@ import { CarmeloLogBox, CarmeloScratchStrip } from "./components/DialogueBox.jsx
 import { NewsTicker } from "./components/NewsTicker.jsx";
 import { HUD } from "./components/HUD.jsx";
 import { NailSidebar } from "./components/NailSidebar.jsx";
+import { RunBar } from "./components/shell/RunBar.jsx";
+import { NailRail } from "./components/shell/NailRail.jsx";
+import { LogColumn } from "./components/shell/LogColumn.jsx";
+import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -459,6 +463,11 @@ export default function Grattini() {
   // Desktop largo: c'è spazio per le fiancate attorno al grattino (vedi overlay scratch).
   // Sotto i 1100px la carta resta da sola e centrata, come prima.
   const wideDesk = !isMobile && vw >= 1100;
+  // Shell desktop V3 (docs/STATUS.md D-01): barra, rail unghie, stage, log.
+  // Sotto i 1024px resta la shell legacy finché tablet e telefono non migrano.
+  const wideShell = vw >= 1024;
+  const inRun = !!player && !["title","tutorialNails"].includes(screen);
+  const shellLog = wideShell && inRun && ["map","event","node"].includes(screen);
 
   // DEV: galleria biglietti — dopo tutti gli hook, così l'ordine resta stabile.
   if (devTicket) {
@@ -520,20 +529,8 @@ export default function Grattini() {
         }
       `}</style>
 
-      {/* ── V2.1 GRANA PELLICOLA + VIGNETTATURA — unifica tutte le schermate ── */}
-      {!['title','tutorialNails'].includes(screen) && (
-        <div aria-hidden style={{
-        position:"fixed", inset:0, zIndex:90000, pointerEvents:"none",
-        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")`,
-        opacity:0.05, mixBlendMode:"overlay",
-        }}/>
-      )}
-      {!['title','tutorialNails'].includes(screen) && (
-        <div aria-hidden style={{
-        position:"fixed", inset:0, zIndex:90001, pointerEvents:"none",
-        background:"radial-gradient(ellipse at 50% 42%, transparent 56%, rgba(0,0,0,0.40) 100%)",
-        }}/>
-      )}
+      {/* Grana pellicola e vignettatura rimosse: effetti morbidi vietati dal
+          redesign (docs/redesign/00-MASTER-PLAN.md, regola 5). */}
 
       {/* ═══ FLASH ROSSO — UNGHIA SANGUINANTE (estetico, sparisce da solo) ═══ */}
       {globalPainFlash > 0 && (
@@ -744,7 +741,11 @@ export default function Grattini() {
       )}
 
       {/* ── HUD PERSISTENTE (tutte le screen tranne title e tutorial) ── */}
-      {player && !["title","tutorialNails"].includes(screen) && (
+      {inRun && wideShell && (
+        <RunBar player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} hideInventoryButton={screen === "shop" && wideDesk} />
+      )}
+      {inRun && wideShell && screen === "map" && <TickerRow currentBiome={currentBiome} />}
+      {inRun && !wideShell && (
         <div style={{width:"100%", flexShrink:0, paddingTop:"6px"}}>
           <HUD player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} currentBiome={currentBiome} hideInventoryButton={screen === "shop" && wideDesk} />
         </div>
@@ -754,7 +755,10 @@ export default function Grattini() {
       <div style={{flex:1, width:"100%", display:"flex", flexDirection: isMobile ? "column" : "row", overflow:"hidden", minHeight:0}}>
 
       {/* ── UNGHIE — colonna sinistra (desktop) / striscia orizzontale in cima (mobile) ── */}
-      {player && !["title","tutorialNails"].includes(screen) && (
+      {inRun && wideShell && (
+        <NailRail nails={player.nails} activeNail={player.activeNail} onSelectNail={handleSelectNail} locked={!!scratchingCard} equippedGrattatore={player.equippedGrattatore} />
+      )}
+      {inRun && !wideShell && (
         <div style={isMobile ? {
           width:"100%", flexShrink:0,
           borderBottom:`2px solid ${bioPal.border}55`,
@@ -798,8 +802,8 @@ export default function Grattini() {
         WebkitOverflowScrolling:"touch", /* momentum scroll iOS */
         display:"flex", flexDirection:"column", alignItems:"center",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        /* Scanlines CRT + ambient glow del bioma corrente */
-        backgroundImage: [
+        /* Scanlines CRT + ambient glow del bioma corrente — solo shell legacy */
+        backgroundImage: wideShell ? "none" : [
           /* linee bright ogni 4px — visibili anche su sfondo nero */
           "repeating-linear-gradient(180deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 4px)",
           `radial-gradient(ellipse 90% 55% at 50% 0%, ${bioPal.border}22 0%, transparent 100%)`,
@@ -3976,10 +3980,12 @@ export default function Grattini() {
 
       </div>{/* fine DESK */}
 
+      {shellLog && <LogColumn log={log} />}
+
       </div>{/* fine 3-column */}
 
       {/* ── LOG STRIP (bottom) — ticker CSS dell'ultima voce ── */}
-      {player && !["title","tutorialNails"].includes(screen) && log.length > 0 && (() => {
+      {inRun && !wideShell && log.length > 0 && (() => {
         const latest = log[log.length - 1];
         const duration = Math.max(7, latest.text.length * 0.085);
         return (

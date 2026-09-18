@@ -35,3 +35,28 @@ Una sola macchina scenica pixel-art che possiede l'intero viewport. Ogni scherma
 - tutte le risorse hanno simbolo, numero e stato accessibile;
 - cambio schermata senza salti dimensionali.
 
+
+## Checkpoint 2026-09-18 — shell desktop
+
+Wireframe approvato (artifact "Shell Grattini V3"). Implementato da 1024 px in su;
+sotto resta la shell legacy (priorità desktop, `STATUS.md` D-01 punto 7).
+
+- `src/components/shell/RunBar.jsx` — barra 48 px: soldi, grattini, vite, stati
+  attivi, volume, zaino. Stati attivi come dati in `statusChips.js`.
+- `src/components/shell/NailRail.jsx` — colonna sinistra 192 px, unico selettore
+  delle unghie. Modulare: 1–11 dita, gruppi MANO DESTRA / MANO SINISTRA / PIEDE
+  (campo `nail.hand` opzionale, altrimenti per indice), righe dense sopra le 6 dita.
+  Verificato con 11 dita a 1280×720 senza scroll.
+- `src/components/shell/LogColumn.jsx` — scontrino a destra 224 px su mappa,
+  eventi e nodi; sostituisce la riga log in fondo.
+- `src/components/shell/TickerRow.jsx` — notizie 24 px, solo sulla mappa.
+- Rimossi su desktop: scanline e alone del DESK, grana pellicola e vignettatura
+  (queste ultime ovunque).
+- Le emoji restano come fallback dentro `Asset` finché non arrivano gli sprite.
+
+Aperto:
+
+- combattimento: rail e log propri di `CombatView` da unificare con la shell (04);
+- negozio: `ShopZainoRail` da fondere nello zaino della shell (07);
+- finali e titolo: nascondere la barra (10);
+- tablet e telefono.

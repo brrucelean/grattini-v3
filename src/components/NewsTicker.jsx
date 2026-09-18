@@ -3,7 +3,8 @@ import { TICKER_COLORS, TICKER_LABELS, getNewsPool } from "../data/art.js";
 import { ANIM } from "../styles/animations.js";
 import { useReducedMotion } from "../hooks/useReducedMotion.js";
 
-function NewsTickerImpl({ currentBiome = 0 }) {
+// flat: versione della shell desktop — niente glow, niente sfumature, badge fermo.
+function NewsTickerImpl({ currentBiome = 0, flat = false }) {
   // Pool notizie = globali + quelle del bioma corrente (ricomputate al cambio bioma)
   const pool = useMemo(() => getNewsPool(currentBiome), [currentBiome]);
   const reducedMotion = useReducedMotion();
@@ -35,12 +36,12 @@ function NewsTickerImpl({ currentBiome = 0 }) {
   const textStyle = reducedMotion ? {
     position:"static", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
     color: col, fontSize:"11px", fontWeight:"bold", lineHeight:"20px",
-    textShadow:`0 0 8px ${col}88, 0 0 16px ${col}44`,
+    textShadow: flat ? "none" : `0 0 8px ${col}88, 0 0 16px ${col}44`,
     letterSpacing:"0.3px",
   } : {
     position:"absolute", left:"100%", top:0, whiteSpace:"nowrap",
     color: col, fontSize:"11px", fontWeight:"bold", lineHeight:"20px",
-    textShadow:`0 0 8px ${col}88, 0 0 16px ${col}44`,
+    textShadow: flat ? "none" : `0 0 8px ${col}88, 0 0 16px ${col}44`,
     animation: `newsTicker ${duration}s linear forwards`,
     willChange:"transform",
     letterSpacing:"0.3px",
@@ -52,8 +53,8 @@ function NewsTickerImpl({ currentBiome = 0 }) {
       <div style={{
         flex:1, overflow:"hidden", position:"relative", height:"20px",
         // Con la notizia ferma la maschera taglierebbe le prime parole
-        WebkitMaskImage: reducedMotion ? "none" : "linear-gradient(to right, transparent 0%, black 18%)",
-        maskImage: reducedMotion ? "none" : "linear-gradient(to right, transparent 0%, black 18%)",
+        WebkitMaskImage: reducedMotion || flat ? "none" : "linear-gradient(to right, transparent 0%, black 18%)",
+        maskImage: reducedMotion || flat ? "none" : "linear-gradient(to right, transparent 0%, black 18%)",
       }}>
         <div key={key} style={textStyle}>
           {pool[safeIdx]}
@@ -65,7 +66,7 @@ function NewsTickerImpl({ currentBiome = 0 }) {
         background: col, color:"#000",
         fontSize:"10px", fontWeight:"bold", letterSpacing:"1px",
         padding:"2px 6px", whiteSpace:"nowrap",
-        animation: reducedMotion ? "none" : ANIM.pulseActive,
+        animation: reducedMotion || flat ? "none" : ANIM.pulseActive,
       }}>{label}</div>
     </div>
   );
