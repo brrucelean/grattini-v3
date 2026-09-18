@@ -49,13 +49,13 @@ These will follow the approved large redundant symbols and remain recognizable w
 
 `boccaDrago`, `doppioOnulla`, `fintoMilionario`, `fortunaFlash`, `grattaCombina`, `jackpotMix`, `labirinto`, `mahjong`, `maledetto`, `mappaTesor0`, `miliardario`, `portaFortuna`, `puzzle`, `ruota`, `setteEMezzo`, `tredici`, `turistaPerSempre`.
 
-Progress: complete. All seventeen V3 ticket artworks supply their live shop, gallery and gameplay thumbnails.
+Progress: integrated, not final. All seventeen V3 thumbnails are live in shop, gallery and gameplay, but derive from the non-conforming full tickets below. See `STATUS.md` §5.
 
 ## 8. Full ticket artwork — 18
 
 The seventeen named tickets above plus `_template`. Each ticket keeps its unique grid and win logic.
 
-Progress: all seventeen named tickets completed and integrated. Every original grid, cost, maximum prize, special mechanic and win rule is unchanged. The legacy `_template` remains only as a fallback source and is no longer shown by any completed V3 ticket.
+Progress: all seventeen named tickets integrated, **not final**. Every original grid, cost, maximum prize, special mechanic and win rule is unchanged, but the artwork is 364×273 downscaled raster and does not meet `redesign/11-PIXEL-ART-BIBLE.md`; it will be redrawn natively once the ticket size is fixed (`STATUS.md` D-01). The legacy `_template` remains only as a fallback source and is no longer shown by any completed V3 ticket.
 
 ## 9. Rooms — 5
 
@@ -70,6 +70,8 @@ Four biome scenes plus `cella`, `combat`, `gameover`, `locanda`, `shop`, `title`
 `bezel-crt`, `tex-gold`, `misc-nograttino`.
 
 ## Recommended production order
+
+Superseded: the authoritative order is `STATUS.md` §7. Kept for history.
 
 1. Common ticket template, scratch material and ASMR scratch interaction.
 2. All seventeen full ticket families and their seventeen thumbnails, one mechanic at a time.

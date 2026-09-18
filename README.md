@@ -22,7 +22,8 @@ presenti. La nuova direzione visiva viene applicata progressivamente senza
 ridurre il contenuto o modificare il bilanciamento.
 
 - V2 funzionale di riferimento: <https://github.com/brrucelean/grattini-v2-redesign>
-- audit, visual system e decisioni: [`docs/`](docs/)
+- **stato, decisioni e ordine di lavoro: [`docs/STATUS.md`](docs/STATUS.md)**
+- altri documenti: [`docs/`](docs/) (fasi concluse in [`docs/archive/`](docs/archive/))
 - stack: React 18 + Vite 5
 - pilot approvato conservato nel tag Git `combat-pilot-approved`
 

@@ -13,7 +13,7 @@ Re-immaginare l'intera presentazione di Grattini come un prodotto pixel-art nati
 3. Gli asset precedenti non vengono eliminati: restano come fallback fino alla sostituzione verificata.
 4. Pixel art reale: risoluzione nativa, palette controllata, bordi netti, cluster intenzionali, scaling intero quando possibile.
 5. Niente vetro, blur, glow generico, gradienti morbidi, angoli arrotondati ornamentali o immagini raster semplicemente filtrate.
-6. Ogni schermata viene controllata a 1280×720, 960×540, 640×360 e viewport touch stretta.
+6. Ogni schermata viene controllata alle viewport della Definition of done in `STATUS.md` §6.
 7. Si correggono overflow, gerarchie e accessibilità della reference; non se ne copiano i difetti.
 
 ## Architettura visiva comune da progettare prima delle schermate
@@ -31,6 +31,8 @@ Re-immaginare l'intera presentazione di Grattini come un prodotto pixel-art nati
 **La macchina della fortuna**: ricevitoria clandestina costruita con lamiera verniciata, plastica ingiallita, carta termica, display LED e biglietti stampati male. Il gratta-e-vinci è il linguaggio strutturale: dialoghi come scontrini, mappa come foglio perforato, premi come timbri, shop come banco fisico, combattimento come battle-ticket. Non è una skin.
 
 ## Ordine di produzione
+
+> Superato: l'ordine in vigore e lo stato di ogni schermata sono in [`../STATUS.md`](../STATUS.md). La tabella resta per le dipendenze tra documenti.
 
 | Fase | Documento | Dipendenze | Gate |
 |---|---|---|---|
