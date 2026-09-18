@@ -760,12 +760,12 @@ export default function Grattini() {
 
       {/* ── HUD PERSISTENTE (tutte le screen tranne title e tutorial) ── */}
       {inRun && wideShell && (
-        <RunBar player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} hideInventoryButton={screen === "shop" && wideDesk} />
+        <RunBar player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} hideInventoryButton={screen === "shop" && wideDesk && !wideShell} />
       )}
       {inRun && wideShell && screen === "map" && <TickerRow currentBiome={currentBiome} />}
       {inRun && !wideShell && (
         <div style={{width:"100%", flexShrink:0, paddingTop:"6px"}}>
-          <HUD player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} currentBiome={currentBiome} hideInventoryButton={screen === "shop" && wideDesk} />
+          <HUD player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} currentBiome={currentBiome} hideInventoryButton={screen === "shop" && wideDesk && !wideShell} />
         </div>
       )}
 
@@ -1971,7 +1971,7 @@ export default function Grattini() {
            lasciare che il layout lo ricentri in un'isola: flex-start lo tiene
            subito dopo la sidebar UNGHIE, la fiancata ZAINO segue a ruota. */}
       {screen === "shop" && player && (
-        <div style={{
+        <div style={wideShell ? { flex:1, minHeight:0, width:"100%", display:"flex" } : {
           width:"100%",
           display:"flex", justifyContent: wideDesk ? "flex-start" : "center",
           gap: wideDesk ? "14px" : "0",
@@ -1982,6 +1982,7 @@ export default function Grattini() {
             currentRow={currentRow}
             currentBiome={currentBiome}
             wideDesk={wideDesk}
+            desk={wideShell}
             onBuyCard={handleBuyCard}
             onBuyItem={handleBuyItem}
             onBuyGrattatore={handleBuyGrattatore}
@@ -1989,7 +1990,8 @@ export default function Grattini() {
             onScratch={handleShopScratch}
             onSlotResult={handleSlotResult}
           />
-          {wideDesk && (
+          {/* Su desktop niente fiancata ZAINO: c'è il bottone ZAINO in alto. */}
+          {wideDesk && !wideShell && (
             <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
           )}
           </Suspense>
