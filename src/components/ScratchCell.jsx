@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { C, FONT, T } from "../data/theme.js";
+import { PlayingCardFace } from "./PlayingCardFace.jsx";
 import { AudioEngine, ParticleSystem } from "../audio.js";
 import { Haptics } from "../utils/haptics.js";
 
@@ -217,8 +218,12 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
       animation: winAnim ? "winFlash 0.9s ease-out forwards" : "none",
       transition: `box-shadow ${T.instant}`,
     }}>
+      {/* Sette e Mezzo: la carta vera (indici negli angoli, semi, figure) */}
+      {cell.scratched && isCard && cell.rank && (
+        <PlayingCardFace rank={cell.rank} suit={cell.suit} isRed={cell.isRed} />
+      )}
       {/* Symbol — visible only after reveal */}
-      {cell.scratched && (
+      {cell.scratched && !(isCard && cell.rank) && (
         <div style={{
           position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
           fontSize:symFontSize, fontWeight:"bold", color,

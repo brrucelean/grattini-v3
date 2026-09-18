@@ -7,6 +7,7 @@ import { AudioEngine } from "../audio.js";
 import { roll, pick, shuffle } from "../utils/random.js";
 import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
+import { PlayingCardFace } from "./PlayingCardFace.jsx";
 import { ScratchCell } from "./ScratchCell.jsx";
 import { hasAsset, assetUrl } from "../assets/registry.js";
 import { ticketLayout, inset } from "../data/ticketLayout.js";
@@ -908,12 +909,12 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           <div style={{display:"flex", gap:"6px", justifyContent:"center", marginBottom:"6px"}}>
             {card.bancoCards?.map((c,i) => (
               <div key={i} style={{
-                background:"#f5f0e0", borderRadius:"0", padding:"4px 8px",
-                fontFamily:FONT, fontWeight:"bold", fontSize:"18px",
-                color: c.isRed ? "#cc1111" : "#111",
-                boxShadow:"none", minWidth:"36px", textAlign:"center",
+                position:"relative", width:"48px", height:"68px",
+                boxShadow:"2px 2px 0 #000",
               }}>
-                {c.symbol}
+                {c.rank
+                  ? <PlayingCardFace rank={c.rank} suit={c.suit} isRed={c.isRed} compact />
+                  : <span style={{fontFamily:FONT, fontWeight:"bold", fontSize:"18px", color: c.isRed ? "#cc1111" : "#111", background:"#f5f0e0", display:"block", height:"100%", textAlign:"center", lineHeight:"68px"}}>{c.symbol}</span>}
               </div>
             ))}
           </div>
