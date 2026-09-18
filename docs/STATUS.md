@@ -106,11 +106,14 @@ Le miniature derivano dallo stesso master. La bible passa da
 
 Richiedono bilanciamento e commit separati; il redesign prepara solo la sede.
 
-- **G-01 Pedine collezionabili.** La pedina della mappa è un oggetto: si
-  compra o si trova, un nuovo NPC le spaccia, e quella equipaggiata modifica il
-  gioco. Il redesign mappa mostra una pedina base e lascia pronto lo slot.
+Elenco completo e dettagli in [FEATURE-BACKLOG.md](FEATURE-BACKLOG.md).
 
-## 4bis. Stato delle schermate
+- **G-01 Pedine collezionabili — DA FARE, PRIORITÀ ALTA.** La pedina della
+  mappa è un oggetto: si compra o si trova, un nuovo NPC le spaccia, e quella
+  equipaggiata modifica il gioco. Il redesign mappa mostra una pedina base e
+  lascia pronto lo slot.
+
+## 4b. Stato delle schermate
 
 Legenda: ✅ fatto e verificato · 🟡 parziale · ⬜ non iniziato.
 "Fatto" = [Definition of done](#6-definition-of-done) completa.
@@ -189,4 +192,5 @@ Una schermata è ✅ solo se:
 | [V3-ASSET-RECREATION-MANIFEST.md](V3-ASSET-RECREATION-MANIFEST.md) | elenco completo dei 163 asset |
 | [PRESENTATION-LAYER-MAP.md](PRESENTATION-LAYER-MAP.md) | dove vive il codice di presentazione |
 | [BUG-REGISTER.md](BUG-REGISTER.md) | bug funzionali, separati dal redesign |
+| [FEATURE-BACKLOG.md](FEATURE-BACKLOG.md) | nuove meccaniche di gameplay da progettare (G-01 pedine) |
 | [archive/](archive/) | fasi concluse e decisioni superate |
