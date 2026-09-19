@@ -276,7 +276,7 @@ function SectionHeader({ icon, label, count, accent = C.gold, subtitle, scrollHi
   );
 }
 
-export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeave, onScratch, onSlotResult, currentRow=0, currentBiome=0, wideDesk=false, desk=false }) {
+export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeave, onScratch, onScratchCard, onSlotResult, currentRow=0, currentBiome=0, wideDesk=false, desk=false }) {
   const punchline = useRef(TABACCAIO_LINES[Math.floor(rng() * TABACCAIO_LINES.length)]);
   const { isMobile: mobile } = useIsMobile(600);
 
@@ -418,7 +418,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
           canPay: player.money >= SLOT_SPIN_COST, onSpin: spinSlot }}
         broker={{ offer: !player.brokerLoan && player.money < 30, debt: player.brokerLoan || 0, onAccept: () => onBuyItem("__brokerLoan__") }}
         onBuyCard={onBuyCard} onBuyItem={onBuyItem} onBuyGrattatore={onBuyGrattatore}
-        onScratch={onScratch} onLeave={onLeave}
+        onScratch={onScratch} onScratchCard={onScratchCard} onLeave={onLeave}
       />
     );
   }

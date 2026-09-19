@@ -1989,6 +1989,7 @@ export default function Grattini() {
             onBuyGrattatore={handleBuyGrattatore}
             onLeave={() => setScreen("map")}
             onScratch={handleShopScratch}
+            onScratchCard={(idx) => { setReturnScreen("shop"); handleSelectCard(idx); }}
             onSlotResult={handleSlotResult}
           />
           {/* Su desktop niente fiancata ZAINO: c'è il bottone ZAINO in alto. */}

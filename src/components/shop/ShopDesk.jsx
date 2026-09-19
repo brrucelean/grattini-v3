@@ -186,7 +186,7 @@ function SlotMachine({ reels, spinning, result, cost, prizes, canPay, onSpin }) 
 
 export function ShopDesk({
   player, punchline, cards, vipCards, grattatori, consumabili, vipItems,
-  slot, broker, onBuyCard, onBuyItem, onBuyGrattatore, onScratch, onLeave,
+  slot, broker, onBuyCard, onBuyItem, onBuyGrattatore, onScratch, onScratchCard, onLeave,
 }) {
   const inPocket = player.scratchCards.length;
   const allCards = [...cards, ...vipCards];
@@ -296,20 +296,24 @@ export function ShopDesk({
           )}
           <Case title="IN TASCA" color={YELLOW} right={inPocket ? `${inPocket} da grattare` : null} style={{ flex: 1 }}>
             {inPocket === 0 ? (
-              <span style={{ fontSize: "12px", color: DIM, lineHeight: 1.5 }}>Vuota. La vetrina ti sta guardando.</span>
+              <span style={{ fontSize: "12px", color: DIM, lineHeight: 1.5 }}>Vuota. La vetrina ti sta guardando. Quello che compri finisce qui: clicca un biglietto per grattarlo.</span>
             ) : (
               <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: "6px", alignContent: "start" }}>
                 {player.scratchCards.map((c, i) => {
                   const crop = ticketArtCrop(c.id);
                   return (
-                    <Tooltip key={i} text={c.name}>
-                      <span style={{ position: "relative", display: "block", aspectRatio: String(TICKET_ART_ASPECT), overflow: "hidden", boxShadow: `0 0 0 1px ${YELLOW}` }}>
+                    <Tooltip key={i} text={`${c.name}\nclic per grattarlo`}>
+                      <button type="button" className="sd-tile" onClick={() => (onScratchCard ? onScratchCard(i) : onScratch())}
+                        aria-label={`Gratta ${c.name}`} style={{ position: "relative", display: "block", width: "100%", padding: 0, border: "none", cursor: "pointer",
+                          aspectRatio: String(TICKET_ART_ASPECT), overflow: "hidden", background: "#000", boxShadow: `0 0 0 1px ${YELLOW}, 0 0 8px ${YELLOW}44` }}>
                         <Asset id={`ticket-${c.id}-v3`} emoji={c.emoji || "🎫"} size="100%" style={{
                           position: "absolute", maxWidth: "none",
                           width: `${10000 / crop.width}%`, height: `${10000 / crop.height}%`,
                           left: `${-crop.left * 100 / crop.width}%`, top: `${-crop.top * 100 / crop.height}%`,
                         }} />
-                      </span>
+                        <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, fontSize: "10px", letterSpacing: "1px", padding: "2px 0",
+                          textAlign: "center", color: "#1a0a00", background: YELLOW }}>GRATTA</span>
+                      </button>
                     </Tooltip>
                   );
                 })}
