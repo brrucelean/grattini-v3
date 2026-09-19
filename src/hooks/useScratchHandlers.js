@@ -165,6 +165,13 @@ export function useScratchHandlers({
       });
     } else if (won) {
       credited = true;
+      if (result.nailPrize) {
+        const n = result.nailPrize;
+        addLog(
+          `${n.positive ? "✨" : "🩸"} ${n.positive ? "Grazie" : "Per colpa"} all'unghia ${n.label}: €${n.fullPrize} × ${n.percent}% → €${n.prize}.`,
+          n.positive ? C.pink : C.orange
+        );
+      }
       const hasClipVirale = player?.clipViraleActive;
       // Bonus streamer in diretta: x1.5 sulla vincita base
       const streamerMultiplied = isStreamerLive ? Math.round(result.prize * 1.5) : result.prize;

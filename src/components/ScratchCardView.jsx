@@ -255,6 +255,27 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     setWinPrize(prize); setWinPrizeFull(fullPrize); setCancelled(wc);
   };
 
+  // Spiega lo stesso calcolo che determina davvero la vincita. Non usiamo una
+  // percentuale scritta a mano: il rapporto viene ricavato dai due importi già
+  // calcolati, così il testo non può divergere dalla somma accreditata.
+  const nailPrizeBreakdown = (prize, fullPrize) => {
+    if (cancelled || !fullPrize || prize === fullPrize || equippedGrattatore) return null;
+    // Se la carta è stata sporcata da una Marcia, resta Marcia ai fini del
+    // premio anche se nel frattempo l'unghia ha cambiato stato.
+    const effectiveState = scratchedWhileMarcia.current ? "marcia" : nailState;
+    const info = NAIL_INFO[effectiveState] || NAIL_INFO.sana;
+    const percent = Math.round(getNailMult(false) * 100);
+    return {
+      state: effectiveState,
+      label: info.label,
+      color: info.color,
+      percent,
+      fullPrize,
+      prize,
+      positive: prize > fullPrize,
+    };
+  };
+
   // Sconfitta a carta non finita (sballo, STOP, ❌) o carta finita senza
   // vincita: resta a schermo col motivo e un OK. Prima sballo/STOP/❌ chiudevano
   // la carta da soli dopo 700ms e il messaggio non arrivava mai al giocatore
@@ -465,8 +486,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     // Miliardario, "INCASSA ORA" prima di finire la carta: si incassa
     // l'accumulato con gli stessi moltiplicatori di ogni altra vincita.
     if (card.mechanic === "collect" && claiming && !winFound) {
-      const { prize, cancelled: wc } = calcPrize(collectedRef.current);
-      onDone({ win: prize > 0, prize, cellsScratched: scratched, message: wc ? CANCELLED_MSG : undefined });
+      const { prize, fullPrize, cancelled: wc } = calcPrize(collectedRef.current);
+      onDone({ win: prize > 0, prize, cellsScratched: scratched, message: wc ? CANCELLED_MSG : undefined,
+        nailPrize: wc ? null : nailPrizeBreakdown(prize, fullPrize) });
       return;
     }
 
@@ -474,6 +496,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       onDone({
         win: !cancelled && winPrize > 0, prize: cancelled ? 0 : winPrize,
         cellsScratched: scratched, message: cancelled ? CANCELLED_MSG : undefined,
+        nailPrize: cancelled ? null : nailPrizeBreakdown(winPrize, winPrizeFull),
       });
       return;
     }
@@ -1290,11 +1313,14 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
         // il badge "VINCITA SPORCA" né lo strikethrough del prezzo pieno.
         // winPrize < winPrizeFull è la condizione reale (vale per qualsiasi
         // stato che scala il moltiplicatore: marcia, sanguinante, unghiaNera).
-        const isDirty = !cancelled && winPrize < winPrizeFull;
-        const borderCol = cancelled ? C.red : isDirty ? C.red : C.green;
-        const prizeCol  = cancelled ? C.red : isDirty ? C.orange : C.green;
+        const nailCalc = nailPrizeBreakdown(winPrize, winPrizeFull);
+        const isDirty = !!nailCalc && !nailCalc.positive;
+        const isBoosted = !!nailCalc?.positive;
+        const borderCol = cancelled ? C.red : isDirty ? C.red : isBoosted ? C.pink : C.green;
+        const prizeCol  = cancelled ? C.red : isDirty ? C.orange : isBoosted ? C.pink : C.green;
         const badgeLabel = cancelled ? "VINCITA ANNULLATA"
           : isDirty ? "VINCITA SPORCA"
+          : isBoosted ? "VINCITA POTENZIATA"
           : "VINCITA!";
         return (
           <div ref={winBoxRef} style={{
@@ -1318,9 +1344,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             }}>
               ★ {cancelled ? "💀" : isDirty ? "🩸" : "💰"} {badgeLabel} ★
             </div>
-            {isDirty && (
-              <div style={{color: C.red, fontSize: "10px", marginBottom: "6px", letterSpacing: "0.5px", fontStyle: "italic"}}>
-                L'unghia rovinata ha sporcato la schedina — vinci solo il {Math.round(winPrize / winPrizeFull * 100)}%
+            {nailCalc && (
+              <div style={{color: nailCalc.color, fontSize: "11px", marginBottom: "7px", letterSpacing: "0.4px"}}>
+                {nailCalc.positive ? "✨ Grazie" : "🩸 Per colpa"} all'unghia <strong>{nailCalc.label}</strong>: premio €{nailCalc.fullPrize} × {nailCalc.percent}% → <strong>€{nailCalc.prize}</strong>
               </div>
             )}
             <div style={{color: prizeCol, fontSize:"20px", fontWeight:"bold", marginBottom:"6px",
@@ -1330,7 +1356,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             }}>
               {(() => {
                 if (cancelled) return "€0";
-                if (isDirty) return <span><span style={{textDecoration:"line-through", color:C.dim, fontSize:"15px"}}>€{winPrizeFull}</span>{" → "}🩸 €{winPrize}</span>;
+                if (nailCalc) return <span><span style={{textDecoration:"line-through", color:C.dim, fontSize:"15px"}}>€{winPrizeFull}</span>{" → "}{nailCalc.positive ? "✨" : "🩸"} €{winPrize}</span>;
                 const eff = equippedGrattatore?.effect;
                 const base = eff === "doublePrize" ? Math.round(winPrize / 2)
                   : eff === "quadPrize" ? Math.round(winPrize / 4)
@@ -1365,7 +1391,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             })()}
             <div style={{display:"flex", justifyContent:"center", gap:"8px"}}>
               <Btn variant={isDirty ? "danger" : "gold"} onClick={() => handleFinish(true)} style={{fontSize:"14px"}}>
-                {cancelled ? "Chiudi" : isDirty ? `🩸 RITIRA €${winPrize} (di €${winPrizeFull})` : card.mechanic === "collect" ? `✓ CONFERMA €${winPrize}` : `✓ RITIRA €${winPrize}`}
+                {cancelled ? "Chiudi" : nailCalc ? `${nailCalc.positive ? "✨" : "🩸"} RITIRA €${winPrize} (${nailCalc.percent}% di €${winPrizeFull})` : card.mechanic === "collect" ? `✓ CONFERMA €${winPrize}` : `✓ RITIRA €${winPrize}`}
               </Btn>
               {!cancelled && scratched < totalCells && !locked && (
                 <span style={{color:C.dim, fontSize:"11px", alignSelf:"center"}}>o continua a grattare →</span>
