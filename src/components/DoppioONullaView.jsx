@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { MK, mkPanel, MkButton, MkScreen, MkTitle } from "./desk/mapKit.jsx";
 import { C, FONT, W } from "../data/theme.js";
 import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
@@ -7,7 +8,7 @@ import { ANIM } from "../styles/animations.js";
 
 // ─── DOPPIO O NULLA COMPONENT ──────────────────────────────────
 // winChance: 50% di base, 65% con la reliquia Dado Truccato.
-export function DoppioONullaView({ prize, winChance = 0.5, onDecline, onResult }) {
+export function DoppioONullaView({ prize, winChance = 0.5, onDecline, onResult, desk = false }) {
   const [revealed, setRevealed] = useState(false);
   const [won, setWon] = useState(null);
   const [scratching, setScratching] = useState(false);
@@ -27,10 +28,13 @@ export function DoppioONullaView({ prize, winChance = 0.5, onDecline, onResult }
     const ctx = canvas.getContext("2d");
     ctxRef.current = ctx;
     // Fill with silver scratch layer
-    ctx.fillStyle = "#888";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Argento a retino 2×2 (come le caselle dei grattini), niente grigio piatto
+    for (let y = 0; y < canvas.height; y += 2) for (let x = 0; x < canvas.width; x += 2) {
+      ctx.fillStyle = (x + y) % 4 === 0 ? "#b9bec4" : "#c9ced3";
+      ctx.fillRect(x, y, 2, 2);
+    }
     // Add "GRATTA QUI" text
-    ctx.fillStyle = "#666";
+    ctx.fillStyle = "#6c7278";
     ctx.font = "bold 16px 'Courier New'";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -93,6 +97,54 @@ export function DoppioONullaView({ prize, winChance = 0.5, onDecline, onResult }
   const resultText = outcomeRef.current ? `€${prize * 2}` : "€0";
   const resultColor = outcomeRef.current ? C.gold : C.red;
   const accent = C.gold; // gambling → gold theme
+
+  // Desktop: minimal nei colori della mappa (desk/mapKit.jsx), stessa logica.
+  if (desk) {
+    const canvasEl = (
+      <canvas ref={canvasRef} width={200} height={140}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 2, cursor: revealed ? "default" : "crosshair", touchAction: "none" }}
+        onMouseDown={handlePointerDown} onMouseMove={handlePointerMove} onMouseUp={handlePointerUp} onMouseLeave={handlePointerUp}
+        onTouchStart={handlePointerDown} onTouchMove={handlePointerMove} onTouchEnd={handlePointerUp} />
+    );
+    return (
+      <MkScreen width={640} center>
+        <MkTitle label={`PROBABILITÀ ${oddsPct}/${100 - oddsPct}`} title="Doppio o nulla"
+          sub="Hai appena vinto. Te lo tieni, o lo giochi tutto su una sola casella?" />
+        <div style={{ ...mkPanel(), padding: "18px 22px", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: "16px", width: "100%", textAlign: "center" }}>
+            <div><div style={{ fontSize: "11px", letterSpacing: "2px", color: MK.dim }}>HAI IN MANO</div><div style={{ fontSize: "26px", color: MK.green }}>€{prize}</div></div>
+            <div style={{ fontSize: "20px", color: MK.ink }}>→</div>
+            <div><div style={{ fontSize: "11px", letterSpacing: "2px", color: MK.dim }}>RISCHI PER</div>
+              <div style={{ fontSize: "26px" }}><span style={{ color: MK.gold.mid }}>€{prize * 2}</span> <span style={{ fontSize: "14px", color: MK.dim }}>o</span> <span style={{ fontSize: "18px", color: MK.red }}>€0</span></div></div>
+          </div>
+          <div style={{ position: "relative", width: "min(320px, 80%)", aspectRatio: "200 / 140", overflow: "hidden", background: "#000",
+            boxShadow: `inset 0 0 0 2px ${revealed ? (won ? MK.gold.mid : MK.red) : MK.lineHi}` }}>
+            <div style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px", opacity: revealed ? 1 : 0 }}>
+              <span style={{ fontSize: "44px" }}>{resultSymbol}</span>
+              <span style={{ fontSize: "24px", color: outcomeRef.current ? MK.gold.mid : MK.red }}>{resultText}</span>
+            </div>
+            {canvasEl}
+          </div>
+          {!revealed && scratchProgress > 0 && (
+            <div style={{ width: "min(320px, 80%)", height: "6px", background: "#000", boxShadow: `inset 0 0 0 1px ${MK.line}` }}>
+              <div style={{ width: `${Math.min(100, scratchProgress / 0.45)}%`, height: "100%", background: MK.gold.mid }} />
+            </div>
+          )}
+          {revealed && (
+            <span role="status" style={{ fontSize: "16px", letterSpacing: "2px", color: won ? MK.gold.mid : MK.red }}>
+              {won ? `RADDOPPIATO: €${prize * 2}` : "PERSO TUTTO"}
+            </span>
+          )}
+          {!scratching && !revealed && (
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <MkButton onClick={onDecline}>INTASCA €{prize}</MkButton>
+              <span style={{ fontSize: "12px", color: MK.dim }}>oppure gratta la casella ↑</span>
+            </div>
+          )}
+        </div>
+      </MkScreen>
+    );
+  }
 
   return (
     <div style={{

@@ -12,28 +12,17 @@ export function useVictoryCanvas({ screen }) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     ctx.globalCompositeOperation = "source-over";
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0,   "#b8860b");
-    grad.addColorStop(0.25,"#f5d060");
-    grad.addColorStop(0.5, "#c8a020");
-    grad.addColorStop(0.75,"#f0e080");
-    grad.addColorStop(1,   "#b8860b");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // subtle crosshatch texture
-    ctx.strokeStyle = "rgba(0,0,0,0.08)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < canvas.width; i += 8) {
-      ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
+    // Oro a retino 2×2 (niente sfumature), bordo a gradini
+    for (let y = 0; y < canvas.height; y += 2) for (let x = 0; x < canvas.width; x += 2) {
+      ctx.fillStyle = (x + y) % 4 === 0 ? "#f2cf44" : "#e0b832";
+      ctx.fillRect(x, y, 2, 2);
     }
-    for (let j = 0; j < canvas.height; j += 8) {
-      ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke();
-    }
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillStyle = "#fff1a8"; ctx.fillRect(0, 0, canvas.width, 3); ctx.fillRect(0, 0, 3, canvas.height);
+    ctx.fillStyle = "#b3801f"; ctx.fillRect(0, canvas.height - 3, canvas.width, 3); ctx.fillRect(canvas.width - 3, 0, 3, canvas.height);
+    ctx.fillStyle = "#5c3a0c";
     ctx.font = `bold 15px "Courier New"`;
     ctx.textAlign = "center";
     ctx.fillText("✦ GRATTA PER SCOPRIRE IL TUO DESTINO ✦", canvas.width/2, canvas.height/2 - 8);
-    ctx.fillText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", canvas.width/2, canvas.height/2 + 10);
     ctx.font = `12px "Courier New"`;
     ctx.fillText("[ usa il dito o il cursore ]", canvas.width/2, canvas.height/2 + 30);
   }, [screen, victoryRevealed]);

@@ -50,6 +50,9 @@ import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
 import { IntroDesk } from "./components/intro/IntroDesk.jsx";
+import { SelectCardDesk } from "./components/desk/SelectCardDesk.jsx";
+import { GameOverDesk, VictoryDesk, CedoleDesk } from "./components/desk/EndScreens.jsx";
+import { MK, mkPanel, MkButton, MkScreen, MkTitle } from "./components/desk/mapKit.jsx";
 import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
@@ -882,9 +885,10 @@ export default function Grattini() {
         const Panel = ({ accent, head, children, strong=false, step=null }) => (
           <div style={{
             position:"relative",
-            background: strong ? C.cardHi : C.card,
-            border: strong ? `2px solid ${accent}88` : `1px solid ${C.dimLow}`,
-            boxShadow: strong ? "4px 4px 0 #000" : "2px 2px 0 #000",
+            // Desktop: pannelli della mappa (nero a filo sottile, ombra dura)
+            background: wideShell ? MK.panel : strong ? C.cardHi : C.card,
+            border: wideShell ? "none" : strong ? `2px solid ${accent}88` : `1px solid ${C.dimLow}`,
+            boxShadow: wideShell ? `inset 0 0 0 2px ${strong ? accent + "88" : MK.line}, 4px 4px 0 #000` : strong ? "4px 4px 0 #000" : "2px 2px 0 #000",
             padding: step ? "10px 13px 10px 38px" : "10px 13px", marginBottom:"8px", flexShrink:0,
           }}>
             {step && (
@@ -901,6 +905,7 @@ export default function Grattini() {
           </div>
         );
         return (
+        <div style={wideShell ? { width:"100%", flex:1, minHeight:0, display:"flex", background: MK.bg, overflowY:"auto" } : { display:"contents" }}>
         <div style={{
           width:"100%", flex:1, minHeight:0, maxWidth:"720px", margin:"0 auto",
           display:"flex", flexDirection:"column", justifyContent:"center",
@@ -1048,6 +1053,7 @@ export default function Grattini() {
               </Btn>
             )}
           </div>
+        </div>
         </div>
         );
       })()}
@@ -1243,9 +1249,10 @@ export default function Grattini() {
 
       {/* ═══ DOPPIO O NULLA ═══ */}
       {screen === "doppioONulla" && player && doppioONulla && (
-        <div style={{maxWidth:"900px", width:"100%"}}>
+        <div style={wideShell ? { flex:1, minHeight:0, width:"100%", display:"flex" } : {maxWidth:"900px", width:"100%"}}>
           <Suspense fallback={<LazyFallback />}>
           <DoppioONullaView
+            desk={wideShell}
             prize={doppioONulla.prize}
             winChance={playerRelicEffects.includes("riggedDice") ? 0.65 : 0.5}
             onDecline={handleDoppioDecline}
@@ -1257,6 +1264,20 @@ export default function Grattini() {
 
       {/* ═══ SELECT CARD TO SCRATCH ═══ */}
       {screen === "selectCard" && player && (() => {
+        const backFromSelect = () => {
+          setCardSelectMode(false);
+          setReturnScreen(null);
+          if (returnScreen === "shop") setScreen("shop");
+          else if (currentNode) setScreen("preScratch");
+          else setScreen("map");
+        };
+        // Desktop: i biglietti veri nei colori della mappa (components/desk/SelectCardDesk.jsx)
+        if (wideShell) return (
+          <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+            <SelectCardDesk cards={player.scratchCards} onSelect={handleSelectCard} onBack={backFromSelect}
+              hasGrattatore={!!player.equippedGrattatore} />
+          </div>
+        );
         const TIER_META = {
           1: { label: "COMUNE",       accent: "#7a8aaa", emoji: "🎫" },
           2: { label: "MEDIA",        accent: C.cyan,    emoji: "🎟️" },
@@ -2198,6 +2219,39 @@ export default function Grattini() {
 
         const wallBricks = Array.from({length: WALL_NEEDED}, (_, i) => i < cellaProgress);
 
+        // Desktop: minimal nei colori della mappa. Le unghie sono già nella
+        // colonna a sinistra: qui scena, muro, condizione di fuga e il bottone.
+        if (wideShell) return (
+          <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+            <MkScreen width={720} center>
+              <MkTitle label="PRIGIONE" title="In cella" color={MK.red}
+                sub="«Quindici anni di grattini illegali. Ora graffi i muri.»" />
+              <div style={{ ...mkPanel(), padding: "16px", display: "grid", gridTemplateColumns: "280px minmax(0,1fr)", gap: "18px", alignItems: "center" }}>
+                <img src={assetUrl("scene-cella")} alt="La cella" style={{ width: "100%", display: "block", imageRendering: "pixelated", boxShadow: `inset 0 0 0 2px ${MK.lineHi}` }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <span style={{ fontSize: "11px", letterSpacing: "2px", color: MK.dim }}>IL MURO · {cellaProgress}/{WALL_NEEDED} MATTONI</span>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${WALL_NEEDED}, 1fr)`, gap: "4px" }}>
+                    {wallBricks.map((broken, i) => (
+                      <span key={i} style={{ height: "22px", background: broken ? "#000" : "#6b4a3a",
+                        boxShadow: broken ? `inset 0 0 0 1px ${MK.line}` : "inset 2px 2px 0 #8a634f, inset -2px -2px 0 #4a3025" }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: "13px", lineHeight: 1.5, color: canEscape ? MK.green : MK.red }}>
+                    {canEscape
+                      ? `Unghie al massimo: puoi scavare. Ancora ${WALL_NEEDED - cellaProgress} graffi.`
+                      : "Le unghie rovinate non scavano il cemento. Servono tutte le unghie vive Sane o Kawaii; altrimenti gratti a vuoto e l'unghia soffre."}
+                  </span>
+                  {aliveCount > 0
+                    ? <MkButton kind={canEscape ? "primary" : "danger"} onClick={handleGrattaMuro} style={{ alignSelf: "flex-start" }}>
+                        {canEscape ? "GRATTA IL MURO" : "GRATTA (INUTILE…)"}
+                      </MkButton>
+                    : <span style={{ fontSize: "14px", color: MK.red }}>Nessuna unghia rimasta. Il muro ha vinto.</span>}
+                </div>
+              </div>
+            </MkScreen>
+          </div>
+        );
+
         return (
           <div style={{maxWidth:"500px", width:"100%", textAlign:"center", fontFamily:FONT}}>
             <div style={{...S.panel, borderColor:C.dim, background:"linear-gradient(180deg, rgba(10,10,12,0.8), rgba(3,3,4,0.9))", backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)", marginTop:"8px"}}>
@@ -2754,7 +2808,12 @@ export default function Grattini() {
       })()}
 
       {/* ═══ GAME OVER ═══ */}
-      {screen === "gameOver" && (
+      {screen === "gameOver" && wideShell && (
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <GameOverDesk gameStats={gameStats} onRetry={() => setScreen("title")} onTrophies={() => setShowTrophies(true)} />
+        </div>
+      )}
+      {screen === "gameOver" && !wideShell && (
         <div style={{
           textAlign: "center", maxWidth: "560px", width: "100%",
           border: `2px solid ${C.red}`,
@@ -2920,7 +2979,19 @@ export default function Grattini() {
 
       {/* ═══ VICTORY ═══ */}
       {/* ═══ CEDOLE DEL BROKER — meta-progressione post-vittoria ═══ */}
-      {screen === "cedole" && pendingCedoleOffer && (
+      {screen === "cedole" && pendingCedoleOffer && wideShell && (
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <CedoleDesk offer={pendingCedoleOffer} active={CEDOLE.find(c => c.id === activeCedola)}
+            onPick={(cedola) => {
+              setStored(STORAGE_KEYS.cedola, cedola.id);
+              setActiveCedola(cedola.id);
+              setPendingCedoleOffer(null);
+              setScreen("victory");
+            }}
+            onRefuse={() => { setPendingCedoleOffer(null); setScreen("victory"); }} />
+        </div>
+      )}
+      {screen === "cedole" && pendingCedoleOffer && !wideShell && (
         <div style={{textAlign:"center", maxWidth:"600px", width:"100%"}}>
           <div style={{color:C.gold, fontSize:"18px", fontWeight:"bold", letterSpacing:"4px", marginBottom:"4px"}}>
             IL BROKER TI OFFRE UN ACCORDO
@@ -2973,7 +3044,34 @@ export default function Grattini() {
         </div>
       )}
 
-      {screen === "victory" && player && (
+      {screen === "victory" && player && wideShell && (
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <VictoryDesk revealed={victoryRevealed}
+            bossName={BIOMES[BIOMES.length-1].boss} biomeCount={BIOMES.length}
+            onNewRun={() => setScreen("title")} onTrophies={() => setShowTrophies(true)}
+            stats={[
+              ["SOLDI FINALI", `€${fmtMoney(player.money)}`, C.gold],
+              ["UNGHIE VIVE", `${player.nails.filter(n=>n.state!=="morta").length}/${player.nails.length}`, C.green],
+              ["GRATTATE", gameStats.cardsScratched],
+              ["VINTE", gameStats.scratchWins||0, C.green],
+              ["PERSE", gameStats.scratchLosses||0, C.red],
+              ["GUADAGNATO", `€${gameStats.moneyEarned}`, C.gold],
+              ["NODI", gameStats.nodesVisited],
+              ["MIGLIOR PREMIO", `€${gameStats.bestPrize||0}`, C.gold],
+              ["COMBATTIMENTI VINTI", gameStats.combatsWon||0, C.green],
+              ["COMBO", gameStats.combosFired||0],
+            ]}
+            canvas={
+              <canvas ref={victoryCanvasRef} width={520} height={140}
+                style={{ position:"absolute", inset:0, width:"100%", height:"100%", cursor:"crosshair", touchAction:"none" }}
+                onMouseDown={e => { victoryDrawing.current = true; handleVictoryScratch(e.clientX, e.clientY); }}
+                onMouseMove={e => { if (victoryDrawing.current) handleVictoryScratch(e.clientX, e.clientY); }}
+                onMouseUp={() => { victoryDrawing.current = false; }}
+                onMouseLeave={() => { victoryDrawing.current = false; }} />
+            } />
+        </div>
+      )}
+      {screen === "victory" && player && !wideShell && (
         <div style={{textAlign:"center", maxWidth:"520px", width:"100%", position:"relative"}}>
 
           {/* ── CONFETTI gold — visibili solo dopo il reveal ──
