@@ -49,6 +49,7 @@ import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
+import { IntroDesk } from "./components/intro/IntroDesk.jsx";
 import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
@@ -1052,7 +1053,34 @@ export default function Grattini() {
       })()}
 
       {/* ═══ INTRO SCRATCH (scratch 2 starting cards, pocket 1 prize) ═══ */}
-      {screen === "introScratch" && player && (
+      {screen === "introScratch" && player && wideShell && (
+        // Desktop: Nonno Carmelo al bancone, chiaro (components/intro/IntroDesk.jsx)
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <IntroDesk
+            messages={carmeloLog}
+            cards={scratchingCard ? [] : player.scratchCards}
+            prizes={introPrizes}
+            onScratch={(card) => {
+              if (!firstScratchShown) triggerNpcComment("first_warning");
+              setScratchingCard(card);
+              setReturnScreen("introScratch");
+            }}
+            onRefuse={() => {
+              addLog("Tieni le mani in tasca e vai.", C.dim);
+              updatePlayer(p => ({...p, scratchCards: []}));
+              setIntroPrizes([{prize:0, cardName:"(rifiutato)"}]);
+              leaveIntro();
+            }}
+            onPocket={(ip) => {
+              updatePlayer(p => ({...p, money: p.money + ip.prize}));
+              setGameStats(s => ({...s, moneyEarned: s.moneyEarned + ip.prize}));
+              addLog(`Intaschi €${ip.prize} dal "${ip.cardName}". Il vecchio annuisce.`, C.green);
+              leaveIntro();
+            }}
+          />
+        </div>
+      )}
+      {screen === "introScratch" && player && !wideShell && (
         // justifyContent:"center" — prima il dialogo di Nonno Carmelo (unico
         // figlio che cresceva, flex:1) si allungava a riempire tutta l'altezza
         // disponibile pur avendo solo 3 righe di testo. Ora il box ha
