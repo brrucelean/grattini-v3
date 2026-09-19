@@ -1,6 +1,6 @@
 # G-01 — Gettoni del Destino (pedine della mappa)
 
-Stato: **APPROVATO · fasi 2–4 fatte, prossima la 5 (regali NPC)** · 2026-09-19 · sostituisce la sezione "Da progettare"
+Stato: **APPROVATO · fasi 2–5 fatte, prossime 6–7 (sprite, bilanciamento)** · 2026-09-19 · sostituisce la sezione "Da progettare"
 di G-01 in `FEATURE-BACKLOG.md`.
 
 La pedina che avanza sulla mappa è un gettone. Quello equipaggiato cambia il modo
@@ -370,6 +370,25 @@ sprite pixel-art (fase 6).
   finale.
 - **Tutti i 33 gettoni sono ora ottenibili** (`TOKEN_RELEASE`).
 - Dev: `window.__gettoni.pedinaro()` apre la bottega.
+
+## 8quinquies. Fase 5 — regali degli NPC (2026-09-19)
+
+Con la scelta "giusta" l'NPC regala la sua pedina **nel 60% dei casi**
+(`NPC_GIFT_CHANCE`), al massimo una volta per NPC e quartiere. Il popup del
+gettone arriva **dopo** quello dell'NPC (coda in `scratchlite`).
+
+| NPC | Pedina | Momento |
+|---|---|---|
+| Sacerdote | Santino Plastificato | dona €30 |
+| Bambino | Biglia del Bambino | scambio di 2 biglietti (Edizione Limitata) |
+| Spacciatore | Gettone Nero | compri il biglietto "vincente" |
+| Poliziotto | Fiche Blu (prova sequestrata) | te la cavi senza multa (cappello, finto tonto, sfida) |
+| Vecchio | Dado Scheggiato | terzo incontro (Luce o Ombra) |
+| Anziana | Moneta Incollata | ti benedice |
+| Streamer | Gettone VHS | vinci in diretta |
+| Boss | scelta tra 2 pedine non possedute | 30%, se non c'è già la compensazione |
+
+Dev: `window.__gettoni.gift("sacerdote")` (sempre, ignora il 60%).
 
 ## 8ter. Verifica effetti (2026-09-19)
 

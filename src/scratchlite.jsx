@@ -68,11 +68,11 @@ import { TokenDebug, TokenPreviewBar } from "./components/tokens/TokenDebug.jsx"
 import { TokenVisualLayer } from "./components/tokens/TokenVisualLayer.jsx";
 import { TOKEN_VISUAL_CSS, visualOf, visualWrapperStyle, playLiquidPulse } from "./components/tokens/tokenVisuals.js";
 import { onFx } from "./utils/fx.js";
-import { TOKENS, TOKEN_RARITY, TOKEN_RELEASE, PEDINARO } from "./data/tokens.js";
+import { TOKENS, TOKEN_RARITY, TOKEN_RELEASE, PEDINARO, NPC_GIFT_CHANCE } from "./data/tokens.js";
 import {
   createTokenState, acquireToken, resolveFullPouch, equipToken, discardToken,
   canSwapToken, onNodeResolved, returnToMap, onNegativeEvent, theftMult,
-  openPedinaro, barterToken, compensationOffer,
+  openPedinaro, barterToken, compensationOffer, claimNpcGift,
   mapGenParams, onMapGenerated, rewindCombat, callTelefono, telefonoTarget,
   dadoOptions, rollDado, chargesLeft, firstHitShield,
 } from "./utils/tokens.js";
@@ -385,7 +385,8 @@ export default function Grattini() {
   const [confettiBurst, setConfettiBurst] = useState(false); // Tappo di Spumante
   const [pedinaroVisit, setPedinaroVisit] = useState(null);   // { sale, barter, gift, first, done }
   const [pedinaroLine, setPedinaroLine] = useState("");
-  const [tokenChoice, setTokenChoice] = useState(null);       // compensazione del boss: [id, id]
+  const [tokenChoice, setTokenChoice] = useState(null);       // scelta tra gettoni: { ids, title, sub, source }
+  const [queuedTokenModal, setQueuedTokenModal] = useState(null); // popup del gettone in attesa del turno
 
   // Dà un gettone al giocatore. `withModal: false` quando il chiamante ha già
   // un popup suo (es. sblocco bioma) e vuole solo la riga da aggiungere.
@@ -402,7 +403,9 @@ export default function Grattini() {
     }
     return {...p, money: roundMoney(p.money - (pay.money || 0)), scratchCards};
   };
-  const grantToken = useCallback((tokenId, { source = "Trovato", withModal = true, pay = null } = {}) => {
+  // defer: il popup del gettone aspetta che si chiuda quello già aperto
+  // (regali degli NPC: prima la loro finestra, poi la pedina).
+  const grantToken = useCallback((tokenId, { source = "Trovato", withModal = true, pay = null, defer = false } = {}) => {
     const def = TOKENS[tokenId];
     if (!def || !player?.tokens) return null;
     discoverToken(tokenId);
@@ -426,7 +429,7 @@ export default function Grattini() {
     addLog(line, C.gold);
     if (withModal && r.outcome === "added") {
       const foundAt = source.toLowerCase() === "debug" ? "Nuovo gettone" : source;
-      setItemFoundModal({
+      (defer ? setQueuedTokenModal : setItemFoundModal)({
         emoji: "🪙", tokenId, name: def.name,
         desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia sotto la mappa. Cliccalo per leggerne la scheda oppure trascinalo direttamente sul tabellone per attivarlo.`,
         subtitle: `${foundAt} · ${TOKEN_RARITY[def.rarity].label}`,
@@ -593,9 +596,45 @@ export default function Grattini() {
     const ids = compensationOffer(player.tokens, { pool: TOKEN_RELEASE });
     if (!ids.length) return false;
     ids.forEach(discoverToken);
-    setTokenChoice(ids);
+    setTokenChoice({ ids, source: "Lasciato dal boss" });
     return true;
   };
+
+  // La valigetta del boss (30%): due gettoni non posseduti, di qualsiasi rarità.
+  const offerBossBag = () => {
+    if (!player?.tokens) return false;
+    const pool = TOKEN_RELEASE.filter(id => id !== "ottone" && !player.tokens.pouch.includes(id));
+    const ids = [];
+    while (ids.length < Math.min(2, pool.length)) {
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      if (!ids.includes(id)) ids.push(id);
+    }
+    if (!ids.length) return false;
+    ids.forEach(discoverToken);
+    setTokenChoice({ ids, source: "Dalla valigetta del boss", title: "Nella valigetta del boss",
+      sub: "Tra le sue carte c'erano due pedine. Una è tua." });
+    return true;
+  };
+
+  // Regali degli NPC (fase 5): una volta per personaggio e per quartiere.
+  const NPC_GIFT_SOURCE = {
+    sacerdote: "Regalo del Sacerdote", bambino: "Regalo del Bambino", spacciatore: "Dallo Spacciatore",
+    poliziotto: "Prova sequestrata", vecchio: "Regalo del Vecchio", streamer: "Regalo della chat",
+    anziana: "Regalo dell'Anziana",
+  };
+  const giftFromNpc = useCallback((npc, { always = false } = {}) => {
+    if (!player?.tokens) return null;
+    if (!always && Math.random() >= NPC_GIFT_CHANCE) return null; // "non sempre"
+    const r = claimNpcGift(player.tokens, npc, currentBiome);
+    if (!r.tokenId) return null;
+    updatePlayer(p => ({...p, tokens: claimNpcGift(p.tokens, npc, currentBiome).state}));
+    return grantToken(r.tokenId, { source: NPC_GIFT_SOURCE[npc] || "Regalo", defer: true });
+  }, [player?.tokens, currentBiome, updatePlayer, grantToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Il popup del gettone in coda parte appena si chiude quello aperto.
+  useEffect(() => {
+    if (!itemFoundModal && queuedTokenModal) { setItemFoundModal(queuedTokenModal); setQueuedTokenModal(null); }
+  }, [itemFoundModal, queuedTokenModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Solo in sviluppo, per il playtest: window.__gettoni.grant("ficheBlu")
   useEffect(() => {
@@ -603,8 +642,9 @@ export default function Grattini() {
     window.__gettoni = {
       grant: (id) => grantToken(id, { source: "Dev" }), ids: Object.keys(TOKENS), catalog: () => setTokenDebugOpen(true),
       pedinaro: () => { openPedinaroVisit(); setScreen("pedinaro"); },
+      gift: (npc) => giftFromNpc(npc, { always: true }),
     };
-  }, [grantToken]);
+  }, [grantToken, giftFromNpc]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ritorno sulla mappa: chiude il nodo (effetti di fine nodo) e scongela la pedina.
   useEffect(() => {
@@ -632,7 +672,7 @@ export default function Grattini() {
     setGameStats, setScratchingCard, setReturnScreen, setCardSelectMode, setSelectedCardIdx,
     setScreen, setIntroCardsLeft, setIntroPrizes, setItemFoundModal,
     setMap, setCurrentRow, setVisitedNodes, setCurrentNode, setCurrentBiome,
-    setPlayer, isAlive, makeMap,
+    setPlayer, isAlive, makeMap, giftFromNpc,
   });
 
   // ─── HOOK: useNodeHandlers ───
@@ -647,7 +687,7 @@ export default function Grattini() {
     setLabirintoState, setCombinaState, setTesoroState,
     effectiveFortune, gameStats, isAlive, grantToken,
     map, makeMap, tokenBlocksNegative, tokenTheftMult, tryRewindCombat,
-    openPedinaroVisit, offerCompensation,
+    openPedinaroVisit, offerCompensation, offerBossBag,
   });
 
   // ─── HOOK: useEventHandlers ───
@@ -657,7 +697,7 @@ export default function Grattini() {
     setScreen, setCombatEnemy, setGameStats, setCellaProgress,
     setItemFoundModal, setSmokeChoiceModal,
     setScratchingCard, setReturnScreen, grantToken,
-    tokenBlocksNegative, tokenTheftMult,
+    tokenBlocksNegative, tokenTheftMult, giftFromNpc,
   });
 
   // ─── HOOK: useSpacebarShortcut ───
@@ -3722,8 +3762,9 @@ export default function Grattini() {
 
       {/* ═══ COMPENSAZIONE DEL BOSS — scegli un gettone tra due (G-01) ═══ */}
       {tokenChoice && !pendingToken && (
-        <TokenChoiceModal ids={tokenChoice}
-          onPick={(id) => { setTokenChoice(null); grantToken(id, { source: "Lasciato dal boss" }); }} />
+        <TokenChoiceModal ids={tokenChoice.ids}
+          {...(tokenChoice.title ? { title: tokenChoice.title, sub: tokenChoice.sub } : {})}
+          onPick={(id) => { const src = tokenChoice.source; setTokenChoice(null); grantToken(id, { source: src }); }} />
       )}
 
       {/* ═══ CUSTODIA GETTONI PIENA — scelta obbligatoria (G-01) ═══ */}

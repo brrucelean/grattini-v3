@@ -194,6 +194,11 @@ export const TOKENS = {
 
 export const TOKEN_RELEASE = Object.keys(TOKENS);
 
+// Probabilità che un NPC regali davvero la sua pedina quando fai la scelta
+// giusta: "non sempre" (proprietario, 2026-09-19). Se non la dà, può darla
+// alla visita dopo nello stesso quartiere.
+export const NPC_GIFT_CHANCE = 0.6;
+
 // Regali degli NPC: esempi di partenza, uno per NPC e bioma.
 export const NPC_TOKEN_GIFTS = {
   sacerdote:   "santino",

@@ -31,7 +31,7 @@ export function useEventHandlers({
   setScreen, setCombatEnemy, setGameStats, setCellaProgress,
   setItemFoundModal, setSmokeChoiceModal,
   setScratchingCard, setReturnScreen, grantToken,
-  tokenBlocksNegative, tokenTheftMult = 1,
+  tokenBlocksNegative, tokenTheftMult = 1, giftFromNpc,
 }) {
   const handleEventChoice = (action) => {
     // Handle streamer live card selection (action = "streamerLive_N")
@@ -137,6 +137,7 @@ export function useEventHandlers({
         // perdere (non vuole grane), 55% attacca per davvero.
         if (roll(0.45)) {
           addLog("😤 Lo guardi dritto negli occhi. Non ha voglia di grane oggi — se ne va scuotendo la testa.", C.green);
+          if (giftFromNpc?.("poliziotto")) addLog("🚔 Nella fretta gli cade una fiche blu, \"prova sequestrata\". È tua.", C.cyan);
           setScreen("map");
         } else {
           addLog("🚔 \"Ah sì? Allora facciamo a modo mio.\" Il poliziotto ti si scaglia contro!", C.red);
@@ -186,6 +187,7 @@ export function useEventHandlers({
           bluffsBought: (p.bluffsBought || 0) + 1,
         }));
         addLog("🤝 \"Vedrai vedrai, 'sta volta è ORO.\" Hai in mano un biglietto 'garantito'.", C.orange);
+        if (giftFromNpc?.("spacciatore")) addLog("🤝 \"E questo tienilo tu, porta bene ai disperati.\" Ti infila un gettone nero in tasca.", C.orange);
         setScreen("map");
         break;
       }
@@ -507,6 +509,7 @@ export function useEventHandlers({
       case "useCappello": {
         updatePlayer(p => ({...p, items: withoutOne(p.items, "cappelloSbirro"), cappelloSbirroWorn: false}));
         addLog("🎩 Il cappello funziona! Il poliziotto ti saluta militarmente e sparisce.", C.green);
+        if (giftFromNpc?.("poliziotto")) addLog("🚔 Nella fretta gli cade una fiche blu, \"prova sequestrata\". È tua.", C.cyan);
         setScreen("map"); break;
       }
       case "pagaMulta": {
@@ -551,6 +554,7 @@ export function useEventHandlers({
       case "fintotonto": {
         if (roll(0.20)) {
           addLog("\"Uhh... grattini? Cosa sono?\" Il poliziotto ti guarda storto ma ti lascia andare.", C.green);
+          if (giftFromNpc?.("poliziotto")) addLog("🚔 Nella fretta gli cade una fiche blu, \"prova sequestrata\". È tua.", C.cyan);
           setScreen("map");
         } else {
           addLog("🚔 Il poliziotto non ci crede! Ti insegue per strada... SEI ARRESTATO!", C.red);
@@ -570,6 +574,7 @@ export function useEventHandlers({
           }));
           addLog("👵 Le sue dita fredde... guariscono! Tutte le unghie migliorano di 1 stato.", C.green);
           showItemFound("👵", "Benedizione dell'Anziana", "Tutte le unghie risalgono di 1 stato grazie alla sua magia.", "Guarigione");
+          if (giftFromNpc?.("anziana")) addLog("👵 \"E questa te la incollo io, così non la perdi.\" Una moneta ti resta attaccata al dito.", C.green);
         } else if (tokenBlocksNegative?.("maledizione")) {
           addLog("👵 \"Ah... la vedo la maledizione su di te.\" Ma scivola sul Santino e cade a terra.", C.green);
         } else {
@@ -670,6 +675,7 @@ export function useEventHandlers({
         });
         addLog("⛪ +3 FORTUNA + TUTTE le unghie protette! \"La grazia scende su di te!\"", C.gold);
         showItemFound("⛪", "Grazia Divina", "FORTUNA +3 per 8 turni + TUTTE le unghie protette da 3 danni!", "Sacerdote della Fortuna");
+        if (giftFromNpc?.("sacerdote")) addLog("⛪ \"Per le giornate storte.\" Il Sacerdote ti mette in mano un santino plastificato.", C.magenta);
         setScreen("map"); break;
       }
       case "teVerde": {
@@ -774,6 +780,7 @@ export function useEventHandlers({
           return {...p, scratchCards: cards};
         });
         addLog("👦 \"Questo è LEGGENDARIO! Edizione Limitata! Non ne trovi più!\"", C.gold);
+        if (giftFromNpc?.("bambino")) addLog("👦 \"E questa è per te: la mia biglia fortunata!\"", C.cyan);
         setItemFoundModal({ emoji: "✨", name: "Edizione Limitata", desc: "Il bambino ti consegna un grattino leggendario, fuori produzione. Premi potenziati x1.5!", subtitle: "Scambio Leggendario" });
         setScreen("map"); break;
       }
@@ -876,6 +883,7 @@ export function useEventHandlers({
       case "vecchio_luce":
         updatePlayer(p => ({...p, vecchioVisits: 3, nails: healAliveNails(p.nails), fortune: p.fortune + 3, fortuneTurns: p.fortuneTurns + 5}));
         addLog("🌟 Una luce dorata avvolge le tue mani. Tutte le unghie risplendono. +3 Fortuna per 5 turni!", C.gold);
+        if (giftFromNpc?.("vecchio")) addLog("🎲 Prima di sparire ti lascia un dado scheggiato. \"Quando la strada non basta.\"", C.gold);
         unlockAchievement("vecchio_luce");
         setScreen("map"); break;
       case "buyGuantoBoss": {
@@ -918,6 +926,7 @@ export function useEventHandlers({
           return {...p, vecchioVisits: 3, nails, money: p.money + 200};
         });
         addLog("🌑 L'ombra divora un'unghia... ma le altre brillano KAWAII. +€200!", C.magenta);
+        if (giftFromNpc?.("vecchio")) addLog("🎲 Nell'ombra resta un dado scheggiato. Lo raccogli.", C.magenta);
         unlockAchievement("vecchio_ombra");
         setScreen("map"); break;
 

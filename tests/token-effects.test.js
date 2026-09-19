@@ -354,3 +354,21 @@ test("il gioco chiama ogni aggancio dei gettoni", () => {
   assert.ok(/tokenCombat\.firstHitShield/.test(src("components/CombatView.jsx")), "Mercurio in combattimento");
   assert.ok(/tokenCombat\.stealMult/.test(src("components/CombatView.jsx")), "Sassolino in combattimento");
 });
+
+// ── Fase 5: ogni regalo degli NPC è agganciato a una scelta del gioco ──
+import { NPC_TOKEN_GIFTS } from "../src/data/tokens.js";
+
+test("ogni NPC della tabella regala davvero il suo gettone", () => {
+  const hooks = src("hooks/useEventHandlers.js") + src("hooks/useScratchHandlers.js");
+  for (const [npc, id] of Object.entries(NPC_TOKEN_GIFTS)) {
+    assert.ok(TOKENS[id], `${npc}: gettone ${id} inesistente`);
+    assert.ok(hooks.includes(`giftFromNpc?.("${npc}")`), `${npc}: regalo non agganciato`);
+  }
+  // una volta per NPC e quartiere
+  let ts = T.createTokenState();
+  const r = T.claimNpcGift(ts, "vecchio", 2);
+  assert.equal(r.tokenId, "dado");
+  assert.equal(T.claimNpcGift(r.state, "vecchio", 2).tokenId, null);
+  // la valigetta del boss esiste ed è chiamata a fine boss
+  assert.ok(/offerBossBag\?\.\(\)/.test(src("hooks/useNodeHandlers.js")));
+});

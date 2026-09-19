@@ -32,7 +32,7 @@ export function useNodeHandlers({
   setLabirintoState, setCombinaState, setTesoroState,
   effectiveFortune, gameStats, isAlive, grantToken,
   map, makeMap = generateMap, tokenBlocksNegative, tokenTheftMult = 1, tryRewindCombat,
-  openPedinaroVisit, offerCompensation,
+  openPedinaroVisit, offerCompensation, offerBossBag,
 }) {
   const [dreamModal, setDreamModal] = useState(null);
 
@@ -529,6 +529,8 @@ export function useNodeHandlers({
         let tokenLine = null;
         if (player.tokens && currentBiome < BIOMES.length - 1 && needsCompensation(player.tokens, currentBiome) && offerCompensation?.()) {
           tokenLine = "🪙 Il boss lascia cadere due gettoni: scegline uno.";
+        } else if (player.tokens && currentBiome < BIOMES.length - 1 && roll(0.3) && offerBossBag?.()) {
+          tokenLine = "💼 Nella valigetta del boss ci sono due pedine: scegline una.";
         }
         // Sorpresina: al primo boss battuto si apre
         if (player.tokens) {

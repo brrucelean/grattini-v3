@@ -29,7 +29,7 @@ export function useScratchHandlers({
   setGameStats, setScratchingCard, setReturnScreen, setCardSelectMode, setSelectedCardIdx,
   setScreen, setIntroCardsLeft, setIntroPrizes, setItemFoundModal,
   setMap, setCurrentRow, setVisitedNodes, setCurrentNode, setCurrentBiome,
-  setPlayer, isAlive, makeMap = generateMap,
+  setPlayer, isAlive, makeMap = generateMap, giftFromNpc,
 }) {
   // { prize, returnTo }: returnTo è la schermata da cui si stava grattando.
   // Prima il Doppio o Nulla azzerava returnScreen e, rifiutando o giocando,
@@ -206,6 +206,8 @@ export function useScratchHandlers({
         const newFollowers = result.prize >= 20 ? 2 : 1;
         updatePlayer(p => ({...p, streamerFollowers: (p.streamerFollowers || 0) + newFollowers}));
         addLog(`📈 +${newFollowers} follower! La tua community cresce...`, C.cyan);
+        // Streamer: la chat ti regala un gettone VHS (una volta per quartiere)
+        if (giftFromNpc?.("streamer")) addLog("📼 La chat fa una colletta: ti arriva un Gettone VHS!", C.magenta);
         setItemFoundModal({ emoji:"🎬", name:"Clip Virale!", desc:`La prossima vincita sarà x2!\n\n+${newFollowers} follower: ti invieranno donazioni in combat!`, subtitle:"Streamer Scratch" });
       }
       if (hasClipVirale) {
