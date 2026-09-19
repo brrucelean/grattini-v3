@@ -54,6 +54,7 @@ import { TutorialDesk } from "./components/intro/TutorialDesk.jsx";
 import { SelectCardDesk } from "./components/desk/SelectCardDesk.jsx";
 import { GameOverDesk, VictoryDesk, CedoleDesk } from "./components/desk/EndScreens.jsx";
 import { MK, mkPanel, MkButton, MkScreen, MkTitle } from "./components/desk/mapKit.jsx";
+import { dither } from "./components/map/mapTheme.js";
 import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TokenDock } from "./components/tokens/TokenDock.jsx";
@@ -417,10 +418,11 @@ export default function Grattini() {
       : `🪙 GETTONE: ${def.name} — ${def.pro}. Fregatura: ${def.contro}.`;
     addLog(line, C.gold);
     if (withModal && r.outcome === "added") {
+      const foundAt = source.toLowerCase() === "debug" ? "Nuovo gettone" : source;
       setItemFoundModal({
         emoji: "🪙", tokenId, name: def.name,
-        desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia sotto la mappa. Trascinalo sul primo posto per renderlo attivo.`,
-        subtitle: `${source} · Gettone ${TOKEN_RARITY[def.rarity].label}`,
+        desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia sotto la mappa. Cliccalo per leggerne la scheda oppure trascinalo direttamente sul tabellone per attivarlo.`,
+        subtitle: `${foundAt} · ${TOKEN_RARITY[def.rarity].label}`,
       });
     }
     return line;
@@ -2106,7 +2108,7 @@ export default function Grattini() {
           )}
           </Suspense>
 
-          <TokenDock tokens={player.tokens} canSwap={canSwapToken(player.tokens)} onEquip={handleEquipToken} />
+          <TokenDock tokens={player.tokens} canSwap={canSwapToken(player.tokens)} />
 
           {/* Striscia inventario compatta — flexShrink:0, NON toglie spazio alla mappa */}
           {(player.items.length > 0 || player.grattatori.length > 0) && (
@@ -3355,6 +3357,7 @@ export default function Grattini() {
           leggendaria:{ c:C.gold,    label:"LEGGEND." },
         };
         const rar = IFM_RARITY[itemFoundModal.rarity] || null;
+        const isToken = !!itemFoundModal.tokenId;
         const em = itemFoundModal.emoji || "✦";
         const sub = (itemFoundModal.subtitle || "").toLowerCase();
         const nm  = (itemFoundModal.name    || "").toLowerCase();
@@ -3376,8 +3379,9 @@ export default function Grattini() {
         return (
           <div style={{
             position:"fixed", inset:0,
-            background:"rgba(0,0,0,0.91)", zIndex:99998,
+            background:isToken?"rgba(4,4,3,0.84)":"rgba(0,0,0,0.91)", zIndex:99998,
             display:"flex", alignItems:"center", justifyContent:"center",
+            backdropFilter:isToken?"blur(2px)":"none",
           }}>
             {/* Backdrop glow */}
             <div style={{
@@ -3385,10 +3389,10 @@ export default function Grattini() {
               background:`radial-gradient(ellipse 70% 55% at 50% 50%, ${accent}1a 0%, ${accent}07 45%, transparent 70%)`,
             }}/>
             <div style={{
-              background:"linear-gradient(180deg,#08081c 0%,#040410 100%)",
-              border:`2px solid ${accent}`,
-              maxWidth:"320px", width:"92%",
-              boxShadow:`0 0 50px ${accent}44, 0 0 90px ${accent}18, inset 0 0 18px ${accent}0a`,
+              background:isToken?dither("#17140f", "#211c13", 3):"linear-gradient(180deg,#08081c 0%,#040410 100%)",
+              border:`${isToken?3:2}px solid ${accent}`,
+              maxWidth:isToken?"430px":"320px", width:"92%",
+              boxShadow:isToken?`8px 8px 0 #000, inset 0 0 0 2px #3f2f0c`:`0 0 50px ${accent}44, 0 0 90px ${accent}18, inset 0 0 18px ${accent}0a`,
               fontFamily:FONT, position:"relative", overflow:"hidden",
               animation:"itemFoundIn 0.25s cubic-bezier(0.22,1,0.36,1)",
             }}>
@@ -3396,9 +3400,9 @@ export default function Grattini() {
               <div style={{height:"2px", background:`linear-gradient(90deg,transparent,${accent}55,${accent}bb,${accent}55,transparent)`}}/>
 
               {/* Header */}
-              <div style={{padding:"10px 14px 0", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px", flexWrap:"wrap"}}>
+              <div style={{padding:isToken?"12px 18px 8px":"10px 14px 0", display:"flex", alignItems:"center", justifyContent:isToken?"space-between":"center", gap:"8px", flexWrap:"wrap", background:isToken?"#0b0a08":"transparent", borderBottom:isToken?`1px solid ${accent}66`:"none"}}>
                 <div style={{color:accent, fontSize:"10px", letterSpacing:"3px", fontWeight:"bold", textShadow:`0 0 10px ${accent}`}}>
-                  {itemFoundModal.subtitle ? `✦ ${itemFoundModal.subtitle.toUpperCase()} ✦` : "✦ HAI TROVATO ✦"}
+                  {itemFoundModal.subtitle ? `${isToken?"":"✦ "}${itemFoundModal.subtitle.toUpperCase()}${isToken?"":" ✦"}` : "✦ HAI TROVATO ✦"}
                 </div>
                 {rar && (
                   <div style={{background:`${accent}22`, border:`1px solid ${accent}66`, color:accent, fontSize:"10px", letterSpacing:"1.5px", padding:"2px 6px", fontWeight:"bold"}}>
@@ -3432,11 +3436,17 @@ export default function Grattini() {
                   if (!line.trim()) return <div key={i} style={{height:"4px"}}/>;
                   const isArt = /^[\s]*[│┌┐└┘╔╗╚╝║═╠╣░▒▓┼─]/.test(line);
                   const isStat = /^[+\-±]/.test(line.trim()) || /[€×x]\d/.test(line) || /VINCITA|BONUS|COMBO/.test(line);
+                  const tokenLine = isToken && /^(VANTAGGIO|FREGATURA|QUANDO):/.test(line.trim());
                   if (isArt) return (
                     <div key={i} style={{color:`${accent}99`, fontSize:"10px", lineHeight:"1.3", fontFamily:"monospace", whiteSpace:"pre", overflow:"hidden", textOverflow:"ellipsis"}}>{line}</div>
                   );
                   return (
-                    <div key={i} style={{color:isStat?C.bright:C.text, fontSize:isStat?"12px":"11px", lineHeight:"1.7", fontWeight:isStat?"bold":"normal"}}>
+                    <div key={i} style={{
+                      color:tokenLine ? C.bright : isStat?C.bright:C.text,
+                      fontSize:isStat?"12px":"11px", lineHeight:"1.7", fontWeight:isStat||tokenLine?"bold":"normal",
+                      ...(tokenLine ? { padding:"5px 8px", marginBottom:3, background:"#09090899",
+                        borderLeft:`3px solid ${line.startsWith("VANTAGGIO")?C.green:line.startsWith("FREGATURA")?C.red:"#c8c0a8"}` } : {}),
+                    }}>
                       {line}
                     </div>
                   );

@@ -234,7 +234,7 @@ const CHAPTERS = [
     rules: [
       <>Una pedina alla volta, e la vedi camminare sulla mappa. <b style={hl(C.bright)}>Cliccala</b> per la scheda: <b style={hl("#7be08a")}>vantaggio</b>, <b style={hl("#ff7a6a")}>fregatura</b>, quando scatta.</>,
       <>Ne porti <b style={hl(C.bright)}>al massimo 3</b> nella custodia sotto la mappa, Ottone compreso. Se è piena, scegli quale buttare.</>,
-      <>Si cambia <b style={hl(C.gold)}>solo sulla mappa</b>: trascina una riserva sul primo posto, prima di scegliere il nodo. Dentro il nodo resta quella.</>,
+      <>Si cambia <b style={hl(C.gold)}>solo sulla mappa</b>: trascina qualunque gettone dalla custodia e rilascialo sul tabellone, prima di scegliere il nodo. Dentro il nodo resta quella.</>,
       <>Le trovi negli <b style={hl(C.bright)}>zaini abbandonati</b> e dal <b style={hl(C.red)}>boss</b>. Valgono per questa run, ma restano nella collezione <b style={hl("#e58a68")}>Pedine</b> della home.</>,
       <>Alcune hanno un potere da usare (Telefono, Dado), altre cambiano <b style={hl("#e07aff")}>come vedi il gioco</b>.</>,
     ],

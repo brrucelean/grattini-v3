@@ -45,6 +45,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
   const [dadoPicking, setDadoPicking] = useState(false);
   const pedinaId = tokens?.equipped || "ottone";
   const [panelOpen, setPanelOpen] = useState(false);
+  const [tokenDropActive, setTokenDropActive] = useState(false);
   const theme = BIOME_THEME[currentBiome] || BIOME_THEME[0];
   const boardRef = useRef(null);
   const { w: bw, h: bh } = useSize(boardRef);
@@ -194,7 +195,29 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
       <div ref={boardRef} style={{
         flex: 1, minHeight: 0, position: "relative", overflow: "hidden",
         background: dither(theme.board, theme.board2, 2),
-      }}>
+        outline: tokenDropActive ? `4px solid ${GOLD.hi}` : "none", outlineOffset: "-6px",
+      }}
+        onDragEnter={e => { if (tokens && Array.from(e.dataTransfer.types).includes("text/token")) setTokenDropActive(true); }}
+        onDragOver={e => {
+          if (!tokens || !Array.from(e.dataTransfer.types).includes("text/token")) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setTokenDropActive(true);
+        }}
+        onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setTokenDropActive(false); }}
+        onDrop={e => {
+          e.preventDefault();
+          setTokenDropActive(false);
+          const id = e.dataTransfer.getData("text/token");
+          if (id && id !== pedinaId) onEquipToken?.(id);
+        }}>
+        {tokenDropActive && (
+          <div aria-hidden style={{ position:"absolute", inset:10, zIndex:20, pointerEvents:"none", display:"grid", placeItems:"center",
+            border:`3px dashed ${GOLD.hi}`, background:"#120e05aa", color:GOLD.hi, fontFamily:FONT, fontSize:15,
+            letterSpacing:3, textShadow:"2px 2px 0 #000" }}>
+            RILASCIA QUI LA PEDINA
+          </div>
+        )}
         {bw > 0 && <>
           {/* Numeri di payline e colonna corrente */}
           {map.rows.map((_, c) => {

@@ -30,7 +30,7 @@ Sono la parte collezionabile e divertente, e costano poco.
 | Custodia mai vuota | non puoi buttare l'ultimo gettone; se un effetto te lo toglie (sequestro), torna l'Ottone |
 | Buttare quello equipaggiato | si equipaggia il primo rimasto in custodia |
 | Custodia piena | scelta obbligatoria: `EQUIPAGGIA` · `CONSERVA` (butti uno) · `SCAMBIA` · `RIFIUTA` |
-| Cambio pedina | solo sulla mappa, **prima** di scegliere il nodo; trascina una riserva sul primo posto |
+| Cambio pedina | solo sulla mappa, **prima** di scegliere il nodo; trascina un gettone dalla custodia e rilascialo sul tabellone |
 | Dopo la scelta del nodo | gettone bloccato fino al ritorno sulla mappa |
 | Durata | solo la run corrente |
 | Metagame | si salva solo il **catalogo** dei gettoni scoperti (vetrina, niente effetti) |
