@@ -1,12 +1,12 @@
-import { useState, memo } from "react";
+import { memo } from "react";
 import { C } from "../../data/theme.js";
-import { AudioEngine } from "../../audio.js";
 import { fmtMoney } from "../../utils/money.js";
 import { Tooltip } from "../Tooltip.jsx";
 import { Asset } from "../Asset.jsx";
 import { NailPipRow } from "../NailMeter.jsx";
 import { getStatusChips } from "./statusChips.js";
 import { SH, edge } from "./shellTokens.js";
+import { VolumeControl } from "./VolumeControl.jsx";
 
 // ─── RUN BAR — barra risorse della shell desktop (48 px) ─────────
 // Sostituisce l'HUD legacy da 1024 px in su. Stessi contenuti: soldi,
@@ -32,10 +32,6 @@ function Pill({ color, children, strong = false, onClick, label, audio, style = 
 }
 
 function RunBarImpl({ player, onOpenInventory, inventoryOpen = false, moneyBling = 0, hideInventoryButton = false }) {
-  const [vol, setVol] = useState(AudioEngine.getVolume());
-  const setVolume = (v) => { setVol(v); AudioEngine.setVolume(v); };
-  const muted = vol === 0;
-
   const aliveNails = player.nails.filter(n => n.state !== "morta").length;
   const viteColor = aliveNails <= 1 ? C.red : aliveNails <= 2 ? C.orange : C.green;
   const ownedCards = player.scratchCards.filter(c => c.owned).length;
@@ -99,19 +95,7 @@ function RunBarImpl({ player, onOpenInventory, inventoryOpen = false, moneyBling
       </div>
 
       {/* ── Volume ── */}
-      <Tooltip text="🔊 volume musicale — alzalo e GODITI l'8-bit bro">
-        <span style={{display:"inline-flex", alignItems:"center", gap:"8px", height:`${PILL_H}px`,
-          padding:"0 8px", border: edge(SH.line), flexShrink:0}}>
-          <button type="button" onClick={() => setVolume(muted ? 0.7 : 0)}
-            aria-label={muted ? "Riattiva audio" : "Disattiva audio"}
-            style={{background:"none", border:"none", padding:0, color:SH.dim, fontSize:"15px", lineHeight:1, cursor:"pointer"}}>
-            {muted ? "🔇" : vol < 0.4 ? "🔈" : "🔊"}
-          </button>
-          <input type="range" min="0" max="1" step="0.05" value={vol} aria-label="Volume"
-            onChange={e => setVolume(parseFloat(e.target.value))}
-            style={{width:"64px", height:"4px", accentColor: C.gold, cursor:"pointer"}} />
-        </span>
-      </Tooltip>
+      <VolumeControl />
 
       {/* ── Zaino: unico comando della barra ── */}
       {onOpenInventory && !hideInventoryButton && (() => {

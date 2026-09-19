@@ -6,6 +6,7 @@ import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
 import { readNail } from "../NailMeter.jsx";
 import { ReceiptPaper } from "../shell/LogColumn.jsx";
+import { VolumeControl } from "../shell/VolumeControl.jsx";
 
 // ─── TAVOLO DA GRATTATA — ambientazione della schermata di grattata ──
 // Desktop (shell ≥1024px). Il biglietto sta su un tappetino in mezzo al
@@ -210,6 +211,7 @@ export function TableTopBar({ card, nails, activeNail, money }) {
         </span>
       </div>
       <span style={{ flex: 1 }} />
+      <VolumeControl compact background="#1b100a" borderColor="#7a5a1c" />
       <div role="list" aria-label="Unghie" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
         {nails.map((n, i) => <NailChip key={i} n={n} i={i} active={i === activeNail} />)}
       </div>
