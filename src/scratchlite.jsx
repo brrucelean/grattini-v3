@@ -2333,7 +2333,7 @@ export default function Grattini() {
         if (wideShell) return (
           <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
             <MinigameTable ticketId="labirinto" title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
-              how="Parti dall'angolo in alto a sinistra e segui la freccia della casella in cui sei."
+              how="Segui le frecce fino al 🏆."
               status={[["Accumulato", `€${ls.prize}`, true], ["Ogni casella nuova", `+€${CELL_PRIZE}`], ["Uscita 🏆", `+€${JACKPOT_PRIZE}`]]}
               rules={[
                 `Premi MUOVITI: vai dove indica la freccia della casella attuale.`,
@@ -2515,7 +2515,7 @@ export default function Grattini() {
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
               <MinigameTable ticketId="grattaCombina" title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
-                how="Scopri una casella per griglia: se le ultime due scoperte sono uguali è COMBO."
+                how="Due simboli uguali, uno per griglia = COMBO."
                 status={[["Premio", `€${cs.prize}`, true], ["Combo", `${cs.combos}/3`], ["MEGA COMBO", `×${MEGA_MULT}`]]}
                 rules={[
                   `Gratta una casella nella griglia A e una nella B.`,
@@ -2627,7 +2627,7 @@ export default function Grattini() {
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
               <MinigameTable ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
-                how="Due X nascoste e 5 bombe. Ogni casella vuota ti dice quanto sei lontano dal tesoro più vicino."
+                how="Trova le 2 X, evita le 5 💣."
                 status={[["Premio", `€${ts.prize}`, true], ["Tesori", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
                 rules={[
                   `Ogni X trovata vale €${X_PRIZE}.`,

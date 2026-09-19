@@ -11,7 +11,7 @@ import { assetUrl } from "../../assets/registry.js";
 // scheda "come si vince". Tutto in vista, senza scorrere.
 // Solo presentazione: stato e regole restano in scratchlite.
 
-const INK = "#153f42", MUTED = "#5d6f68", CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#3a1f0f", RED = "#a3161d";
+const INK = "#153f42", CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#3a1f0f", RED = "#a3161d";
 
 // Casella: argento a retino finché coperta, carta quando scoperta.
 export function CoverCell({ revealed, onClick, children, size = 76, mark = null, disabled = false, label }) {
@@ -66,9 +66,9 @@ export function MinigameTable({ ticketId, title, emoji, accent, how, status, chi
             filter: `drop-shadow(6px 6px 0 ${SHADOW})`,
           }}>
             {/* cartiglio: titolo stampato */}
-            <div style={{ ...box(lay.header), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px", textAlign: "center", padding: "0 4px" }}>
+            <div style={{ ...box(lay.header), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", textAlign: "center", padding: "0 6px" }}>
               <span style={{ fontSize: "clamp(16px, 2.6cqw, 30px)", lineHeight: 1, color: INK, letterSpacing: "1px" }}>{title.toUpperCase()}</span>
-              <span style={{ fontSize: "clamp(10px, 1.1cqw, 13px)", lineHeight: 1.35, color: MUTED }}>{how}</span>
+              <span style={{ fontSize: "clamp(13px, 1.7cqw, 17px)", lineHeight: 1.35, color: INK }}>{how}</span>
             </div>
             {/* riquadro di gioco */}
             <div style={{ ...box(lay.play), containerType: "size" }}>
