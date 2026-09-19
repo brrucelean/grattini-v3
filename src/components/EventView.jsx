@@ -202,6 +202,9 @@ export function EventView({ node, player, onChoice }) {
             disabledNote: `ti mancano €${Math.max(0, g.cost - player.money)}`, tooltip: g.desc,
           };
         }),
+        ...(!player.hasVIP ? [{ label: `🪙 Fai l'elemosina (€5) → Tessera VIP`, action: "elemosinaVIP",
+          condition: player.money >= 5, disabledNote: `ti mancano €${Math.max(0, 5 - player.money)}`,
+          tooltip: "Apre la Zona VIP nel tabaccaio: Gratta & Combina, Mappa del Tesoro, Labirinto e oggetti rari." }] : []),
         { label: `🦴 Offri 1 unghia → Bottone Magico gratis`, action: "barattoGrat_bottone",
           condition: player.nails.filter(n => n.state !== "morta").length > 1,
           disabledNote: "non hai unghie da offrire", tooltip: GRATTATORE_DEFS.bottone.desc },

@@ -229,6 +229,22 @@ export function useEventHandlers({
         }
         setScreen("map"); break;
       }
+      // Elemosina al Mendicante: €5 → Tessera VIP (apre la Zona VIP del tabaccaio).
+      // Prima la tessera non si otteneva da nessuna parte: la Zona VIP era morta.
+      case "elemosinaVIP": {
+        if (player.money < 5 || player.hasVIP) { setScreen("map"); break; }
+        updatePlayer(p => ({...p, money: Math.max(0, p.money - 5), hasVIP: true}));
+        addLog("🎫 Il Mendicante ti infila in tasca una Tessera VIP. «Il retro del tabacchi, figliolo.»", C.gold);
+        {
+          const def = ITEM_DEFS.tesseraVIP;
+          setItemFoundModal({
+            emoji: def.emoji, name: def.name,
+            desc: "Dal prossimo tabaccaio si apre la Zona VIP: Gratta & Combina, Mappa del Tesoro, Labirinto e oggetti rari.",
+            subtitle: "Elemosina ricompensata",
+          });
+        }
+        setScreen("map"); break;
+      }
       case "buyGrat_bottone":
       case "buyGrat_bullone":
       case "buyGrat_discoRotto": {
