@@ -9,6 +9,16 @@ export const AudioEngine = (() => {
   let currentTheme = null;
   let pendingTheme = null;      // tema in attesa nel debounce (fix race A→B→A)
   let masterVolume = 0.7;
+  let uiCleanup = null;
+  const lastPlayed = new Map();
+
+  const mayPlay = (key, cooldownMs) => {
+    const now = performance.now();
+    const last = lastPlayed.get(key) || 0;
+    if (now - last < cooldownMs) return false;
+    lastPlayed.set(key, now);
+    return true;
+  };
 
   const getCtx = () => {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -88,8 +98,33 @@ export const AudioEngine = (() => {
     } catch(e) {}
   };
 
+  // Fruscio breve e filtrato. Un solo generatore serve carta, CRT e impatti,
+  // ma ogni famiglia ha banda e inviluppo propri: il mix resta coerente.
+  const playNoise = ({ duration=.05, volume=.03, frequency=1800, q=.7, type="bandpass", startTime=0 } = {}) => {
+    if (masterVolume === 0) return;
+    try {
+      const ac = getCtx();
+      const length = Math.max(1, Math.floor(ac.sampleRate * duration));
+      const buffer = ac.createBuffer(1, length, ac.sampleRate);
+      const channel = buffer.getChannelData(0);
+      for (let i=0; i<length; i++) {
+        const env = Math.sin(Math.PI * i / length);
+        channel[i] = (Math.random() * 2 - 1) * env;
+      }
+      const source = ac.createBufferSource(); source.buffer = buffer;
+      const filter = ac.createBiquadFilter(); filter.type = type; filter.frequency.value = frequency; filter.Q.value = q;
+      const gain = ac.createGain(); const t = ac.currentTime + startTime;
+      gain.gain.setValueAtTime(.0001, t);
+      gain.gain.exponentialRampToValueAtTime(volume, t + Math.min(.012, duration * .25));
+      gain.gain.exponentialRampToValueAtTime(.0001, t + duration);
+      source.connect(filter); filter.connect(gain); gain.connect(getMaster());
+      source.start(t); source.stop(t + duration + .01);
+    } catch {}
+  };
+
   return {
     scratch: () => {
+      if (!mayPlay("scratch", 38)) return;
       if (masterVolume === 0) return;
       try {
         const ac = getCtx();
@@ -97,7 +132,7 @@ export const AudioEngine = (() => {
         src.buffer = getScratchBuffer();
         const filt = ac.createBiquadFilter();
         filt.type = "bandpass"; filt.frequency.value = 2500 + Math.random()*2000; filt.Q.value = 0.5;
-        const gain = ac.createGain(); gain.gain.value = 0.4;
+        const gain = ac.createGain(); gain.gain.value = 0.20;
         src.connect(filt); filt.connect(gain); gain.connect(getMaster());
         src.start(); src.stop(ac.currentTime + 0.09);
       } catch(e) {}
@@ -108,7 +143,70 @@ export const AudioEngine = (() => {
     lose: () => {
       [330,220,150].forEach((f,i) => setTimeout(()=>playTone(f,0.25,"sawtooth",0.1), i*120));
     },
-    click: () => playTone(600, 0.04, "square", 0.06),
+    // UI tattile: carta/plastica morbida, non bleeps da menu generico.
+    hover: () => {
+      if (!mayPlay("hover", 85)) return;
+      playTone(1180 + Math.random()*90, .018, "sine", .018);
+      playNoise({duration:.018, volume:.007, frequency:2800});
+    },
+    click: () => {
+      if (!mayPlay("click", 32)) return;
+      playTone(540 + Math.random()*35, .035, "triangle", .055);
+      playTone(260, .045, "sine", .025, .008);
+      playNoise({duration:.025, volume:.016, frequency:1450});
+    },
+    nailTap: () => {
+      if (!mayPlay("nail", 55)) return;
+      const variants = [410, 455, 505, 565];
+      const f = variants[Math.floor(Math.random() * variants.length)];
+      playTone(f, .032, "triangle", .038);
+      playNoise({duration:.018, volume:.012, frequency:900 + Math.random()*350, q:.9});
+    },
+    cardTap: () => {
+      if (!mayPlay("card", 55)) return;
+      playNoise({duration:.06, volume:.027, frequency:1150 + Math.random()*260, q:.55});
+      playTone(235 + Math.random()*24, .055, "sine", .026);
+    },
+    itemTap: () => {
+      if (!mayPlay("item", 60)) return;
+      playTone(760 + Math.random()*65, .035, "triangle", .035);
+      playNoise({duration:.028, volume:.014, frequency:2100, q:1.1});
+    },
+    select: () => {
+      playTone(720 + Math.random()*30, .045, "triangle", .045);
+      playTone(1080, .055, "sine", .025, .025);
+    },
+    panelOpen: () => {
+      if (!mayPlay("panel", 180)) return;
+      playNoise({duration:.09, volume:.022, frequency:1050});
+      playTone(190, .11, "sine", .035);
+      playTone(430, .07, "triangle", .025, .04);
+    },
+    transition: () => {
+      if (!mayPlay("transition", 260)) return;
+      playNoise({duration:.12, volume:.018, frequency:820, q:.5});
+      playTone(155, .14, "sine", .025);
+    },
+    reveal: () => {
+      if (!mayPlay("reveal", 75)) return;
+      playNoise({duration:.045, volume:.025, frequency:2350});
+      playTone(880 + Math.random()*75, .06, "triangle", .04, .015);
+    },
+    error: () => {
+      if (!mayPlay("error", 220)) return;
+      playTone(155, .08, "square", .06);
+      playTone(112, .10, "sawtooth", .045, .055);
+    },
+    purchase: () => {
+      playNoise({duration:.055, volume:.025, frequency:1900});
+      playTone(880, .055, "triangle", .055);
+      playTone(1320, .09, "sine", .04, .055);
+    },
+    crtGlitch: () => {
+      if (!mayPlay("crt", 5000)) return;
+      playNoise({duration:.18, volume:.055, frequency:1550, q:.7});
+      playTone(73, .14, "sawtooth", .018);
+    },
     // "Voce" a blip degli NPC mentre il testo si scrive
     talkBlip: (freq) => playTone(freq, 0.04, "square", 0.05),
     // Scatto meccanico della mappa — "slot reel stop"
@@ -300,14 +398,17 @@ export const AudioEngine = (() => {
       };
 
       const th = T[theme] || T.explore;
+      // La musica è il fondale, non il feedback: -4.7 dB circa rispetto agli
+      // SFX. Vale soprattutto per explore, che parte nelle prime schermate.
+      const MUSIC_MIX = 0.58;
       let i = 0;
       const step = () => {
-        playHarp(th.mel[i % th.mel.length], th.mv);
-        playTone(th.har[i % th.har.length], th.t / 1000 * 0.50, "sine", th.hv);
-        if (i % 2 === 0) playHarp(th.bas[Math.floor(i / 2) % th.bas.length], th.bv);
+        playHarp(th.mel[i % th.mel.length], th.mv * MUSIC_MIX);
+        playTone(th.har[i % th.har.length], th.t / 1000 * 0.50, "sine", th.hv * MUSIC_MIX);
+        if (i % 2 === 0) playHarp(th.bas[Math.floor(i / 2) % th.bas.length], th.bv * MUSIC_MIX);
         // Sparkle ogni 8 step — solo sui temi calmi (non combat/boss/china)
         if (i % 8 === 0 && (theme === "explore" || theme === "shop" || theme === "locanda" || theme === "chinaTown")) {
-          playTone(th.mel[i % th.mel.length] * 2, 0.10, "sine", th.mv * 0.22);
+          playTone(th.mel[i % th.mel.length] * 2, 0.10, "sine", th.mv * 0.22 * MUSIC_MIX);
         }
         i++;
       };
@@ -329,6 +430,42 @@ export const AudioEngine = (() => {
     },
     getVolume: () => masterVolume,
     init: () => { try { getCtx(); } catch(e) {} },
+    // Copre anche i molti <button> nativi delle schermate storiche. Hover/focus
+    // sono delegati, con cooldown globale: attraversare una griglia non produce
+    // una mitragliata. I Btn gestiscono già il proprio click e vengono esclusi.
+    bindUI: () => {
+      if (uiCleanup || typeof document === "undefined") return uiCleanup;
+      const interactive = 'button:not(:disabled), [role="button"], [data-audio-interactive="true"]';
+      const unlock = () => AudioEngine.init();
+      const over = (e) => {
+        if (e.pointerType === "touch") return;
+        const el = e.target.closest?.(interactive);
+        if (!el || el.contains(e.relatedTarget)) return;
+        AudioEngine.hover();
+      };
+      const focus = (e) => { if (e.target.closest?.(interactive)) AudioEngine.hover(); };
+      const down = (e) => {
+        unlock();
+        const el = e.target.closest?.(interactive);
+        if (!el || el.classList.contains("btn-ui")) return;
+        const family = el.dataset.audio;
+        if (family === "nail") AudioEngine.nailTap();
+        else if (family === "card") AudioEngine.cardTap();
+        else if (family === "item") AudioEngine.itemTap();
+        else AudioEngine.click();
+      };
+      document.addEventListener("pointerover", over, true);
+      document.addEventListener("focusin", focus, true);
+      document.addEventListener("pointerdown", down, true);
+      document.addEventListener("keydown", unlock, {once:true});
+      uiCleanup = () => {
+        document.removeEventListener("pointerover", over, true);
+        document.removeEventListener("focusin", focus, true);
+        document.removeEventListener("pointerdown", down, true);
+        uiCleanup = null;
+      };
+      return uiCleanup;
+    },
   };
 })();
 

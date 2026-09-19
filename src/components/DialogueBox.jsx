@@ -29,7 +29,7 @@ export function MsgRender({ msg, color, style = {}, charCount = Infinity }) {
   })}</span>;
 }
 
-export function CarmeloLogBox({ npc, name, color, messages, footer, height="170px" }) {
+export function CarmeloLogBox({ npc, name, color, messages, footer, height="170px", active=true }) {
   const portrait = SPR_BIG[npc];
   const scrollRef = useRef(null);
   const [typedText, setTypedText] = useState("");
@@ -39,7 +39,7 @@ export function CarmeloLogBox({ npc, name, color, messages, footer, height="170p
   const latestPlain = msgPlainText(latest);
 
   useEffect(() => {
-    if (!latest) return;
+    if (!latest || !active) { setTypedText(latestPlain); setTypingDone(true); return; }
     setTypedText(""); setTypingDone(false);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     let i = 0;
@@ -50,7 +50,7 @@ export function CarmeloLogBox({ npc, name, color, messages, footer, height="170p
       i++;
     }, 28);
     return () => clearInterval(iv);
-  }, [latestPlain]);
+  }, [latestPlain, active]);
 
   // Segui il cursore: ogni volta che il testo cresce scrolla in fondo
   useEffect(() => {
@@ -143,7 +143,7 @@ export function CarmeloLogBox({ npc, name, color, messages, footer, height="170p
 // Striscia compatta (44px): typewriter lettera per lettera + scroll
 // che segue il cursore (overflow a sinistra mentre si scrive).
 // Dopo la fine: scorre indietro lentamente per rileggere dall'inizio.
-export function CarmeloScratchStrip({ messages, color }) {
+export function CarmeloScratchStrip({ messages, color, active=true }) {
   const latest = messages && messages.length > 0 ? messages[messages.length - 1] : "";
   const latestPlain = msgPlainText(latest);
   const [typedText, setTypedText] = useState("");
@@ -152,7 +152,7 @@ export function CarmeloScratchStrip({ messages, color }) {
 
   // Nuovo messaggio: reset e riparti
   useEffect(() => {
-    if (!latestPlain) return;
+    if (!latestPlain || !active) { setTypedText(latestPlain); setDone(true); return; }
     setTypedText("");
     setDone(false);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -164,7 +164,7 @@ export function CarmeloScratchStrip({ messages, color }) {
       i++;
     }, 28);
     return () => clearInterval(iv);
-  }, [latestPlain]);
+  }, [latestPlain, active]);
 
   // Segui il cursore: scrolla in basso durante il typing
   useEffect(() => {

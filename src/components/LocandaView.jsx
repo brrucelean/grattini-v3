@@ -10,6 +10,7 @@ function RoomTile({ room, canAfford, onClick }) {
   const accent = room.accent;
   return (
     <div
+      data-audio-interactive={!disabled ? "true" : undefined}
       onClick={disabled ? undefined : onClick}
       style={{
         position: "relative",

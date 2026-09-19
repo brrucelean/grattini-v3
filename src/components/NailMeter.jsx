@@ -105,6 +105,8 @@ export function NailPip({ nail, active = false, size = "md", onClick = null }) {
     : active ? r.col : r.col + "88";
   return (
     <span
+      data-audio={onClick ? "nail" : undefined}
+      data-audio-interactive={onClick ? "true" : undefined}
       title={nailTitle(nail)}
       onClick={onClick || undefined}
       style={{

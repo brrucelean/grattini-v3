@@ -155,6 +155,8 @@ export default function Grattini() {
   // ─── HOOK: useAudioTheme ───
   useAudioTheme({ screen, currentNode, combatEnemy, currentBiome });
 
+  useEffect(() => AudioEngine.bindUI(), []);
+
 
   // Commenti reattivi al cambio schermata
   useEffect(() => {
@@ -775,7 +777,7 @@ export default function Grattini() {
 
           {/* ── CARMELO STRIP — striscia 96px multi-riga con typewriter, visibile durante introScratch ── */}
           {returnScreen === "introScratch" && carmeloLog.length > 0 && !wideShell && (
-            <CarmeloScratchStrip messages={carmeloLog} color={C.gold} />
+            <CarmeloScratchStrip messages={carmeloLog} color={C.gold} active={!scratchingCard} />
           )}
         </div>
       )}
@@ -1061,7 +1063,7 @@ export default function Grattini() {
       })()}
 
       {/* ═══ INTRO SCRATCH (scratch 2 starting cards, pocket 1 prize) ═══ */}
-      {screen === "introScratch" && player && wideShell && (
+      {screen === "introScratch" && player && wideShell && !scratchingCard && (
         // Desktop: Nonno Carmelo al bancone, chiaro (components/intro/IntroDesk.jsx)
         <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
           <IntroDesk
@@ -1102,6 +1104,7 @@ export default function Grattini() {
             name="Nonno Carmelo"
             color={C.gold}
             messages={carmeloLog}
+            active={!scratchingCard}
             height="200px"
             footer={player.scratchCards.length > 0
               ? <Btn onClick={(e) => {
@@ -1129,7 +1132,7 @@ export default function Grattini() {
                     <div key={idx} style={{textAlign:"center"}}
                       onMouseEnter={() => setHoveredIntroIdx(idx)}
                       onMouseLeave={() => setHoveredIntroIdx(-1)}>
-                      <Btn variant="gold" onClick={() => {
+                      <Btn variant="gold" sound="card" onClick={() => {
                         if (!firstScratchShown) triggerNpcComment("first_warning");
                         setScratchingCard(card);
                         setReturnScreen("introScratch");
@@ -1368,7 +1371,7 @@ export default function Grattini() {
                 const cardEmoji = card.emoji || meta.emoji;
                 const mechBadge = MECH_BADGE[card.mechanic];
                 return (
-                  <div key={idx} onClick={() => handleSelectCard(idx)} style={{
+                  <div key={idx} data-audio="card" data-audio-interactive="true" onClick={() => handleSelectCard(idx)} style={{
                     position: "relative",
                     background: "#0a0a14",
                     border: `2px solid ${accent}88`,

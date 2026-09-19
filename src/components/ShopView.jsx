@@ -95,6 +95,8 @@ function ProductTile({ emoji, assetId, name, subtitle, cost, maxPrize, accent, c
   return (
     <Tooltip text={tooltip}>
       <div
+        data-audio-interactive={!cantPay ? "true" : undefined}
+        data-audio={ticketPreview ? "card" : "item"}
         onClick={cantPay ? undefined : onClick}
         className={shimmer && !cantPay ? "holo holo-strong" : undefined}
         style={{

@@ -5,6 +5,7 @@ import { generateCard } from "../utils/card.js";
 import { roundMoney, fmtMoney } from "../utils/money.js";
 import { shopDiscount, monopolioMult, cardPrice, itemPrice } from "../utils/shop.js";
 import { hasRelic } from "../utils/hasRelic.js";
+import { AudioEngine } from "../audio.js";
 
 export function useShopHandlers({ player, gameStats, updatePlayer, addLog, setGameStats, setCardSelectMode, setScreen, setReturnScreen, effectiveFortune, unlockAchievement, setItemFoundModal, currentBiome = 0 }) {
   // Etichette dello sconto per log e riepilogo ("" se non c'è sconto)
@@ -22,10 +23,11 @@ export function useShopHandlers({ player, gameStats, updatePlayer, addLog, setGa
     const type = CARD_TYPES.find(t => t.id === cardId);
     if (!type) return;
     const finalCost = cardPrice(player, currentBiome, type);
-    if (player.money < finalCost) return;
+    if (player.money < finalCost) { AudioEngine.error(); return; }
     const riggedBonus = (cardId === "doppioOnulla" && hasRelic(player, "riggedDice")) ? 0.15 : 0;
     const card = {...generateCard(cardId, effectiveFortune, riggedBonus), owned: true};
     pay(finalCost);
+    AudioEngine.purchase();
     updatePlayer(p => ({...p, scratchCards: [...p.scratchCards, card]}));
     const { tag, note } = discountLabels();
     const mult = monopolioMult(player, type);
@@ -48,9 +50,10 @@ export function useShopHandlers({ player, gameStats, updatePlayer, addLog, setGa
     const item = ITEM_DEFS[itemId];
     if (!item) return;
     const finalCost = itemPrice(player, currentBiome, item.cost);
-    if (player.money < finalCost) return;
-    if (player.items.length >= MAX_ITEMS) { addLog("Zaino pieno! Usa o butta un oggetto.", C.red); return; }
+    if (player.money < finalCost) { AudioEngine.error(); return; }
+    if (player.items.length >= MAX_ITEMS) { AudioEngine.error(); addLog("Zaino pieno! Usa o butta un oggetto.", C.red); return; }
     pay(finalCost);
+    AudioEngine.purchase();
     updatePlayer(p => ({...p, items: [...p.items, itemId]}));
     const { tag, note } = discountLabels();
     addLog(`Comprato: ${item.emoji} ${item.name} (€${finalCost}${tag})`, C.green);
@@ -66,8 +69,9 @@ export function useShopHandlers({ player, gameStats, updatePlayer, addLog, setGa
     const def = GRATTATORE_DEFS[gratId];
     if (!def) return;
     const finalCost = itemPrice(player, currentBiome, def.cost);
-    if (player.money < finalCost) return;
+    if (player.money < finalCost) { AudioEngine.error(); return; }
     pay(finalCost);
+    AudioEngine.purchase();
     updatePlayer(p => ({...p, grattatori: [...p.grattatori, makeGrattatore(gratId)]}));
     const { tag, note } = discountLabels();
     addLog(`Comprato grattatore: ${def.emoji} ${def.name} (€${finalCost}${tag})`, C.cyan);

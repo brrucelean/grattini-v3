@@ -181,6 +181,7 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
     const pct = transparent / (canvas.width * canvas.height);
     if (pct > 0.35 && !revealed.current) {
       revealed.current = true;
+      AudioEngine.reveal();
       onScratch(idx);
     }
   };

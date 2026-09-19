@@ -120,7 +120,7 @@ function ToolTrayImpl({ player, onEquipGrattatore, tone = "dark" }) {
             const uses = g.usesLeft || 0;
             return (
               <Tooltip key={idx} text={`${g.name}\n${g.desc || def?.desc || ""}\n${uses} usi rimasti · clic per ${inHand ? "posarlo" : "prenderlo"}`} color={TRAY_GOLD}>
-                <button type="button" onClick={() => onEquipGrattatore?.(idx)}
+                <button type="button" data-audio="item" onClick={() => onEquipGrattatore?.(idx)}
                   aria-pressed={inHand} aria-label={`${g.name}, ${uses} usi, ${inHand ? "in mano" : "sul vassoio"}`}
                   style={{
                     width: "100%", height: "92px", boxSizing: "border-box",

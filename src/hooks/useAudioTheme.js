@@ -1,10 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { AudioEngine } from "../audio.js";
 
 export function useAudioTheme({ screen, currentNode, combatEnemy, currentBiome }) {
+  const previousScreen = useRef(screen);
   const nodeType = currentNode?.type;
   const bossName = combatEnemy?.isBoss ? combatEnemy.name : null;
   useEffect(() => {
+    if (previousScreen.current !== screen) {
+      AudioEngine.transition();
+      previousScreen.current = screen;
+    }
     const screenTheme = {
       title:        null,
       tutorialNails: "explore",

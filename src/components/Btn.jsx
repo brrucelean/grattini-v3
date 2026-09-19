@@ -2,7 +2,7 @@ import { C } from "../data/theme.js";
 import { S } from "../utils/styles.js";
 import { AudioEngine } from "../audio.js";
 
-export function Btn({ children, onClick, variant="normal", disabled=false, style={} }) {
+export function Btn({ children, onClick, variant="normal", disabled=false, style={}, sound="button" }) {
   const base = disabled ? S.btnDisabled :
                variant === "gold" ? S.btnGold :
                variant === "danger" ? S.btnDanger : S.btn;
@@ -16,9 +16,14 @@ export function Btn({ children, onClick, variant="normal", disabled=false, style
   // `disabled` nativo: senza di esso il bottone restava raggiungibile da
   // tastiera (focus + Invio) pur non avendo più l'onClick. Lo stile visivo
   // resta quello di S.btnDisabled, già applicato sopra.
-  return <button className="btn-ui" style={merged} disabled={disabled}
-    onClick={disabled ? undefined : (e) => { AudioEngine.click(); onClick?.(e); }}
+  const playPress = () => sound === "card" ? AudioEngine.cardTap()
+    : sound === "nail" ? AudioEngine.nailTap()
+    : sound === "item" ? AudioEngine.itemTap()
+    : AudioEngine.click();
+  return <button className="btn-ui" data-audio={sound} style={merged} disabled={disabled}
+    onClick={disabled ? undefined : (e) => { playPress(); onClick?.(e); }}
     onMouseEnter={e => { if(!disabled) {
+      AudioEngine.hover();
       e.currentTarget.style.boxShadow = `0 0 16px ${glowColor}66, 0 0 32px ${glowColor}33`;
       e.currentTarget.style.textShadow = `0 0 12px ${glowColor}`;
     }}}
