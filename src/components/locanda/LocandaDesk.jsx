@@ -2,25 +2,28 @@ import { FONT } from "../../data/theme.js";
 import { nailRank, isDamagedNail } from "../../utils/nail.js";
 import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
+import { GOLD, bevel } from "../map/mapTheme.js";
+import { MK } from "../desk/mapKit.jsx";
 
 // ─── LOCANDA (desktop) — insegna + listino delle stanze ──────────
-// Stesso linguaggio della soglia: schermata chiara, carta color crema con
-// inchiostro scuro (scura resta solo la lotta), niente neon, glow o luccichii. Sul fondo resta il dipinto della locanda
+// Stesso sistema della soglia e degli eventi: pannelli neri a filo sottile e
+// oro del kit della mappa (prima carta crema, scollegata dal resto:
+// proprietario, 2026-09-19). Sul fondo resta il dipinto della locanda
 // (scene-locanda, messo da scratchlite): richiesto dall'utente. In alto
 // l'insegna (oste, nome, frase, come stanno le tue unghie), sotto il listino:
 // cinque stanze affiancate, ognuna dice cosa cura A TE adesso, cosa rischi e
 // quanto costa. Stesse stanze, prezzi e callback della versione mobile.
 
-const INK = "#153f42", MUTED = "#5d6f68", RED = "#a3161d", GREEN = "#2f7a4a", ROSE = "#b0407a", BRASS = "#b8862a";
-const CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#1a0c04";
-const frame = (edge = INK) => `inset 0 0 0 2px ${EDGE}, inset 0 0 0 4px ${edge}, 5px 5px 0 ${SHADOW}`;
+const INK = MK.txt, MUTED = MK.ink, RED = "#e0564a", GREEN = "#5fbf7e", ROSE = "#ff88cc", BRASS = GOLD.mid;
+const EDGE = MK.line;
+const frame = (edge = EDGE) => `inset 0 0 0 2px ${edge}, 5px 5px 0 #000`;
 
 // Cosa fa ciascuna stanza, in parole semplici (le regole sono in useNodeHandlers.handleRest).
 const ROOM_COPY = {
   "Per Terra":       { effect: "Unghie a metà strada", detail: "Ogni unghia rovinata risale verso Sana. Le morte restano morte.", risk: "50%: un ladro ti sveglia e devi combattere" },
-  "Bettola":         { effect: "Cura 1 unghia", detail: "Prima le rovinate, poi resuscita una morta.", risk: "25%: ti rubano un oggetto dallo zaino" },
-  "Camera Media":    { effect: "Cura 2 unghie", detail: "Prima le rovinate, poi le morte. Si dorme tranquilli." },
-  "Suite":           { effect: "Cura 5 unghie", detail: "Lenzuola di seta: fino a cinque unghie tornano Sane, anche le morte." },
+  "Bettola":         { detail: "Prima le rovinate, poi resuscita una morta.", risk: "25%: ti rubano un oggetto dallo zaino" },
+  "Camera Media":    { detail: "Prima le rovinate, poi le morte. Si dorme tranquilli." },
+  "Suite":           { detail: "Lenzuola di seta: le unghie tornano Sane, anche le morte." },
   "Manicure Kawaii": { effect: "Tutte KAWAII", detail: "Ogni unghia, anche morta, diventa Kawaii: premi ×2." },
 };
 
@@ -35,7 +38,9 @@ function roomPreview(room, nails) {
 }
 
 function RoomCard({ room, player, onRest }) {
-  const copy = ROOM_COPY[room.name] || { effect: room.desc, detail: "" };
+  const base = ROOM_COPY[room.name] || { effect: room.desc, detail: "" };
+  // Unghie curate: dalla stanza vera (il Sassolino ne toglie una), non dal testo.
+  const copy = { ...base, effect: base.effect || `Cura ${room.heals} ${room.heals === 1 ? "unghia" : "unghie"}` };
   const gap = room.cost - player.money;
   const canAfford = room.isFloor || gap <= 0;
   const changes = roomPreview(room, player.nails || []);
@@ -44,12 +49,12 @@ function RoomCard({ room, player, onRest }) {
 
   return (
     <article aria-label={room.name} style={{
-      background: CREAM, boxShadow: frame(edge), padding: "14px 14px 16px", minWidth: 0,
+      background: MK.panel, boxShadow: frame(edge), padding: "14px 14px 16px", minWidth: 0,
       display: "grid", gridTemplateRows: "auto auto auto 1fr auto auto", gap: "8px", textAlign: "center",
       opacity: canAfford ? 1 : 0.62,
     }}>
       {/* la stanza: sprite su un fondo incassato */}
-      <div style={{ height: 100, background: "#f3e2a2", boxShadow: `inset 3px 3px 0 ${EDGE}, inset -1px -1px 0 #fffbe6`,
+      <div style={{ height: 100, background: "#000", boxShadow: `inset 0 0 0 1px ${MK.lineHi}`,
         display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         <Asset id={room.img} emoji={room.emoji} size={88} style={{ width: 88, height: 88, objectFit: "contain" }} />
       </div>
@@ -67,8 +72,8 @@ function RoomCard({ room, player, onRest }) {
         <button type="button" onClick={canAfford ? () => onRest(room) : undefined} disabled={!canAfford} style={{
           height: "40px", fontFamily: FONT, fontSize: "14px", letterSpacing: "2px", border: "none",
           cursor: canAfford ? "pointer" : "default",
-          background: canAfford ? INK : "#f3e2a2", color: canAfford ? CREAM : RED,
-          boxShadow: canAfford ? `3px 3px 0 ${SHADOW}` : `inset 0 0 0 1px ${RED}`,
+          background: canAfford ? GOLD.mid : "#000", color: canAfford ? GOLD.dark : RED,
+          boxShadow: canAfford ? `inset 0 0 0 2px ${GOLD.dark}, 3px 3px 0 #000` : `inset 0 0 0 1px ${RED}`,
         }}>{label}</button>
       </div>
     </article>
@@ -90,24 +95,28 @@ export function LocandaDesk({ rooms, player, onRest, onLeave }) {
     }}>
       {/* ══ L'insegna ══ */}
       <header style={{
-        width: "min(100%, 640px)", boxSizing: "border-box", background: CREAM, boxShadow: frame(GREEN),
-        padding: "18px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", textAlign: "center",
+        width: "min(100%, 1180px)", boxSizing: "border-box", background: MK.panel, boxShadow: frame(GREEN + "aa"),
+        padding: "16px 22px", display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: "20px", alignItems: "center",
       }}>
-        <div style={{ width: 112, height: 112, padding: "4px", boxSizing: "border-box", background: "#1a1410",
-          boxShadow: `inset 0 0 0 2px ${INK}, 4px 4px 0 ${SHADOW}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <Asset id="spr-locanda" emoji="🏨" size={104} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ width: 120, height: 120, padding: 5, boxSizing: "border-box", background: "#000",
+          boxShadow: `${bevel(GOLD, 2)}, 4px 4px 0 #000`, display: "grid", placeItems: "center", overflow: "hidden" }}>
+          <Asset id="spr-locanda" emoji="🏨" size={110} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
-        <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: CREAM, background: GREEN }}>SICURO</span>
-        <span style={{ fontSize: "30px", color: INK, letterSpacing: "1px", lineHeight: 1 }}>Locanda</span>
-        <span style={{ fontSize: "14px", lineHeight: 1.5, fontStyle: "italic" }}>«Riposati, viaggiatore. Le tue unghie ne hanno bisogno.»</span>
-        <span style={{ fontSize: "12px", letterSpacing: "1px", color: MUTED }}>
-          Hai <b>€{fmtMoney(player.money)}</b> · unghie: <span style={{ color: damaged + dead ? RED : GREEN }}>{status}</span>
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "3px 8px", color: GREEN, background: "#000", boxShadow: `inset 0 0 0 1px ${GREEN}` }}>✚ SICURO</span>
+            <span style={{ fontSize: "30px", color: INK, letterSpacing: "1px", lineHeight: 1 }}>Locanda</span>
+          </div>
+          <span style={{ fontSize: "15px", lineHeight: 1.5, fontStyle: "italic", color: MUTED }}>«Riposati, viaggiatore. Le tue unghie ne hanno bisogno.»</span>
+          <span style={{ fontSize: "12px", letterSpacing: "1px", color: MUTED }}>
+            Hai <span style={{ color: GOLD.mid }}>€{fmtMoney(player.money)}</span> · unghie: <span style={{ color: damaged + dead ? RED : GREEN }}>{status}</span>
+          </span>
+        </div>
       </header>
 
       {/* ══ Il listino ══ */}
       <div style={{ width: "min(100%, 1180px)", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <span style={{ fontSize: "12px", letterSpacing: "3px", color: CREAM, background: "#1a1410cc", padding: "3px 10px", alignSelf: "center", textAlign: "center" }}>LISTINO DELLE STANZE</span>
+        <span style={{ fontSize: "12px", letterSpacing: "3px", color: MK.accent, background: "#000c", padding: "3px 10px", alignSelf: "flex-start" }}>LISTINO DELLE STANZE</span>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${rooms.length}, minmax(0,1fr))`, gap: "12px" }}>
           {rooms.map(room => <RoomCard key={room.name} room={room} player={player} onRest={onRest} />)}
         </div>
@@ -115,7 +124,7 @@ export function LocandaDesk({ rooms, player, onRest, onLeave }) {
 
       <button type="button" onClick={onLeave} style={{
         width: "min(100%, 240px)", height: "42px", flexShrink: 0, cursor: "pointer", fontFamily: FONT, fontSize: "15px", letterSpacing: "2px",
-        background: CREAM, color: INK, border: "none", boxShadow: `inset 0 0 0 2px ${INK}, 3px 3px 0 ${SHADOW}`,
+        background: "#000", color: MUTED, border: "none", boxShadow: `inset 0 0 0 2px ${MK.line}, 3px 3px 0 #000`,
       }}>VAI VIA →</button>
     </div>
   );

@@ -60,7 +60,7 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
   const canSwitch = !isDead && !active && !locked;
   const name = chirurgo ? chirurgo.label : `${meter.glyph ? meter.glyph + " " : ""}${dense ? meter.shortLabel : info.label}`;
   const mult = chirurgo ? `${n.implantUses}/${chirurgo.max}` : `×${(info.mult || 0).toFixed(1)}`;
-  const sprite = dense ? 32 : 48;
+  const sprite = dense ? 32 : 44;
 
   return (
     <Tooltip text={tipFor(n, info, chirurgo, meter)} color={col}>
@@ -73,7 +73,8 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
         style={{
           position:"relative", width:"100%", boxSizing:"border-box",
           display:"grid", gridTemplateColumns:`${sprite}px minmax(0,1fr)`, alignItems:"center", gap:"8px",
-          minHeight: dense ? "40px" : "88px", padding: dense ? "4px 8px" : "8px",
+          // cornice snella: l'altezza la dà il contenuto (prima 88px con vuoto sopra e sotto)
+          minHeight: dense ? "40px" : "0", padding: dense ? "4px 8px" : "6px 8px",
           background: active ? SH.panel2 : isDead ? SH.world : SH.panel,
           border: edge(active ? (meter.off ? meter.off.borderCol : col) : isDead ? SH.line : meter.off ? meter.off.borderCol : `${col}66`),
           boxShadow: active ? SH.shadow : "none",
@@ -87,7 +88,7 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
           <Asset id={spriteId} emoji={visual?.emoji || "🖐"} size={sprite - 8} pixel={false} />
         </span>
 
-        <span style={{display:"grid", gap: dense ? "3px" : "6px", minWidth:0}}>
+        <span style={{display:"grid", gap: dense ? "3px" : "4px", minWidth:0}}>
           <span style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:"4px"}}>
             <span style={{color: isDead ? "#8a8aa0" : meter.off ? meter.off.glyphCol : col, fontSize: dense ? "11px" : "13px", fontWeight:"bold",
               whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{name}</span>

@@ -1,159 +1,120 @@
-import { useState, useLayoutEffect, useRef } from "react";
+import { useState } from "react";
 import { FONT } from "../../data/theme.js";
 import { normalizePortrait } from "../../utils/nail.js";
 import { hasAsset } from "../../assets/registry.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
-import { TABLE_BG } from "../scratch/ScratchTable.jsx";
+import { GOLD, bevel } from "../map/mapTheme.js";
+import { MK } from "../desk/mapKit.jsx";
 
 // ─── IL DIALOGO — evento / NPC su desktop ────────────────────────
-// Stesso linguaggio della soglia (node/NodeThreshold.jsx): fondo a righe del
-// titolo, pannello nero a retino con filo, oro/avorio, spigoli netti.
-// Colonna centrata: ritratto medio, tipo, nome, battuta, poi le scelte come
-// righe a tutta larghezza (numero, testo, chip a destra).
+// Stesso sistema delle schermate di passaggio che funzionano (Nonno Carmelo,
+// tutorial, Pedinaro, soglia del nodo): tavolo verde scuro a retino, pannelli
+// neri a filo sottile, oro per ciò che si può fare. Prima era carta crema su
+// legno, scollegata dal resto (proprietario, 2026-09-19).
+// In alto il personaggio (ritratto, tipo, pericolo, nome), poi la sua battuta
+// scritta a macchina, poi le scelte come righe (numero, testo, targhetta).
 // Solo presentazione: testi, scelte, condizioni e callback arrivano da
 // EventView invariati.
 
-// Chiaro come il tavolo della grattata (carta crema, inchiostro scuro, bancone
-// di legno): scura resta solo la lotta.
-const GOLD = "#8a5a12", INK = "#153f42", MUTED = "#5d6f68", CREAM = "#fff3c4", PAPER2 = "#fbeebc";
-const RED = "#a3161d", EDGE = "#d9c27a", SHADOW = "#3a1f0f";
-const BLACK = CREAM;
-const TABLE = TABLE_BG;
-const frame = (edge = INK) => `inset 0 0 0 2px ${EDGE}, inset 0 0 0 4px ${edge}, 5px 5px 0 ${SHADOW}`;
+const TXT = MK.txt, INK = MK.ink, DIM = MK.dim;
+const RED = "#e0564a";
+const panel = (edge = MK.line) => ({ background: MK.panel, boxShadow: `inset 0 0 0 2px ${edge}, 5px 5px 0 #000` });
 
-// Colore del cartellino tipo: niente neon, stessa tavolozza della soglia.
+// Colore del cartellino tipo: gli stessi della legenda della mappa, accesi per il testo.
 function tagColor(cat) {
   if (cat.danger >= 2) return RED;
-  if (cat.label === "EVENTO") return "#9a3a78";
-  if (cat.danger === 1) return "#b0661a";
-  if (cat.label === "OGGETTO") return MUTED;
-  return INK;
+  if (cat.label === "EVENTO") return "#d06aa8";
+  if (cat.danger === 1) return "#f08a2a";
+  if (cat.label === "OGGETTO") return INK;
+  return MK.accent;
 }
 
-// Chip a destra: il costo in oro, i badge rischiosi in rosso, l'uscita spenta.
+// Targhetta a destra: il costo in oro, le scelte rischiose in rosso, l'uscita spenta.
 function chipColor(badge, isCost) {
-  if (isCost) return GOLD;
+  if (isCost) return GOLD.mid;
   if (badge === "COMBATTI" || badge === "TRADIMENTO" || badge === "SCAPPA") return RED;
-  if (badge === "ESCI" || badge === "GRATIS") return MUTED;
-  return GOLD;
-}
-
-// Altezza disponibile: dal bordo alto del pannello al fondo dell'area che
-// scorre (il DESK). Così la pagina non scorre; se le scelte sono tante, scorre
-// solo l'interno del palco.
-function useFitHeight(ref, deps) {
-  const [h, setH] = useState(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let box = el.parentElement;
-    while (box && box !== document.body) {
-      const oy = getComputedStyle(box).overflowY;
-      if (oy === "auto" || oy === "scroll") break;
-      box = box.parentElement;
-    }
-    const inBox = box && box !== document.body;
-    const bottom = inBox ? box.getBoundingClientRect().bottom : window.innerHeight;
-    // 10px = margine inferiore del palco
-    setH(Math.max(420, Math.floor(bottom - el.getBoundingClientRect().top - 10)));
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
-  return h;
+  if (badge === "ESCI" || badge === "GRATIS") return DIM;
+  return GOLD.mid;
 }
 
 export function EventStage({
-  node, ev, cat, bigArt, blink, vw, vh,
+  node, ev, cat, bigArt, blink,
   typedText, typingDone, onSkip,
   choices, onChoice,
 }) {
-  const rootRef = useRef(null);
-  const height = useFitHeight(rootRef, [vw, vh]);
   const [hover, setHover] = useState(-1);
   const tag = tagColor(cat);
   const spriteId = hasAsset(`spr-${node.type}`) && !node.secret ? `spr-${node.type}` : null;
-  // Molte scelte (es. Poliziotto, 7): pannello più largo, ritratto piccolo
-  // accanto al nome e risposte due per riga, così niente scroll.
-  const compact = choices.length > 4;
-  const pic = compact ? 104 : 188;
+  // Molte scelte (es. Poliziotto, 7): risposte due per riga, così niente scroll.
+  const twoCols = choices.length > 4;
+  const pic = 176;
 
   return (
-    <div ref={rootRef} style={{
-      flex: "1 1 0", minWidth: 0, minHeight: 0, width: "100%", margin: 0,
-      height: height ? `${height}px` : "100%", boxSizing: "border-box",
-      background: TABLE, boxShadow: "none",
-      overflowY: "auto", padding: compact ? "14px 20px" : "20px",
-      justifyContent: "center",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      fontFamily: FONT, color: INK,
+    // Riempie tutta l'area: prima un'altezza calcolata in pixel lasciava una
+    // fascia vuota sotto la scena.
+    <div style={{
+      flex: "1 1 0", minWidth: 0, minHeight: 0, width: "100%", alignSelf: "stretch", boxSizing: "border-box",
+      background: MK.bg, overflowY: "auto", padding: "20px",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px",
+      fontFamily: FONT, color: TXT,
     }}>
       <style>{`@keyframes evStageCursor { 0%,100% { opacity:1; } 50% { opacity:0; } }`}</style>
 
       <article aria-label={ev.title} style={{
-        width: compact ? "min(100%, 920px)" : "min(100%, 680px)", boxSizing: "border-box", background: BLACK,
-        boxShadow: frame(tag), padding: compact ? "16px 22px 18px" : "20px 24px 22px", flexShrink: 0,
-        display: "flex", flexDirection: "column", alignItems: "center", gap: compact ? "10px" : "12px", textAlign: "center",
+        width: "min(100%, 1000px)", boxSizing: "border-box", ...panel(tag + "aa"), padding: "18px 22px 20px",
+        flexShrink: 0, display: "flex", flexDirection: "column", gap: "14px",
       }}>
-        <div style={{ display: "flex", flexDirection: compact ? "row" : "column", alignItems: "center", gap: compact ? "18px" : "12px",
-          alignSelf: compact ? "stretch" : "center", textAlign: compact ? "left" : "center" }}>
-        {/* Ritratto medio: padding perché il filo oro resti visibile su tutti i lati */}
-        <div style={{ width: pic, height: pic, padding: "4px", boxSizing: "border-box", background: "#1a1410",
-          boxShadow: `inset 0 0 0 2px ${INK}, 4px 4px 0 ${SHADOW}`, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          {spriteId ? (
-            <Asset id={spriteId} size={pic - 8} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : bigArt ? (
-            <pre style={{ margin: 0, color: "#e9c46a", fontSize: "11px", lineHeight: 1.2, fontFamily: FONT, textAlign: "left" }}>
-              {normalizePortrait(bigArt).map((line, i) => {
-                const t = blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line;
-                return <span key={i}>{t}{"\n"}</span>;
-              })}
-            </pre>
-          ) : (
-            <span style={{ fontSize: compact ? "52px" : "80px", lineHeight: 1 }}>{node.secret ? "🔮" : cat.icon}</span>
-          )}
+        {/* ── Il personaggio ── */}
+        <div onClick={onSkip} style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: "22px", alignItems: "center",
+          cursor: typingDone ? "default" : "pointer" }}>
+          <div style={{ width: pic, height: pic, padding: 5, boxSizing: "border-box", background: "#000",
+            boxShadow: `${bevel(GOLD, 2)}, 4px 4px 0 #000`, flexShrink: 0,
+            display: "grid", placeItems: "center", overflow: "hidden" }}>
+            {spriteId ? (
+              <Asset id={spriteId} size={pic - 10} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : bigArt ? (
+              <pre style={{ margin: 0, color: GOLD.mid, fontSize: "11px", lineHeight: 1.2, fontFamily: FONT, textAlign: "left" }}>
+                {normalizePortrait(bigArt).map((line, i) => {
+                  const t = blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line;
+                  return <span key={i}>{t}{"\n"}</span>;
+                })}
+              </pre>
+            ) : (
+              <span style={{ fontSize: "80px", lineHeight: 1 }}>{node.secret ? "🔮" : cat.icon}</span>
+            )}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "3px 8px", color: tag, background: "#000", boxShadow: `inset 0 0 0 1px ${tag}` }}>{cat.label}</span>
+              {cat.danger > 0 && (
+                <span aria-label={`Pericolo ${cat.danger} su 3`} style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "3px 6px", background: "#000", boxShadow: `inset 0 0 0 1px ${MK.line}` }}>
+                  <span style={{ fontSize: "10px", letterSpacing: "2px", color: DIM, marginRight: "3px" }}>PERICOLO</span>
+                  {[1, 2, 3].map(i => (
+                    <span key={i} style={{ width: "8px", height: "8px", background: i <= cat.danger ? RED : MK.line }} />
+                  ))}
+                </span>
+              )}
+            </div>
+            <h2 style={{ margin: 0, fontSize: "28px", fontWeight: "normal", color: TXT, letterSpacing: "1px", lineHeight: 1.1 }}>{ev.title}</h2>
+            {/* la battuta, scritta a macchina: clic per saltare */}
+            <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.6, fontStyle: "italic", color: INK, minHeight: "3.2em", whiteSpace: "pre-line" }}>
+              {typedText}
+              {!typingDone && <span style={{ color: MK.accent, animation: "evStageCursor 0.6s step-start infinite", marginLeft: "1px" }}>▌</span>}
+            </p>
+            {!typingDone && <span style={{ fontSize: "10px", letterSpacing: "1px", color: DIM }}>clic per saltare →</span>}
+          </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: compact ? "flex-start" : "center", gap: "10px", minWidth: 0 }}>
-        {/* Tipo + pericolo */}
-        <div style={{ display: "flex", gap: "8px", justifyContent: compact ? "flex-start" : "center", alignItems: "center" }}>
-          <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "2px 8px", color: CREAM, background: tag }}>{cat.label}</span>
-          {cat.danger > 0 && (
-            <span aria-label={`Pericolo ${cat.danger} su 3`} style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 6px", boxShadow: `inset 0 0 0 1px ${EDGE}` }}>
-              <span style={{ fontSize: "10px", letterSpacing: "2px", color: MUTED, marginRight: "3px" }}>PERICOLO</span>
-              {[1, 2, 3].map(i => (
-                <span key={i} style={{ width: "8px", height: "8px", background: i <= cat.danger ? RED : EDGE }} />
-              ))}
-            </span>
-          )}
-        </div>
-
-        <h2 style={{ margin: 0, fontSize: "30px", fontWeight: "normal", color: INK, letterSpacing: "1px", lineHeight: 1.1 }}>{ev.title}</h2>
-        </div>
-        </div>
-
-        {/* Battuta: clic per saltare la scrittura */}
-        <div onClick={onSkip} style={{
-          width: "100%", boxSizing: "border-box", padding: "12px 16px", background: PAPER2,
-          boxShadow: `inset 0 0 0 1px ${EDGE}`, cursor: typingDone ? "default" : "pointer",
-          position: "relative", minHeight: compact ? "0" : "76px",
-        }}>
-          <p style={{ margin: "0 auto", maxWidth: "52ch", fontSize: "15px", lineHeight: 1.6, color: INK }}>
-            {typedText}
-            {!typingDone && <span style={{ color: INK, animation: "evStageCursor 0.6s step-start infinite", marginLeft: "1px" }}>▌</span>}
-          </p>
-          {!typingDone && (
-            <span style={{ position: "absolute", right: "8px", bottom: "4px", fontSize: "10px", letterSpacing: "1px", color: MUTED }}>clicca per saltare →</span>
-          )}
-        </div>
-
-        {/* Scelte */}
+        {/* ── Le scelte ── */}
         {typingDone && (
-          <div style={{ width: "100%", display: "grid", gridTemplateColumns: compact ? "repeat(2, minmax(0,1fr))" : "minmax(0,1fr)", gap: compact ? "8px" : "6px", marginTop: "2px" }}>
-            <span style={{ gridColumn: "1 / -1", fontSize: "11px", letterSpacing: "3px", color: MUTED }}>SCEGLI</span>
+          <div style={{ display: "grid", gridTemplateColumns: twoCols ? "repeat(2, minmax(0,1fr))" : "minmax(0,1fr)", gap: "8px" }}>
+            <span style={{ gridColumn: "1 / -1", fontSize: "11px", letterSpacing: "3px", color: MK.accent }}>COSA FAI?</span>
             {choices.map((ch, i) => {
               const off = ch.isDisabled;
               const on = !off && hover === i;
-              const chipCol = off ? "#b8a878" : chipColor(ch.badge, !!ch.cost);
+              const chipCol = off ? MK.line : chipColor(ch.badge, !!ch.cost);
               const act = () => { if (!off) onChoice(ch.action); };
               return (
                 <Tooltip key={i} text={ch.tooltip || (off && ch.disabledNote ? `⛔ ${ch.disabledNote}` : "")}>
@@ -164,18 +125,18 @@ export function EventStage({
                     onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(h => (h === i ? -1 : h))}
                     onFocus={() => setHover(i)} onBlur={() => setHover(h => (h === i ? -1 : h))}
                     style={{
-                      display: "flex", alignItems: "center", gap: "12px", height: compact ? "100%" : undefined, minHeight: compact ? "48px" : "46px", padding: compact ? "4px 10px 4px 5px" : "6px 10px 6px 6px",
-                      boxSizing: "border-box", textAlign: "left", userSelect: "none", outline: "none",
-                      background: on ? "#fff9dc" : off ? "#f3e6b4" : PAPER2,
-                      boxShadow: `inset 0 0 0 ${on ? 2 : 1}px ${on ? INK : EDGE}${off ? "" : `, 3px 3px 0 ${EDGE}`}`,
-                      cursor: off ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", gap: "12px", height: twoCols ? "100%" : undefined, minHeight: "48px",
+                      padding: "6px 10px 6px 6px", boxSizing: "border-box", textAlign: "left", userSelect: "none", outline: "none",
+                      background: on ? "#141c1a" : "#000",
+                      boxShadow: `inset 0 0 0 2px ${on ? GOLD.mid : MK.line}${off ? "" : ", 3px 3px 0 #000"}`,
+                      cursor: off ? "not-allowed" : "pointer", opacity: off ? 0.6 : 1,
                     }}>
                     <span style={{
-                      flexShrink: 0, width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "14px", color: off ? "#b8a878" : on ? CREAM : INK, background: on ? INK : CREAM,
-                      boxShadow: on ? "none" : `inset 0 0 0 1px ${off ? EDGE : INK}`,
+                      flexShrink: 0, width: "32px", height: "32px", display: "grid", placeItems: "center", fontSize: "14px",
+                      color: on ? GOLD.dark : off ? DIM : GOLD.mid, background: on ? GOLD.mid : "#000",
+                      boxShadow: on ? `inset 0 0 0 2px ${GOLD.dark}` : `inset 0 0 0 1px ${off ? MK.line : GOLD.lo}`,
                     }}>{i + 1}</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: "14px", lineHeight: 1.4, color: off ? "#9a8a60" : INK }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: "14px", lineHeight: 1.4, color: off ? DIM : TXT }}>
                       {ch.label}
                       {off && ch.disabledNote && (
                         <span style={{ display: "block", fontSize: "12px", marginTop: "3px", color: RED }}>⛔ {ch.disabledNote}</span>
@@ -183,7 +144,7 @@ export function EventStage({
                     </span>
                     <span style={{
                       flexShrink: 0, minWidth: "48px", textAlign: "center", padding: "3px 8px", fontSize: "11px", letterSpacing: "1px",
-                      whiteSpace: "nowrap", color: chipCol, background: CREAM, boxShadow: `inset 0 0 0 1px ${chipCol}`,
+                      whiteSpace: "nowrap", color: chipCol, background: "#000", boxShadow: `inset 0 0 0 1px ${chipCol}`,
                     }}>{ch.cost || ch.badge}</span>
                   </div>
                 </Tooltip>

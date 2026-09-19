@@ -854,7 +854,10 @@ export default function Grattini() {
   // Sotto i 1024px resta la shell legacy finché tablet e telefono non migrano.
   const wideShell = vw >= 1024;
   const inRun = !!player && !["title","tutorialNails"].includes(screen);
-  const shellLog = wideShell && inRun && ["map","event","node"].includes(screen);
+  // Scontrino a fianco anche sulla soglia del nodo (preScratch): si legge
+  // cosa è appena successo mentre si decide se entrare. Nei dialoghi (event)
+  // no: la scena del personaggio prende tutto lo spazio (proprietario, 2026-09-19).
+  const shellLog = wideShell && inRun && ["map","node","preScratch"].includes(screen);
 
   // DEV: galleria biglietti — dopo tutti gli hook, così l'ordine resta stabile.
   if (devTicket) {
