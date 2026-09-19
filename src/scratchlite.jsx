@@ -410,11 +410,14 @@ export default function Grattini() {
     if (!def || !player?.tokens) return null;
     discoverToken(tokenId);
     const biome = currentBiome;
+    // Ogni riga dello scontrino dice DA DOVE arriva il gettone
+    // (zaino, boss, Pedinaro, regalo di un NPC…): mai un gettone "dal nulla".
+    const from = source.toUpperCase();
     const r = acquireToken(player.tokens, tokenId, { biome });
     if (r.outcome === "full") {
       setPendingToken({ id: tokenId, biome, pay });
-      addLog(`🪙 ${def.name}: custodia piena, scegli cosa tenere.`, C.gold);
-      return `🪙 GETTONE: ${def.name} — custodia piena, scegli cosa tenere.`;
+      addLog(`🪙 ${from}: ${def.name} — custodia piena, scegli cosa tenere.`, C.gold);
+      return `🪙 ${from}: ${def.name} — custodia piena, scegli cosa tenere.`;
     }
     updatePlayer(p => {
       const rr = acquireToken(p.tokens, tokenId, { biome });
@@ -424,11 +427,11 @@ export default function Grattini() {
     });
     AudioEngine.tokenInsert();
     const line = r.outcome === "duplicate"
-      ? `🪙 ${def.name} già in custodia: rivenduto per €${r.money}.`
-      : `🪙 GETTONE: ${def.name} — ${def.pro}. Fregatura: ${def.contro}.`;
+      ? `🪙 ${from}: ${def.name}, ma ce l'hai già — rivenduto per €${r.money}.`
+      : `🪙 ${from}: ${def.name} — ${def.pro}. Fregatura: ${def.contro}.`;
     addLog(line, C.gold);
     if (withModal && r.outcome === "added") {
-      const foundAt = source.toLowerCase() === "debug" ? "Nuovo gettone" : source;
+      const foundAt = source;
       (defer ? setQueuedTokenModal : setItemFoundModal)({
         emoji: "🪙", tokenId, name: def.name,
         desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia sotto la mappa. Cliccalo per leggerne la scheda oppure trascinalo direttamente sul tabellone per attivarlo.`,
@@ -640,7 +643,7 @@ export default function Grattini() {
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     window.__gettoni = {
-      grant: (id) => grantToken(id, { source: "Dev" }), ids: Object.keys(TOKENS), catalog: () => setTokenDebugOpen(true),
+      grant: (id) => grantToken(id, { source: "Prova sviluppatore" }), ids: Object.keys(TOKENS), catalog: () => setTokenDebugOpen(true),
       pedinaro: () => { openPedinaroVisit(); setScreen("pedinaro"); },
       gift: (npc) => giftFromNpc(npc, { always: true }),
     };
@@ -3753,7 +3756,7 @@ export default function Grattini() {
           onClose={() => setTokenDebugOpen(false)}
           onPreview={(id) => { setTokenPreview(id); setTokenDebugOpen(false); }}
           canGive={!!player?.tokens && screen !== "title"}
-          onGive={(id) => grantToken(id, { source: "Debug" })} />
+          onGive={(id) => grantToken(id, { source: "Prova sviluppatore" })} />
       )}
       {tokenPreview && (
         <TokenPreviewBar id={tokenPreview} onStop={() => setTokenPreview(null)}
