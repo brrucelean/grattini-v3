@@ -1,15 +1,18 @@
 import { PLAYER_COMBAT_CELLS, ENEMY_COMBAT_POOLS } from "../data/combat.js";
-import { roll, pick } from "./random.js";
+import { pick, rng } from "./random.js";
 
 export function generateCombatCell() {
   const categories = ["COMBATTIMENTO", "DIFESA", "DENARO"];
-  // Tradeoff compaiono meno spesso (30% delle carte della categoria)
+  // Carte a doppio taglio: ognuna ha la SUA probabilità (tradeoffChance), non
+  // una quota fissa divisa per categoria. Così spostare All-in tra i premi non
+  // ha raddoppiato Berserk né dimezzato la Schedina (proprietario, 2026-09-19).
   const cat = pick(categories);
   const pool = PLAYER_COMBAT_CELLS[cat];
   const base = pool.filter(c => !c.tradeoff);
-  const tradeoffs = pool.filter(c => c.tradeoff);
-  const useTradeoff = tradeoffs.length > 0 && roll(0.28);
-  const effect = useTradeoff ? pick(tradeoffs) : pick(base);
+  const r = rng();
+  let acc = 0;
+  const tradeoff = pool.filter(c => c.tradeoff).find(c => (acc += c.tradeoffChance ?? 0.14) > r);
+  const effect = tradeoff || pick(base);
   return { ...effect, category: cat, scratched: false };
 }
 

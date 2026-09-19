@@ -10,14 +10,14 @@ export const PLAYER_COMBAT_CELLS = {
     { name:"Furto!",      desc:"Ruba €10 al nemico",                                effect:"stealMoney",  value:10, emoji:"💸" },
     { name:"Schiaffo!",   desc:"Degrada 1 stato unghia avversario 🩸",              effect:"lightDamage", emoji:"🖐" },
     // Tradeoff: alto rischio/ricompensa
-    { name:"Berserk!",    desc:"Strappa unghia nemico MA degrada la tua di 1 🩸",   effect:"berserk",     emoji:"💢", tradeoff:true },
+    { name:"Berserk!",    desc:"Strappa unghia nemico MA degrada la tua di 1 🩸",   effect:"berserk",     emoji:"💢", tradeoff:true, tradeoffChance:0.14 },
   ],
   DIFESA: [
     { name:"Scudo!",      desc:"Blocca il prossimo attacco",                        effect:"block",       emoji:"🛡" },
     { name:"Schiva!",     desc:"Schiva tutto — nessun danno",                       effect:"dodge",       emoji:"💨" },
     { name:"Adrenalina!", desc:"Unghie danneggiate: cura 1. Sane: +€15.",           effect:"adrenaline",  value:15, emoji:"💉" },
     // Tradeoff: difesa costosa
-    { name:"Fortezza!",   desc:"Blocca tutto MA perdi €20 per costruirla 🏰",       effect:"fortress",    cost:20, emoji:"🏰", tradeoff:true },
+    { name:"Fortezza!",   desc:"Blocca tutto MA perdi €20 per costruirla 🏰",       effect:"fortress",    cost:20, emoji:"🏰", tradeoff:true, tradeoffChance:0.28 },
   ],
   DENARO: [
     { name:"+10€",        desc:"Guadagni €10",                                      effect:"money", value:10,  emoji:"💰" },
@@ -27,9 +27,9 @@ export const PLAYER_COMBAT_CELLS = {
     // Grattino in omaggio — carta gratis trovata in combattimento
     { name:"Grattino!",   desc:"Trovi un grattino in omaggio! 🎫",                  effect:"freeCard",        emoji:"🎫" },
     // Tradeoff: jackpot con rischio
-    { name:"Schedina!",   desc:"50% chance: +€60. 50%: −€15 🎟",                   effect:"gamble", value:60, cost:15, emoji:"🎟", tradeoff:true },
+    { name:"Schedina!",   desc:"50% chance: +€60. 50%: −€15 🎟",                   effect:"gamble", value:60, cost:15, emoji:"🎟", tradeoff:true, tradeoffChance:0.28 },
     // All-in: non fa danni, è soldi → sta tra i PREMI (P-06), non tra le botte
-    { name:"All-in!",     desc:"+€40 MA il nemico guadagna +€15 sicuri 🎲",         effect:"allIn",       value:40, cost:15, emoji:"🎰", tradeoff:true },
+    { name:"All-in!",     desc:"+€40 al bottino MA il nemico guadagna +15 di scudo 🎲", effect:"allIn",   value:40, cost:15, emoji:"🎰", tradeoff:true, tradeoffChance:0.14 },
   ],
 };
 
