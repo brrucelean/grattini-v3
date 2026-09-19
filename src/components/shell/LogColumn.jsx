@@ -57,21 +57,14 @@ const LogRow = memo(function LogRow({ entry }) {
   );
 });
 
-function LogColumnImpl({ log }) {
+export const ReceiptPaper = memo(function ReceiptPaper({ log }) {
   const latest = log.length ? log[log.length - 1] : null;
   // Storico dal più recente al più vecchio: si legge scendendo, cioè tornando indietro.
   const history = [];
   for (let i = log.length - 2; i >= 0; i--) history.push(log[i]);
 
   return (
-    <aside aria-label="Registro della run" style={{
-      width:`${SH.logW}px`, flexShrink:0, boxSizing:"border-box",
-      display:"flex", flexDirection:"column", minHeight:0,
-      background: SH.panel, borderLeft: edge(SH.line),
-      fontFamily: SH.font, padding:"8px 10px 12px 8px",
-    }}>
-      {/* Carta dello scontrino con ombra dura */}
-      <div style={{flex:1, minHeight:0, display:"flex", flexDirection:"column", filter:"drop-shadow(4px 4px 0 #050304)"}}>
+      <div aria-label="Scontrino della run" style={{flex:1, minHeight:0, display:"flex", flexDirection:"column", filter:"drop-shadow(4px 4px 0 #050304)", fontFamily: SH.font}}>
         <Teeth top />
         <div style={{flex:1, minHeight:0, display:"flex", flexDirection:"column", background: PAPER.bg, color: PAPER.ink}}>
 
@@ -127,6 +120,18 @@ function LogColumnImpl({ log }) {
         </div>
         <Teeth />
       </div>
+  );
+});
+
+function LogColumnImpl({ log }) {
+  return (
+    <aside aria-label="Registro della run" style={{
+      width:`${SH.logW}px`, flexShrink:0, boxSizing:"border-box",
+      display:"flex", flexDirection:"column", minHeight:0,
+      background: SH.panel, borderLeft: edge(SH.line),
+      fontFamily: SH.font, padding:"8px 10px 12px 8px",
+    }}>
+      <ReceiptPaper log={log} />
     </aside>
   );
 }

@@ -1,10 +1,11 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { C, FONT } from "../../data/theme.js";
 import { GRATTATORE_DEFS } from "../../data/items.js";
 import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
 import { readNail } from "../NailMeter.jsx";
+import { ReceiptPaper } from "../shell/LogColumn.jsx";
 
 // ─── TAVOLO DA GRATTATA — ambientazione della schermata di grattata ──
 // Desktop (shell ≥1024px). Il biglietto sta su un tappetino in mezzo al
@@ -153,31 +154,10 @@ function ToolTrayImpl({ player, onEquipGrattatore, tone = "dark" }) {
 }
 export const ToolTray = memo(ToolTrayImpl);
 
-// ── DESTRA (sotto): scontrino dei colpi ──
-function ReceiptImpl({ log }) {
-  const ref = useRef(null);
-  const lastId = log.length ? log[log.length - 1].id : 0;
-  useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [lastId]);
-  return (
-    <section aria-label="Scontrino dei colpi" style={{ ...paperBox, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "8px 12px", borderBottom: `2px dashed ${PAPER.edge}`, display: "flex", justifyContent: "space-between" }}>
-        <Label>SCONTRINO</Label>
-        <span style={{ fontSize: "11px", color: PAPER.dim }}>{log.length ? `#${lastId}` : ""}</span>
-      </div>
-      <ol ref={ref} aria-live="polite" style={{ listStyle: "none", margin: 0, padding: "8px 12px", overflowY: "auto", flex: 1, minHeight: 0,
-        display: "flex", flexDirection: "column", gap: "6px" }}>
-        {log.length === 0 && <li style={{ fontSize: "11px", color: PAPER.dim }}>Ancora niente. Gratta.</li>}
-        {log.map((e, i) => (
-          <li key={e.id} style={{ fontSize: "11px", lineHeight: 1.45, color: PAPER.ink,
-            opacity: i === log.length - 1 ? 1 : 0.72, borderLeft: `3px solid ${i === log.length - 1 ? PAPER.ink : PAPER.edge}`, paddingLeft: "6px" }}>
-            {e.text}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-export const Receipt = memo(ReceiptImpl);
+// ── DESTRA (sotto): lo stesso scontrino realistico della mappa ──
+// Un solo componente condiviso evita che mappa, grattata e minigiochi tornino
+// a divergere quando cambia il formato della ricevuta.
+export const Receipt = ReceiptPaper;
 
 // setGameHost: ScratchCardView disegna qui (portal) i pannelli della
 // meccanica — Banco, punteggio, contatori, avvisi — così non stanno sotto il
