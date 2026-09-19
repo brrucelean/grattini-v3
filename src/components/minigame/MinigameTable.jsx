@@ -14,20 +14,37 @@ import { assetUrl } from "../../assets/registry.js";
 const INK = "#153f42", CREAM = "#fff3c4", EDGE = "#d9c27a", SHADOW = "#3a1f0f", RED = "#a3161d";
 
 // Casella: argento a retino finché coperta, carta quando scoperta.
-export function CoverCell({ revealed, onClick, children, size = 76, mark = null, disabled = false, label }) {
+// fill: la casella riempie la sua cella di griglia (il riquadro di gioco è un
+// container, quindi il testo si misura in cqh del riquadro).
+export function CoverCell({ revealed, onClick, children, size = 76, fill = false, mark = null, disabled = false, label }) {
   const can = !revealed && !disabled && !!onClick;
   const dim = typeof size === "number" ? `${size}px` : size;
+  const w = fill ? "100%" : dim, h = fill ? "100%" : dim;
+  const font = fill ? (revealed ? "15cqh" : "7cqh") : (revealed ? `calc(${dim} * 0.42)` : `calc(${dim} * 0.24)`);
   return (
     <button type="button" onClick={can ? onClick : undefined} disabled={!can} aria-label={label} style={{
-      width: dim, height: dim, border: "none", padding: 0, fontFamily: FONT, position: "relative",
+      width: w, height: h, minWidth: 0, minHeight: 0, border: "none", padding: 0, fontFamily: FONT, position: "relative",
       cursor: can ? "pointer" : "default",
       background: revealed ? "#fffbe6" : "repeating-conic-gradient(#b9bec4 0% 25%, #c9ced3 0% 50%) 0 0 / 4px 4px",
       boxShadow: mark
         ? `inset 0 0 0 3px ${mark}`
         : revealed ? `inset 0 0 0 1px ${EDGE}` : "inset 2px 2px 0 #e4e8ec, inset -2px -2px 0 #8a9096",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: revealed ? `calc(${dim} * 0.42)` : `calc(${dim} * 0.24)`, color: revealed ? INK : "#6c7278",
+      fontSize: font, color: revealed ? INK : "#6c7278",
     }}>{revealed ? children : (children ?? "?")}</button>
+  );
+}
+
+// Freccia pixel del Labirinto: il font Tiny5 non ha ↓ ↑ (uscivano come ✚),
+// quindi è disegnata a mano e ruotata. Emoji e simboli (💀 🏆) passano così.
+const ARROW_ROT = { "→": 0, "↓": 90, "←": 180, "↑": 270 };
+export function MazeGlyph({ ch, color }) {
+  if (!(ch in ARROW_ROT)) return ch;
+  return (
+    <svg viewBox="0 0 8 8" shapeRendering="crispEdges" aria-hidden
+      style={{ width: "13cqh", height: "13cqh", transform: `rotate(${ARROW_ROT[ch]}deg)` }}>
+      <path fill={color} d="M0 3h5v2H0zM4 1h1v6H4zM5 2h1v4H5zM6 3h1v2H6z" />
+    </svg>
   );
 }
 
@@ -47,7 +64,7 @@ function ActionButton({ label, onClick, kind = "secondary", disabled = false }) 
 // Il biglietto è l'illustrazione vera (ticket-<id>-v3): titolo nel cartiglio,
 // griglia nel riquadro scuro (zone da TICKET_LAYOUT, come gli altri grattini).
 // Il riquadro è un container: i figli possono dimensionarsi in cqh/cqw.
-export function MinigameTable({ ticketId, title, emoji, accent, how, status, children, actions = [], rules = [] }) {
+export function MinigameTable({ ticketId, title, emoji, accent, how, status, children, actions = [], rules = [], result = null, onContinue }) {
   const lay = TICKET_LAYOUT[ticketId] || TICKET_LAYOUT_FALLBACK;
   const box = (z) => ({ position: "absolute", top: `${z.top}%`, left: `${z.left}%`, right: `${z.right}%`, bottom: `${z.bottom}%` });
   const art = assetUrl(`ticket-${ticketId}-v3`);
@@ -70,15 +87,33 @@ export function MinigameTable({ ticketId, title, emoji, accent, how, status, chi
               <span style={{ fontSize: "clamp(16px, 2.6cqw, 30px)", lineHeight: 1, color: INK, letterSpacing: "1px" }}>{title.toUpperCase()}</span>
               <span style={{ fontSize: "clamp(13px, 1.7cqw, 17px)", lineHeight: 1.35, color: INK }}>{how}</span>
             </div>
+            {/* timbro dell'esito sul cartiglio */}
+            {result && (
+              <div aria-hidden style={{ ...box(lay.header), display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                <span style={{ transform: "rotate(-8deg)", padding: "4px 14px", fontSize: "clamp(22px, 4cqw, 44px)", letterSpacing: "4px",
+                  color: result.kind === "win" ? "#1f7a4a" : RED, border: `4px solid ${result.kind === "win" ? "#1f7a4a" : RED}`,
+                  background: "#fff3c4e6" }}>{result.kind === "win" ? "VINTO" : "PERSO"}</span>
+              </div>
+            )}
             {/* riquadro di gioco */}
             <div style={{ ...box(lay.play), containerType: "size" }}>
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: "100%", height: "100%", boxSizing: "border-box", padding: "2.5cqh 1.5cqw", display: "flex", alignItems: "stretch", justifyContent: "center" }}>
                 {children}
               </div>
             </div>
           </article>
         </div>
-        {/* striscia di stato + azioni, sotto il biglietto */}
+        {/* esito: cartello al posto di stato e azioni */}
+        {result ? (
+          <div role="status" style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0, padding: "10px 12px 10px 16px",
+            background: CREAM, boxShadow: `inset 0 0 0 3px ${result.kind === "win" ? "#1f7a4a" : RED}, 5px 5px 0 ${SHADOW}` }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "22px", lineHeight: 1, color: result.kind === "win" ? "#1f7a4a" : RED }}>{result.title}</span>
+              <span style={{ fontSize: "13px", lineHeight: 1.4, color: INK, maxWidth: "52ch" }}>{result.detail}</span>
+            </div>
+            <ActionButton label="CONTINUA →" kind="primary" onClick={onContinue} />
+          </div>
+        ) : (
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
           {status.map(([k, v, strong]) => (
             <span key={k} style={{ fontSize: "12px", padding: "6px 10px", background: strong ? accent : CREAM,
@@ -89,6 +124,7 @@ export function MinigameTable({ ticketId, title, emoji, accent, how, status, chi
           <span style={{ width: "12px" }} />
           {actions.filter(Boolean).map(a => <ActionButton key={a.label} {...a} />)}
         </div>
+        )}
       </div>
 
       {/* ══ Come si vince ══ */}

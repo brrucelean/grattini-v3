@@ -49,7 +49,7 @@ import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
-import { MinigameTable, CoverCell } from "./components/minigame/MinigameTable.jsx";
+import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
@@ -405,7 +405,17 @@ export default function Grattini() {
   // ─── MINIGIOCHI (labirinto / combina / tesoro): chiusura ────
   // Si torna da dove si era partiti: prima una carta comprata e giocata nel
   // Tabaccaio rimandava all'anteprima del nodo invece che al negozio.
+  // Esito dei minigiochi su desktop: invece di chiudere subito (si tornava al
+  // tabaccaio senza capire cosa fosse successo) il biglietto resta aperto,
+  // tutto scoperto, con il cartello dell'esito e CONTINUA.
+  const [minigameResult, setMinigameResult] = useState(null);
+  const endMinigame = (result, revealAll) => {
+    if (!wideShell) { closeMinigame(); return; }
+    revealAll?.();
+    setMinigameResult(result);
+  };
   const closeMinigame = () => {
+    setMinigameResult(null);
     setLabirintoState(null); setCombinaState(null); setTesoroState(null);
     setCardSelectMode(false); setSelectedCardIdx(null);
     setScreen(returnScreen === "shop" ? "shop" : currentNode ? "preScratch" : "map");
@@ -2299,7 +2309,7 @@ export default function Grattini() {
           if (target === "💀") {
             handleNailDamage();
             addLog("💀 Hai trovato una trappola! Perdi tutto e un'unghia!", C.red);
-            closeMinigame();
+            endMinigame({ kind: "lose", title: "TRAPPOLA!", detail: `Sei entrato in un 💀: perdi i €${ls.prize} accumulati e un'unghia.` }, () => setLabirintoState(st => st && ({...st, done: true, pos: [nr, nc], revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
             return;
           }
           // Il premio si paga SOLO per celle nuove: se la traiettoria entra in un
@@ -2312,7 +2322,7 @@ export default function Grattini() {
             const totalPrize = newPrize + JACKPOT_PRIZE;
             updatePlayer(p => ({...p, money: p.money + totalPrize}));
             addLog(`🏆 SEI USCITO! Jackpot €${JACKPOT_PRIZE} + €${newPrize} = €${totalPrize}!`, C.gold);
-            closeMinigame();
+            endMinigame({ kind: "win", title: `HAI VINTO €${totalPrize}`, detail: `Sei uscito dal labirinto: €${newPrize} di strada + €${JACKPOT_PRIZE} di jackpot.` }, () => setLabirintoState(st => st && ({...st, done: true, pos: [nr, nc], revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
             return;
           }
           const newRevealed = new Set(ls.revealed);
@@ -2326,6 +2336,9 @@ export default function Grattini() {
           if (ls.prize > 0) {
             updatePlayer(p => ({...p, money: p.money + ls.prize}));
             addLog(`🏃 Hai incassato €${ls.prize} scappando dal labirinto!`, C.gold);
+            endMinigame({ kind: "win", title: `INCASSATI €${ls.prize}`, detail: "Sei scappato prima della trappola. Ecco dove portavano le frecce." },
+              () => setLabirintoState(st => st && ({...st, done: true, revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
+            return;
           }
           closeMinigame();
         };
@@ -2333,7 +2346,7 @@ export default function Grattini() {
         // Desktop: grattino sul tavolo (components/minigame/MinigameTable.jsx)
         if (wideShell) return (
           <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-            <MinigameTable ticketId="labirinto" title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
+            <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="labirinto" title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
               how="Segui le frecce fino al 🏆."
               status={[["Accumulato", `€${ls.prize}`, true], ["Ogni casella nuova", `+€${CELL_PRIZE}`], ["Uscita 🏆", `+€${JACKPOT_PRIZE}`]]}
               rules={[
@@ -2344,18 +2357,18 @@ export default function Grattini() {
                 `Se entri in un 💀 perdi tutto e un'unghia.`,
               ]}
               actions={[
-                { label: `MUOVITI ${ls.grid[row]?.[col] || ""}`, onClick: handleMove, kind: "primary" },
+                { label: "MUOVITI →", onClick: handleMove, kind: "primary" },
                 ls.prize > 0 && { label: `INCASSA €${ls.prize}`, onClick: handleIncassa },
                 { label: "ABBANDONA", onClick: closeMinigame, kind: "danger" },
               ]}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: "1.5cqh" }}>
+              <div style={{ display: "grid", flex: 1, gridTemplateColumns: "repeat(4, minmax(0,1fr))", gridTemplateRows: "repeat(4, minmax(0,1fr))", gap: "2cqh 1.2cqw" }}>
                 {ls.grid.map((rowData, r) => rowData.map((cell, c) => {
                   const isPos = r === row && c === col;
                   const seen = ls.revealed.has(`${r},${c}`);
                   return (
-                    <CoverCell key={`${r},${c}`} size="23.5cqh" revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
+                    <CoverCell key={`${r},${c}`} fill revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
                       label={isPos ? `Sei qui: ${cell}` : seen ? cell : "casella coperta"}>
-                      {isPos || seen ? <span style={{ color: isPos ? "#1f7a4a" : "#8a9a90" }}>{cell}</span> : undefined}
+                      {isPos || seen ? <span style={{ display: "flex", color: isPos ? "#1f7a4a" : "#8a9a90" }}><MazeGlyph ch={cell} color={isPos ? "#1f7a4a" : "#8a9a90"} /></span> : undefined}
                     </CoverCell>
                   );
                 }))}
@@ -2446,7 +2459,7 @@ export default function Grattini() {
               const megaPrize = newPrize * MEGA_MULT;
               updatePlayer(p => ({...p, money: p.money + megaPrize}));
               addLog(`🎆 MEGA COMBO x${MEGA_MULT}! +€${megaPrize}!`, C.gold);
-              closeMinigame();
+              endMinigame({ kind: "win", title: `MEGA COMBO! €${megaPrize}`, detail: `Tre combo: €${newPrize} moltiplicati ×${MEGA_MULT}.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
               return;
             }
             newState = {...newState, combos: newCombos, prize: newPrize, lastRevealedA: null, lastRevealedB: null};
@@ -2462,7 +2475,9 @@ export default function Grattini() {
             } else {
               addLog("Nessuna combo trovata...", C.dim);
             }
-            closeMinigame();
+            endMinigame(newState.prize > 0
+              ? { kind: "win", title: `HAI VINTO €${newState.prize}`, detail: `${newState.combos} ${newState.combos === 1 ? "combo" : "combo"} da €${COMBO_PRIZE}. Per la MEGA ne servivano 3.` }
+              : { kind: "lose", title: "NESSUNA COMBO", detail: "Hai scoperto tutte le caselle senza mai due simboli uguali di fila." }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
             return;
           }
           setCombinaState(newState);
@@ -2495,11 +2510,11 @@ export default function Grattini() {
             const revealed = which === "A" ? cs.revealedA : cs.revealedB;
             const last = which === "A" ? cs.lastRevealedA : cs.lastRevealedB;
             return (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "11px", letterSpacing: "3px", color: "#fff3c4" }}>GRIGLIA {which}</span>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, auto)", gap: "2cqh" }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", gap: "1.5cqh" }}>
+                <span style={{ fontSize: "11px", letterSpacing: "3px", color: "#fff3c4", textAlign: "center" }}>GRIGLIA {which}</span>
+                <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gridTemplateRows: "repeat(2, minmax(0,1fr))", gap: "2cqh 1cqw" }}>
                   {grid.map((sym, i) => (
-                    <CoverCell key={i} size="min(34cqh, 12cqw)" revealed={revealed[i]} onClick={() => handleReveal(which, i)}
+                    <CoverCell key={i} fill revealed={revealed[i]} onClick={() => handleReveal(which, i)}
                       mark={revealed[i] && sym && sym === last ? "#9a2a66" : null}
                       label={revealed[i] ? (sym || "vuota") : `griglia ${which}, casella coperta`}>
                       {revealed[i] ? (sym || <span style={{ color: "#b8a878" }}>—</span>) : undefined}
@@ -2515,7 +2530,7 @@ export default function Grattini() {
           );
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable ticketId="grattaCombina" title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
+              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="grattaCombina" title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
                 how="Due simboli uguali, uno per griglia = COMBO."
                 status={[["Premio", `€${cs.prize}`, true], ["Combo", `${cs.combos}/3`], ["MEGA COMBO", `×${MEGA_MULT}`]]}
                 rules={[
@@ -2527,13 +2542,15 @@ export default function Grattini() {
                 ]}
                 actions={[
                   { label: cs.prize > 0 ? `INCASSA €${cs.prize} E VAI` : "ABBANDONA", kind: cs.prize > 0 ? "primary" : "danger", onClick: () => {
-                    if (cs.prize > 0) { updatePlayer(p => ({...p, money: p.money + cs.prize})); addLog(`Incassato €${cs.prize} abbandonando.`, C.dim); }
-                    closeMinigame();
+                    if (cs.prize > 0) {
+                      updatePlayer(p => ({...p, money: p.money + cs.prize})); addLog(`Incassato €${cs.prize} abbandonando.`, C.dim);
+                      endMinigame({ kind: "win", title: `INCASSATI €${cs.prize}`, detail: `${cs.combos} combo prima di lasciare. Ecco cosa c'era sotto.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
+                    } else closeMinigame();
                   } },
                 ]}>
-                <div style={{ display: "flex", alignItems: "center", gap: "4cqw" }}>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "stretch", gap: "2.5cqw" }}>
                   {deskGrid("A")}
-                  <div aria-label="Ultime due scoperte" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                  <div aria-label="Ultime due scoperte" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                     {pair(cs.lastRevealedA)}
                     <span style={{ fontSize: "18px", color: cs.lastRevealedA && cs.lastRevealedA === cs.lastRevealedB ? "#ffe14a" : "#fff3c4" }}>=</span>
                     {pair(cs.lastRevealedB)}
@@ -2600,7 +2617,7 @@ export default function Grattini() {
             // Bomba!
             handleNailDamage();
             addLog("💣 BOMBA! Perdi tutto e un'unghia!", C.red);
-            closeMinigame();
+            endMinigame({ kind: "lose", title: "BOOM!", detail: `Hai scoperto una 💣: perdi i €${ts.prize} trovati e un'unghia.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
             return;
           }
 
@@ -2615,7 +2632,7 @@ export default function Grattini() {
               const total = newPrize + JACKPOT_PRIZE;
               updatePlayer(p => ({...p, money: p.money + total}));
               addLog(`🗺️ JACKPOT! Trovato tutto! €${newPrize} accumulati + €${JACKPOT_PRIZE} bonus = +€${total}!`, C.gold);
-              closeMinigame();
+              endMinigame({ kind: "win", title: `JACKPOT! €${total}`, detail: `Tutte e due le X: €${newPrize} + €${JACKPOT_PRIZE} di bonus.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
               return;
             }
           }
@@ -2627,7 +2644,7 @@ export default function Grattini() {
           const DIST_INK = { 1: "#a3161d", 2: "#b0661a", 3: "#8a6a22" };
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
+              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
                 how="Trova le 2 X, evita le 5 💣."
                 status={[["Premio", `€${ts.prize}`, true], ["Tesori", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
                 rules={[
@@ -2641,17 +2658,17 @@ export default function Grattini() {
                   ts.prize > 0 && { label: `INCASSA €${ts.prize}`, kind: "primary", onClick: () => {
                     updatePlayer(p => ({...p, money: p.money + ts.prize}));
                     addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} tesori trovati.`, C.gold);
-                    closeMinigame();
+                    endMinigame({ kind: "win", title: `INCASSATI €${ts.prize}`, detail: `${ts.foundTreasures} X trovata. Ecco dov'erano l'altra e le bombe.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
                   } },
                   { label: "ABBANDONA", kind: "danger", onClick: closeMinigame },
                 ]}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: "1.5cqh" }}>
+                <div style={{ display: "grid", flex: 1, gridTemplateColumns: "repeat(4, minmax(0,1fr))", gridTemplateRows: "repeat(4, minmax(0,1fr))", gap: "2cqh 1.2cqw" }}>
                   {Array.from({length:16}, (_, idx) => {
                     const rev = ts.revealed[idx];
                     const isTreasure = ts.treasures.has(idx), isBomb = ts.bombs.has(idx);
                     const dist = rev && !isTreasure && !isBomb ? getManhattanDist(idx) : null;
                     return (
-                      <CoverCell key={idx} size="23.5cqh" revealed={rev} onClick={() => handleReveal(idx)}
+                      <CoverCell key={idx} fill revealed={rev} onClick={() => handleReveal(idx)}
                         mark={rev && isTreasure ? "#8a5a12" : null}
                         label={rev ? (isTreasure ? "tesoro" : isBomb ? "bomba" : `distanza ${dist}`) : "casella coperta"}>
                         {rev ? (isTreasure ? "💎" : isBomb ? "💣" : <span style={{ color: DIST_INK[dist] || "#5d6f68" }}>{dist}</span>) : undefined}
