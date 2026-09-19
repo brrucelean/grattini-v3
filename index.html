@@ -34,12 +34,59 @@
            Le safe-area sono gestite internamente dal componente Grattini via
            env(safe-area-inset-top/bottom) sullo S.container. */
       }
-      /* Vetro CRT su tutto il gioco: righe orizzontali sopra ogni schermata,
-         modali e tooltip compresi. pointer-events:none → clic e grattate
-         passano attraverso. Richiesto dall'utente dopo il tabaccaio. */
+      /* ══ VETRO LOTTERIA ═══════════════════════════════════════════
+         Tre pellicole sottili sopra al gioco: iridescenza ambientale,
+         riflesso speculare e grana/scanline. Sono layer compositi animati
+         solo con transform/opacity: nessun reflow e nessun input bloccato. */
+      @keyframes gameFoilDrift {
+        0%,100% { transform: translate3d(-7%, -4%, 0) rotate(-4deg); opacity: .10; }
+        35%     { transform: translate3d( 2%,  1%, 0) rotate( 2deg); opacity: .16; }
+        70%     { transform: translate3d(-1%,  5%, 0) rotate( 5deg); opacity: .08; }
+      }
+      @keyframes gameSpecularPass {
+        0%,12%  { transform: translate3d(-135%,0,0) skewX(-18deg); opacity: 0; }
+        18%     { opacity: .18; }
+        34%     { transform: translate3d(135%,0,0) skewX(-18deg); opacity: .10; }
+        35%,100%{ transform: translate3d(135%,0,0) skewX(-18deg); opacity: 0; }
+      }
+      @keyframes gameGrainStep {
+        0%   { transform: translate3d(-2%, -3%, 0); }
+        25%  { transform: translate3d( 3%,  1%, 0); }
+        50%  { transform: translate3d(-1%,  4%, 0); }
+        75%  { transform: translate3d( 4%, -1%, 0); }
+        100% { transform: translate3d(-3%,  2%, 0); }
+      }
+      body::before {
+        content: ""; position: fixed; inset: -30%; pointer-events: none; z-index: 2147483645;
+        background:
+          conic-gradient(from 210deg at 48% 42%,
+            transparent 0 10%, rgba(255,45,125,.46) 17%, rgba(255,211,63,.30) 25%,
+            rgba(60,255,190,.34) 34%, rgba(50,205,255,.44) 43%, rgba(145,80,255,.38) 52%,
+            transparent 61% 78%, rgba(255,255,255,.18) 86%, transparent 94%);
+        mix-blend-mode: color-dodge; opacity: .11;
+        animation: gameFoilDrift 18s steps(12) infinite;
+      }
+      #root::before {
+        content: ""; position: fixed; top:-12%; bottom:-12%; left:0; width:34%; pointer-events:none;
+        z-index:2147483646;
+        background: linear-gradient(100deg, transparent 0 26%, rgba(255,255,255,.06) 38%,
+          rgba(185,245,255,.32) 48%, rgba(255,225,130,.22) 53%, transparent 68%);
+        mix-blend-mode: screen; opacity:0;
+        animation: gameSpecularPass 11s cubic-bezier(.22,.7,.2,1) infinite;
+      }
       body::after {
-        content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2147483647;
-        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+        content: ""; position: fixed; inset: -8%; pointer-events: none; z-index: 2147483647;
+        background-image:
+          repeating-linear-gradient(0deg, rgba(0,0,0,.21) 0 1px, rgba(255,255,255,.018) 1px 2px, transparent 2px 4px),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='2' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
+        background-size:auto,96px 96px;
+        mix-blend-mode:soft-light; opacity:.62;
+        animation:gameGrainStep 1.15s steps(5) infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        body::before, body::after, #root::before { animation:none !important; }
+        body::before { transform:translate3d(-3%,-1%,0); opacity:.08; }
+        #root::before { display:none; }
       }
     </style>
   </head>

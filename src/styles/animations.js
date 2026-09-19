@@ -203,17 +203,17 @@ export const EFFECTS_CSS = `
     rgba(220,0,255,0.28) 84%, rgba(255,0,80,0.30) 100%);
   background-size: 320% 320%;
   mix-blend-mode: screen;
-  opacity: 0.26;
+  opacity: 0.34;
   animation: holoSweep 6s linear infinite;
 }
 .holo::after {
   content:""; position:absolute; inset:0; z-index:5; pointer-events:none;
-  background: linear-gradient(100deg, transparent 36%, rgba(255,255,255,0.30) 47%, rgba(255,255,255,0.06) 53%, transparent 64%);
+  background: linear-gradient(100deg, transparent 31%, rgba(255,255,255,0.08) 40%, rgba(210,250,255,0.46) 48%, rgba(255,222,120,0.20) 54%, transparent 67%);
   background-size: 260% 100%;
   mix-blend-mode: screen;
   animation: holoGlide 3.4s linear infinite;
 }
-.holo-strong::before { opacity: 0.45; }
+.holo-strong::before { opacity: 0.56; }
 .holo-strong::after  { animation-duration: 2.6s; }
 .glass {
   background: rgba(8,10,24,0.55) !important;
