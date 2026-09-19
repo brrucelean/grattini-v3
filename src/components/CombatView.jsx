@@ -6,7 +6,7 @@ import {
 } from "../data/combat.js";
 import { roll, pick } from "../utils/random.js";
 import { nailCursor, isDamagedNail } from "../utils/nail.js";
-import { generateCombatHand, generateCombatCard, CARD_VARIANTS } from "../utils/combat.js";
+import { generateCombatHand, generateCombatCard } from "../utils/combat.js";
 import { SPR_BIG } from "../data/art.js";
 import { BOSS_SPRITE } from "../data/biomes.js";
 import { AudioEngine, ParticleSystem } from "../audio.js";
@@ -324,8 +324,7 @@ const FURY_TURN = 3; // dal turno 3 il nemico va in FURIA (enrage): +danno, nien
 
 // Risolve UNA carta del player → produce delta {dmg, loot, heals, self, block, dodge, log}
 function resolvePlayerCell(c) {
-  const variantMult = CARD_VARIANTS[c.variant]?.valueMult ?? 1;
-  const val = Math.round((c.value || 0) * variantMult);
+  const val = Math.round(c.value || 0);
   switch (c.effect) {
     case "lightDamage":
       return { dmg: EFFECT_DAMAGE.lightDamage, log: `🗡️ ${c.name}: ${EFFECT_DAMAGE.lightDamage} danni!` };
@@ -464,7 +463,8 @@ function TimingBar({ mode = "attack", speed = 1.5, onResult, perfectWiden = 0 })
 
 
 // ─── COMBAT COMPONENT — DUELLO HP ────────────────────────────
-export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onCellScratch, onGrattatoreConsumed, onCombo, onVariantRevealed, table = false, onEquipGrattatore }) {
+// tokenCombat (G-01): { firstHitShield } Goccia di Mercurio · { stealMult } Sassolino
+export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onCellScratch, onGrattatoreConsumed, onCombo, table = false, onEquipGrattatore, tokenCombat = {} }) {
   // Nome mostrato all'utente: usa il flavor (displayName) se presente, altrimenti
   // la specie. Le lookup stats/pool/sprite restano su enemy.name (la specie).
   const enemyLabel = enemy.displayName || enemy.name;
@@ -487,7 +487,8 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
   const perfectWiden = (grEffect === "widePerfect" ? (player.equippedGrattatore.value || 0.06) : 0)
     + (hasRelic(player, "globalWinBoost") ? 0.04 : 0);
   // Occhio di Tigre: primo colpo subito in QUESTO combattimento completamente assorbito.
-  const tigerShieldLeftRef = useRef(hasRelic(player, "firstHitShield"));
+  const tigerShieldLeftRef = useRef(hasRelic(player, "firstHitShield") || !!tokenCombat.firstHitShield);
+  const shieldLabel = hasRelic(player, "firstHitShield") ? "🐯 Occhio di Tigre" : "💧 Goccia di Mercurio";
   // ELITE: nodi ★ — non solo loot ×2 (in handleCombatEnd) ma anche fight più
   // dura. Scala HP/scudo e aggiunge +1 step ai colpi nemici (isEliteFight sotto).
   const isEliteFight = !!enemy.isElite;
@@ -578,7 +579,6 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
     onCellScratch?.(false);
     const cell = hand[idx];
     if (!cell) { resolvingRef.current = false; setBusy(false); return; }
-    if (cell.variant && onVariantRevealed) onVariantRevealed(cell.variant);
 
     const r = resolvePlayerCell(cell);
     const isAttack = cell.category === "COMBATTIMENTO" && r.dmg > 0;
@@ -714,7 +714,7 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
     const fury = Math.max(0, turn - FURY_TURN + 1); // 0 fino al turno soglia, poi cresce
     const eliteStep = isEliteFight ? 1 : 0;         // elite: colpi più duri
     const baseSteps = (heavy ? 2 : 1) + fury + eliteStep; // FURIA: attacchi sempre più pesanti
-    const stealVal = (c.value || 15) + fury * 10;
+    const stealVal = Math.round(((c.value || 15) + fury * 10) * (tokenCombat.stealMult ?? 1));
 
     if (quality === "perfect") {
       // Annulla il danno + contrattacco
@@ -736,7 +736,7 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
       } else if (tigerShieldLeftRef.current) {
         // Occhio di Tigre: primo colpo del combattimento assorbito gratis.
         tigerShieldLeftRef.current = false;
-        pushLog(`🐯 Occhio di Tigre! ${c.name} assorbito — nessun danno`, C.orange);
+        pushLog(`${shieldLabel}! ${c.name} assorbito — nessun danno`, C.orange);
         spawnFloater("ASSORBITO!", C.orange, "player", true);
       } else {
         onNailDamage?.(1);
@@ -756,7 +756,7 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
     } else if (tigerShieldLeftRef.current) {
       // Occhio di Tigre: primo colpo del combattimento assorbito gratis.
       tigerShieldLeftRef.current = false;
-      pushLog(`🐯 Occhio di Tigre! ${c.name}: colpo assorbito — nessun danno`, C.orange);
+      pushLog(`${shieldLabel}! ${c.name}: colpo assorbito — nessun danno`, C.orange);
       spawnFloater("ASSORBITO!", C.orange, "player", true);
     } else {
       onNailDamage?.(baseSteps);

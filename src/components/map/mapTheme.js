@@ -43,7 +43,7 @@ export const BIOME_THEME = [
 
 // Famiglie di nodo: colore della casella + glifo non cromatico nell'angolo.
 export const DANGER = new Set(["ladro", "spacciatore", "miniboss", "poliziotto", "macellaio"]);
-export const SAFE = new Set(["locanda", "tabaccaio", "mendicante", "sacerdote", "chirurgo", "maestroTe", "guantaio"]);
+export const SAFE = new Set(["locanda", "tabaccaio", "mendicante", "sacerdote", "chirurgo", "maestroTe", "guantaio", "pedinaro"]);
 
 export function nodeFamily(node) {
   if (node.type === "boss") return "boss";

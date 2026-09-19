@@ -3,14 +3,17 @@ import { C } from "../data/theme.js";
 import { degradeNailObj } from "../utils/nail.js";
 import { hasRelic } from "../utils/hasRelic.js";
 import { spendGrattatoreUse, grattatoreAtLastUse, COMBAT_ONLY_EFFECTS } from "../utils/grattatore.js";
+import { fortuneModifier } from "../utils/tokens.js";
 
 export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scratchingCard, addLog }) {
   // Reliquie: lista effetti attivi per passare ai componenti figli
   const playerRelicEffects = useMemo(() => (player?.relics || []).map(r => r.effect), [player?.relics]);
+  // Fortuna effettiva: base + gettone (Mezzo Corno, Moneta Incollata, Prisma,
+  // Aura, penitenza del Santino). Il Cornetto Rosso tiene il minimo a 1.
   const effectiveFortune = useMemo(() => {
-    const base = player?.fortune || 0;
+    const base = (player?.fortune || 0) + (player?.tokens ? fortuneModifier(player.tokens) : 0);
     return hasRelic(player, "minFortune1") ? Math.max(base, 1) : base;
-  }, [player?.fortune, player?.relics]);
+  }, [player?.fortune, player?.relics, player?.tokens]);
 
   const getActiveNailState = () => {
     if (!player) return "sana";

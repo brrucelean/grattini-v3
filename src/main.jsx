@@ -4,7 +4,12 @@ import "@fontsource/tiny5/400.css";
 import Grattini from "./scratchlite.jsx";
 import { AudioEngine } from "./audio.js";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+// #root non deve mai scorrere (vedi overflow:clip in index.html): riserva per
+// i browser senza "clip", dove il focus di un pulsante lo spostava di lato.
+const rootEl = document.getElementById("root");
+rootEl.addEventListener("scroll", () => { rootEl.scrollLeft = 0; rootEl.scrollTop = 0; }, { passive: true });
+
+ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <Grattini />
   </React.StrictMode>

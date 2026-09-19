@@ -8,6 +8,9 @@ import { useReducedMotion } from "../../hooks/useReducedMotion.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
 import { Pedina } from "./Pedina.jsx";
+import { TokenPanel } from "../tokens/TokenPanel.jsx";
+import { TOKENS } from "../../data/tokens.js";
+import { isSecretOpen, secretThreshold as tokenSecretThreshold } from "../../utils/tokens.js";
 import { GOLD, SILVER, bevel, dither, BIOME_THEME, FAMILY, nodeFamily } from "./mapTheme.js";
 
 // ─── MAP BOARD — la mappa come schermo di una slot da tabacchi ───
@@ -37,7 +40,11 @@ function useSize(ref) {
   return size;
 }
 
-export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachableNodes, currentBiome = 0, playerFortuna = 0, pedinaId = "ottone" }) {
+export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachableNodes, currentBiome = 0, playerFortuna = 0, tokens = null, onEquipToken, onDiscardToken, mirror = false, tokenPowers = null }) {
+  // Dado Scheggiato: modalità "scegli il nuovo percorso"
+  const [dadoPicking, setDadoPicking] = useState(false);
+  const pedinaId = tokens?.equipped || "ottone";
+  const [panelOpen, setPanelOpen] = useState(false);
   const theme = BIOME_THEME[currentBiome] || BIOME_THEME[0];
   const boardRef = useRef(null);
   const { w: bw, h: bh } = useSize(boardRef);
@@ -54,11 +61,15 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
   const T = Math.max(32, Math.floor(tileRaw / 8) * 8);
   const bossT = Math.min(Math.floor((colW - 8) / 8) * 8, T + 16);
 
+  // Specchietto del Barbiere (G-01): la mappa corre da destra a sinistra.
+  // Si specchiano solo le posizioni, così le scritte restano leggibili.
+  const mx = (x) => (mirror ? bw - x : x);
+
   const pos = useMemo(() => {
     const out = {};
     map.rows.forEach((row, rIdx) => {
       row.forEach(node => {
-        const x = originX + colW * rIdx + colW / 2;
+        const x = mx(originX + colW * rIdx + colW / 2);
         // node.x ∈ [0,1] era l'ascissa della mappa verticale: qui diventa l'ordinata.
         const top = PAYLINE_H + 8 + T / 2;
         const span = Math.max(0, usableH - T - LABEL_H);
@@ -67,7 +78,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
       });
     });
     return out;
-  }, [map, originX, colW, usableH, T]);
+  }, [map, originX, colW, usableH, T, mirror, bw]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const flat = useMemo(() => map.rows.flat(), [map]);
   const rowOf = useMemo(() => {
@@ -91,6 +102,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
   const [moving, setMoving] = useState(null);
   const choose = (node) => {
     if (moving) return;
+    setPanelOpen(false);
     if (reducedMotion) { onSelectNode(node, rowOf[node.id]); return; }
     setMoving(node);
     setTimeout(() => onSelectNode(node, rowOf[node.id]), 420);
@@ -101,7 +113,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
   const pedinaNode = moving || (currentRow > 0 ? map.rows[currentRow - 1]?.find(n => visitedNodes.includes(n.id)) : null);
   const pedinaAt = pedinaNode && pos[pedinaNode.id]
     ? pos[pedinaNode.id]
-    : { x: Math.round(PAD_X + colW * 0.3), y: Math.round(PAYLINE_H + 8 + usableH / 2) };
+    : { x: Math.round(mx(PAD_X + colW * 0.3)), y: Math.round(PAYLINE_H + 8 + usableH / 2) };
 
   // Scatti sonori quando la pedina avanza (stessa voce della mappa legacy).
   const lastPedina = useRef(null);
@@ -115,7 +127,10 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
 
   const biome = BIOMES[currentBiome] || BIOMES[0];
   const mod = BIOME_MODIFIERS[currentBiome];
-  const secretThreshold = mod?.secretFortuneThreshold ?? 2;
+  // Soglia dei segreti: bioma, poi gettone (Fiche Truccata −1). Il Telefono
+  // può aver aperto un segreto a prescindere dalla Fortuna.
+  const baseSecret = mod?.secretFortuneThreshold ?? 2;
+  const secretThreshold = tokens ? tokenSecretThreshold(tokens, baseSecret) : baseSecret;
 
   return (
     <div style={{
@@ -173,7 +188,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
         {bw > 0 && <>
           {/* Numeri di payline e colonna corrente */}
           {map.rows.map((_, c) => {
-            const x = originX + colW * c;
+            const x = mirror ? bw - (originX + colW * c) - colW : originX + colW * c;
             const here = c === currentRow;
             const past = c < currentRow;
             return (
@@ -227,12 +242,13 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
             const isActive = reachable && !visited;
             const isBoss = node.type === "boss";
             const isSecret = !!node.secret;
-            const secretUnlocked = isSecret && playerFortuna >= secretThreshold;
+            const secretUnlocked = isSecret && (tokens ? isSecretOpen(tokens, node, playerFortuna, baseSecret) : playerFortuna >= secretThreshold);
+            const dadoTarget = dadoPicking && tokenPowers?.dado?.targets.includes(node.id);
             const hidden = isSecret && !secretUnlocked && !visited;
             const isElite = !!node.elite && !visited;
             const fam = FAMILY[nodeFamily(node)];
             const size = isBoss ? bossT : T;
-            const clickable = isActive && !hidden;
+            const clickable = (isActive && !hidden) || dadoTarget;
             const icon = hidden ? "🔒" : isSecret ? "🔮" : NODE_ICONS[node.type] || "?";
             const bossKey = isBoss ? BOSS_SPRITE[node.bossName] : null;
             const spriteKey = bossKey && hasAsset(`spr-${bossKey}`) ? bossKey : node.type;
@@ -250,7 +266,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
                 <button type="button"
                   className={`mb-tile${clickable ? " is-active" : ""}`}
                   disabled={!clickable}
-                  onClick={clickable ? () => choose(node) : undefined}
+                  onClick={dadoTarget ? () => { tokenPowers.dado.onPick(node.id); setDadoPicking(false); } : clickable ? () => choose(node) : undefined}
                   aria-label={`${label}${isElite ? ", élite" : ""}${visited ? ", già visitato" : clickable ? ", raggiungibile" : hidden ? ", segreto bloccato" : ", non ancora raggiungibile"}`}
                   style={{
                     position:"absolute", left: p.x - size / 2, top: p.y - size / 2,
@@ -266,6 +282,7 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
                       visited ? `inset 0 0 0 2px #0c0b0a, inset 0 0 0 4px #57504a` : bevel(frame, isBoss ? 3 : 2),
                       isElite ? `0 0 0 2px #000, 0 0 0 4px ${C.orange}` : null,
                       clickable ? "2px 2px 0 #000" : null,
+                      dadoTarget ? `0 0 0 3px #000, 0 0 0 6px ${C.magenta}` : null,
                     ].filter(Boolean).join(", "),
                     opacity: locked && !isBoss ? 0.55 : 1,
                     filter: visited ? "grayscale(1)" : "none",
@@ -306,20 +323,44 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
             );
           })}
 
-          {/* Pedina: avanza a scatti fino al nodo appena scelto */}
-          <div aria-hidden={false} style={{
+          {/* Pedina: avanza a scatti fino al nodo appena scelto. Cliccandola si
+              apre la scheda del gettone con CAMBIA GETTONE (G-01). */}
+          <div style={{
             position:"absolute", left: pedinaAt.x, top: pedinaAt.y - (pedinaNode ? T / 2 - 4 : 0),
-            transform:"translate(-50%,-100%)", zIndex: 5, pointerEvents:"none",
+            transform:"translate(-50%,-100%)", zIndex: 5, pointerEvents: tokens && !moving ? "auto" : "none",
             transition: reducedMotion ? "none" : "left 0.36s steps(4), top 0.36s steps(4)",
           }}>
             <div key={pedinaNode?.id || "start"} className="mb-anim" style={{
               animation: reducedMotion ? "none" : "mbHop 0.36s steps(3) 1",
               filter:"drop-shadow(2px 2px 0 #000)",
             }}>
-              <Pedina id={pedinaId} size={28} />
+              {tokens ? (
+                <Tooltip text={`${TOKENS[pedinaId]?.name || "Pedina"}\nclic per la scheda e per cambiare gettone`}>
+                  <button type="button" className="mb-tile is-active" onClick={() => setPanelOpen(o => !o)}
+                    aria-label={`Pedina: ${TOKENS[pedinaId]?.name}. Apri la scheda`} aria-expanded={panelOpen}
+                    style={{ padding: 0, border: "none", background: "none", cursor: "pointer", display: "block" }}>
+                    <Pedina id={pedinaId} size={28} />
+                  </button>
+                </Tooltip>
+              ) : <Pedina id={pedinaId} size={28} />}
             </div>
           </div>
         </>}
+        {dadoPicking && (
+          <div style={{ position:"absolute", top: 8, left:"50%", transform:"translateX(-50%)", zIndex: 21, display:"flex", gap: 10,
+            alignItems:"center", padding:"6px 10px", background:"#16130f", boxShadow:`${bevel(GOLD, 1)}, 3px 3px 0 #000`,
+            color:"#f2e6c8", fontFamily: FONT, fontSize:"11px" }}>
+            🎲 Scegli il nuovo percorso: i nodi bordati di magenta (diventeranno ÉLITE)
+            <button type="button" onClick={() => setDadoPicking(false)} style={{ fontFamily: FONT, fontSize:"10px", border:"none",
+              padding:"4px 8px", cursor:"pointer", background:"#3a332a", color:"#f2e6c8" }}>ANNULLA</button>
+          </div>
+        )}
+        {panelOpen && tokens && (
+          <TokenPanel tokens={tokens} onClose={() => setPanelOpen(false)}
+            onEquip={(id) => onEquipToken?.(id)} onDiscard={(id) => onDiscardToken?.(id)}
+            powers={tokenPowers} dadoPicking={dadoPicking}
+            onDado={() => { setDadoPicking(p => !p); setPanelOpen(false); }} />
+        )}
       </div>
 
       {/* ══ LEGENDA — forma + colore ════════════════════════════════ */}
@@ -337,6 +378,15 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
         ))}
         <span style={{display:"inline-flex", alignItems:"center", gap:"6px", color: C.orange, flexShrink:0}}>★ ÉLITE</span>
         <span style={{marginLeft:"auto", color: theme.ink, flexShrink:0}}>PAGATO = già visitato</span>
+        {tokens && (
+          <button type="button" onClick={() => setPanelOpen(o => !o)} style={{
+            display:"inline-flex", alignItems:"center", gap:"6px", flexShrink:0, padding:"0 6px", height: 22,
+            border:"none", background:"#000", color: GOLD.mid, fontFamily: FONT, fontSize:"11px", letterSpacing:"1px",
+            cursor:"pointer", boxShadow:`inset 0 0 0 1px ${GOLD.lo}`,
+          }}>
+            <Pedina id={pedinaId} size={16} /> {TOKENS[pedinaId]?.name.toUpperCase()}
+          </button>
+        )}
       </div>
     </div>
   );

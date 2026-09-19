@@ -4,6 +4,7 @@ import { SPR_BIG, NPC_PALETTE, VECCHIO_DIALOGHI } from "../data/art.js";
 import { MACELLAIO_IMPLANTS, CHIRURGO_OSCURO_IMPLANTS, GRATTATORE_DEFS } from "../data/items.js";
 import { normalizePortrait } from "../utils/nail.js";
 import { pickNewRelic } from "../utils/hasRelic.js";
+import { surgeonPrice } from "../utils/shop.js";
 import { Asset } from "./Asset.jsx";
 import { hasAsset } from "../assets/registry.js";
 import { Tooltip } from "./Tooltip.jsx";
@@ -177,7 +178,7 @@ export function EventView({ node, player, onChoice }) {
       // Prezzi e slot da CHIRURGO_OSCURO_IMPLANTS: qui erano scritti a mano e la
       // Plastica era rimasta a €10 / 2 slot dopo il ribilanciamento (€6 / 3 slot).
       choices: [
-        ...CHIRURGO_OSCURO_IMPLANTS.map(impl => ({
+        ...CHIRURGO_OSCURO_IMPLANTS.map(i0 => ({ ...i0, cost: surgeonPrice(player, i0.cost) })).map(impl => ({
           label: `${impl.name} (€${impl.cost})`, action: `implant_${impl.id}`,
           condition: player.money >= impl.cost,
           disabledNote: `ti mancano €${Math.max(0, impl.cost - player.money)}`,
@@ -422,7 +423,7 @@ export function EventView({ node, player, onChoice }) {
         choices: alive.length === 0 || hasImplant
           ? [{ label: "Capito... arrivederci", action: "leave" }]
           : [
-            ...MACELLAIO_IMPLANTS.map(impl => ({
+            ...MACELLAIO_IMPLANTS.map(i0 => ({ ...i0, cost: surgeonPrice(player, i0.cost) })).map(impl => ({
               label: `${impl.emoji} ${impl.name} (€${impl.cost}) — ${impl.rarity}`,
               action: `macellaio_${impl.id}`,
               condition: player.money >= impl.cost,

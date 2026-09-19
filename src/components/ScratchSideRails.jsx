@@ -23,7 +23,7 @@ function railBox(pal) {
     // lo sticky non ha margine di scorrimento.
     // La schermata di grattata desktop non scorre più: la fiancata si stira
     // sull'altezza della riga (definita), il contenuto scorre al suo interno.
-    alignSelf: "stretch", height: "auto", overflow: "hidden",
+    alignSelf: "stretch", height: "auto",
     display: "flex", flexDirection: "column", minHeight: 0,
     fontFamily: FONT,
     background: pal.panelBg,

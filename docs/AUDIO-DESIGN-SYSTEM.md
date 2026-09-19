@@ -45,6 +45,7 @@ Ogni feedback deve essere breve, leggibile e meno forte dell'evento che conferma
 | Scratch | patina argentata | rumore band-pass variabile | 0.20 nel bus SFX |
 | Reveal | carta scoperta | carta secca + piccolo ping | 0.040 |
 | Acquisto | moneta/cassa | click carta + due armoniche ascendenti | 0.055 |
+| Gettone (G-01) | ottone nella fessura | tintinnio 1480/2220 Hz + scivolata + fermo 240 Hz | 0.040 |
 | Errore | meccanismo bloccato | doppio tono basso discendente | 0.060 |
 | CRT | scarica analogica | burst band-pass + ronzio 73 Hz | 0.055 |
 | Premio | gettoni/campanello | arpeggio brillante esistente | 0.12 max |

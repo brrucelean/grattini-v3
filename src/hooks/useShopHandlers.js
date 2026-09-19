@@ -3,15 +3,18 @@ import { CARD_TYPES } from "../data/cards.js";
 import { ITEM_DEFS, GRATTATORE_DEFS, makeGrattatore } from "../data/items.js";
 import { generateCard } from "../utils/card.js";
 import { roundMoney, fmtMoney } from "../utils/money.js";
-import { shopDiscount, monopolioMult, cardPrice, itemPrice } from "../utils/shop.js";
+import { shopPriceMult, monopolioMult, cardPrice, itemPrice } from "../utils/shop.js";
 import { hasRelic } from "../utils/hasRelic.js";
 import { AudioEngine } from "../audio.js";
 
 export function useShopHandlers({ player, gameStats, updatePlayer, addLog, setGameStats, setCardSelectMode, setScreen, setReturnScreen, effectiveFortune, unlockAchievement, setItemFoundModal, currentBiome = 0 }) {
-  // Etichette dello sconto per log e riepilogo ("" se non c'è sconto)
+  // Etichette di sconto/rincaro per log e riepilogo ("" se prezzo pieno).
+  // Include il gettone equipaggiato (Fiche Blu −10%, Fiche Truccata +15%…).
   const discountLabels = () => {
-    const pct = Math.round(shopDiscount(player, currentBiome) * 100);
-    return pct > 0 ? { tag: ` [-${pct}%]`, note: ` (sconto -${pct}%)` } : { tag: "", note: "" };
+    const pct = Math.round((1 - shopPriceMult(player, currentBiome)) * 100);
+    if (pct > 0) return { tag: ` [-${pct}%]`, note: ` (sconto -${pct}%)` };
+    if (pct < 0) return { tag: ` [+${-pct}%]`, note: ` (rincaro +${-pct}%)` };
+    return { tag: "", note: "" };
   };
 
   const pay = (cost) => {

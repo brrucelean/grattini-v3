@@ -2,7 +2,7 @@
 
 ## Stati
 
-Game over, run vinta, vittoria combat, cedole, trofei, reliquie, vintage, statistiche e modali residui.
+Game over, run vinta, vittoria combat, cedole, trofei, reliquie, pedine, statistiche (vintage rimossi 2026-09-19) e modali residui.
 
 ## Direzione
 

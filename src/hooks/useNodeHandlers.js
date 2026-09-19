@@ -12,6 +12,11 @@ import { generateCard } from "../utils/card.js";
 import { generateMap, generateLabirintoGrid, generateCombinaState, generateTesoroState } from "../utils/map.js";
 import { AudioEngine } from "../audio.js";
 import { pickNewRelic } from "../utils/hasRelic.js";
+import {
+  selectNode as tokenSelectNode, markNodeOutcome, rewardMultiplier, needsCompensation,
+  onEnterShop, onPoliziotto, ladroMissed, claimBigliaTicket, onBossDefeated, onEnterBiome,
+} from "../utils/tokens.js";
+import { TOKENS } from "../data/tokens.js";
 
 // Carte con una schermata dedicata al posto del grattino (meccanica → schermata)
 const MINIGAMES = { labirinto: "labirinto", combina: "grattaCombina", tesoro: "mappaTesor0" };
@@ -25,11 +30,25 @@ export function useNodeHandlers({
   setCombatEnemy, setCurrentBiome, setMap, setPlayer,
   setItemFoundModal, discoverRelic, activeCedola, setPendingCedoleOffer,
   setLabirintoState, setCombinaState, setTesoroState,
-  effectiveFortune, gameStats, isAlive,
+  effectiveFortune, gameStats, isAlive, grantToken,
+  map, makeMap = generateMap, tokenBlocksNegative, tokenTheftMult = 1, tryRewindCombat,
+  openPedinaroVisit, offerCompensation,
 }) {
   const [dreamModal, setDreamModal] = useState(null);
 
-  const selectNode = (node, rowIdx) => {
+  const selectNode = (picked, rowIdx) => {
+    // G-01: fotografia della pedina — da qui al ritorno sulla mappa gli effetti
+    // leggono questo gettone, e il cambio è bloccato. I tiri casuali (Autoscontro,
+    // Testa o Croce…) si fanno qui una volta sola, fuori dall'updater.
+    let node = picked;
+    if (player.tokens) {
+      const snap = tokenSelectNode(player.tokens, picked, { map });
+      if (snap.targetId !== picked.id) {
+        node = map.rows[picked.row].find(n => n.id === snap.targetId) || picked;
+        addLog(`🎠 Autoscontro! Rimbalzi da ${picked.type} a ${node.type}.`, C.orange);
+      }
+      updatePlayer(p => ({...p, tokens: snap.state}));
+    }
     setCurrentNode(node);
     setVisitedNodes(v => [...v, node.id]);
     setCurrentRow(rowIdx + 1);
@@ -82,8 +101,46 @@ export function useNodeHandlers({
   const enterNode = () => {
     if (!currentNode) return;
     const type = currentNode.type;
+    const ts = player.tokens;
 
-    if (type === "tabaccaio") setScreen("shop");
+    // ── Gettoni (G-01) all'ingresso del nodo ──
+    if (ts) {
+      // Pedina Invisibile: il Ladro non ti vede, nodo superato senza combattere
+      if (type === "ladro" && ladroMissed(ts)) {
+        addLog("👻 Pedina Invisibile: il Ladro guarda dritto attraverso di te. Passi oltre.", C.cyan);
+        setScreen("map");
+        return;
+      }
+      // Gettone Contraffatto: il Poliziotto lo sequestra
+      if (type === "poliziotto") {
+        const r = onPoliziotto(ts);
+        if (r.seized) {
+          updatePlayer(p => ({...p, tokens: r.state, money: Math.max(0, p.money - r.fine)}));
+          addLog(`🚔 Il Poliziotto ti trova il Gettone Contraffatto: SEQUESTRATO e multa di €${r.fine}.`, C.red);
+        }
+      }
+      // Lira del '99 al tabaccaio
+      if (type === "tabaccaio") {
+        const r = onEnterShop(ts, currentBiome);
+        if (r.money || r.fortune) {
+          updatePlayer(p => ({...p, tokens: r.state, money: p.money + r.money,
+            fortune: (p.fortune || 0) + r.fortune, fortuneTurns: r.fortune ? Math.max(p.fortuneTurns || 0, 3) : p.fortuneTurns}));
+          addLog(r.money ? `💶 Il tabaccaio accetta la Lira del '99 come €${r.money}!` : "💶 \"Le lire? Nel '99?\" Il tabaccaio ride. −1 Fortuna per l'umiliazione.", r.money ? C.gold : C.red);
+        } else if (r.state !== ts) updatePlayer(p => ({...p, tokens: r.state}));
+      }
+      // Biglia del Bambino: primo evento del bioma → grattino base in regalo
+      if (type === "evento") {
+        const r = claimBigliaTicket(ts, currentBiome);
+        if (r.give) {
+          const card = {...generateCard("fortunaFlash", effectiveFortune), owned: true};
+          updatePlayer(p => ({...p, tokens: r.state, scratchCards: [...p.scratchCards, card]}));
+          addLog("🔵 Biglia del Bambino: un bambino ti regala un grattino base.", C.cyan);
+        }
+      }
+    }
+
+    if (type === "pedinaro") { openPedinaroVisit?.(); setScreen("pedinaro"); }
+    else if (type === "tabaccaio") setScreen("shop");
     else if (type === "locanda") setScreen("locanda");
     else if (type === "boss") {
       const bossName = currentNode.bossName || "Il Broker";
@@ -266,7 +323,10 @@ export function useNodeHandlers({
     // Bettola thief risk
     if (room.risk === "ladri" && roll(0.25)) {
       addLog("Un ladro ti deruba nel sonno!", C.red);
-      if (player.items.length > 0) {
+      // Santino annulla il furto · Sassolino: 50% di salvare l'oggetto
+      if (tokenBlocksNegative?.("furto")) { /* annullato */ }
+      else if (tokenTheftMult < 1 && roll(1 - tokenTheftMult)) addLog("🪨 Il Sassolino pesa: il ladro scappa a mani vuote.", C.green);
+      else if (player.items.length > 0) {
         const stolen = pick(player.items);
         updatePlayer(p => {
           const items = [...p.items];
@@ -421,10 +481,15 @@ export function useNodeHandlers({
           }
         }
         const eliteMulti = currentNode?.elite ? 2 : 1;
-        return {...p, money: p.money + Math.max(0, result.playerMoney) * eliteMulti, nails};
+        // Gettone (Fiche Blu −10%, Pellicola +20%…): sopra l'×2 élite, tetti in utils/tokens.js
+        const tokenMult = p.tokens ? rewardMultiplier(p.tokens, { elite: !!currentNode?.elite }) : 1;
+        const tokens = p.tokens ? markNodeOutcome(p.tokens, true) : p.tokens;
+        return {...p, money: p.money + roundMoney(Math.max(0, result.playerMoney) * eliteMulti * tokenMult), nails, tokens};
       });
       const eliteTag = currentNode?.elite ? " ★ELITE x2!" : "";
-      addLog(`🏆 Vittoria! Guadagni €${Math.max(0, result.playerMoney) * (currentNode?.elite ? 2 : 1)}!${eliteTag}`, C.green);
+      const tokenMult = player.tokens ? rewardMultiplier(player.tokens, { elite: !!currentNode?.elite }) : 1;
+      const tokenTag = tokenMult !== 1 ? ` [pedina ${tokenMult > 1 ? "+" : "−"}${Math.round(Math.abs(tokenMult - 1) * 100)}%]` : "";
+      addLog(`🏆 Vittoria! Guadagni €${fmtMoney(roundMoney(Math.max(0, result.playerMoney) * (currentNode?.elite ? 2 : 1) * tokenMult))}!${eliteTag}${tokenTag}`, C.green);
       if (result.winNail) addLog(`✨ Hai preso un'unghia al nemico! Una tua unghia risorge.`, C.green);
       if (result.nailHeals > 0) addLog(`Cure in combattimento: ${result.nailHeals} unghie curate!`, C.green);
       // Boss defeated? Drop reliquia casuale.
@@ -452,11 +517,36 @@ export function useNodeHandlers({
       }
       // Boss defeated? Advance biome or victory
       if (currentNode?.type === "boss") {
+        // G-01 compensazione: nessun gettone ottenuto nel bioma → il boss ne
+        // lascia uno (la scelta tra due arriva col Pedinaro, fase 4).
+        // Compensazione: nessun gettone preso nel bioma → il boss ne lascia
+        // due e ne scegli uno (finestra sopra lo sblocco del bioma)
+        let tokenLine = null;
+        if (player.tokens && currentBiome < BIOMES.length - 1 && needsCompensation(player.tokens, currentBiome) && offerCompensation?.()) {
+          tokenLine = "🪙 Il boss lascia cadere due gettoni: scegline uno.";
+        }
+        // Sorpresina: al primo boss battuto si apre
+        if (player.tokens) {
+          const r = onBossDefeated(player.tokens);
+          if (r.opened) {
+            updatePlayer(p => ({...p, tokens: r.state}));
+            addLog(`🥚 La Sorpresina si apre: dentro c'è ${TOKENS[r.opened].name}!`, C.gold);
+            tokenLine = (tokenLine ? tokenLine + "\n" : "") + `🥚 SORPRESINA APERTA: ${TOKENS[r.opened].name}`;
+          }
+        }
         const nextBiome = currentBiome + 1;
         if (nextBiome < BIOMES.length) {
           // Advance to next biome
           setCurrentBiome(nextBiome);
-          setMap(generateMap(nextBiome));
+          setMap(makeMap(nextBiome));
+          // Biglia del Bambino: con 5+ biglietti ne perdi uno entrando nel bioma
+          if (player.tokens && onEnterBiome(player.tokens, { ticketCount: player.scratchCards.length }).loseRandomTicket) {
+            updatePlayer(p => {
+              const nc = [...p.scratchCards]; nc.splice(Math.floor(Math.random() * nc.length), 1);
+              return {...p, scratchCards: nc};
+            });
+            addLog("🔵 Biglia del Bambino: un bambino ti sfila un biglietto dalla tasca.", C.red);
+          }
           setCurrentRow(0);
           setVisitedNodes([]);
           addLog(`🌍 Benvenuto a ${BIOMES[nextBiome].name}! "${BIOMES[nextBiome].desc}"`, BIOMES[nextBiome].color);
@@ -489,7 +579,7 @@ export function useNodeHandlers({
             // popup invece di due che si sovrascrivono a vicenda.
             desc: (foundRelic
               ? `🏆 RELIQUIA TROVATA: ${foundRelic.name}\n${foundRelic.desc}\nEffetto permanente per tutta la run!\n\n${"─".repeat(28)}\n\n`
-              : "") + (CUTSCENE_ART[nextBiome - 1] || "") + `\n\n${BIOMES[nextBiome].name}\n"${BIOMES[nextBiome].desc}"\n\nBoss: ${BIOMES[nextBiome].boss}`,
+              : "") + (tokenLine ? `${tokenLine}\n\n` : "") + (CUTSCENE_ART[nextBiome - 1] || "") + `\n\n${BIOMES[nextBiome].name}\n"${BIOMES[nextBiome].desc}"\n\nBoss: ${BIOMES[nextBiome].boss}`,
             subtitle: `Hai conquistato il bioma ${nextBiome}/${BIOMES.length}`,
             buttonLabel: `Entra in ${BIOMES[nextBiome].name} →`,
           });
@@ -515,8 +605,11 @@ export function useNodeHandlers({
         return;
       }
     } else {
+      // Gettone VHS: riavvolge invece di perdere (1 per bioma, €10)
+      if (tryRewindCombat?.()) return;
       // Apply damage and money loss in one update to avoid stale state
       updatePlayer(p => {
+        if (p.tokens) p = {...p, tokens: markNodeOutcome(p.tokens, false)};
         const nails = [...p.nails];
         if (result.nailDamage > 0) {
           for (let d = 0; d < result.nailDamage; d++) {

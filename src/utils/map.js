@@ -3,7 +3,8 @@ import { NODE_POOL_WEIGHTS } from "../data/map.js";
 import { roll, pick, shuffle, weightedPick } from "./random.js";
 
 // Generate map for a biome — layered graph with branching paths
-export function generateMap(biomeIdx = 0) {
+// opts.poliziottoChance: probabilità del Poliziotto per nodo (Pedina Magnetica la raddoppia).
+export function generateMap(biomeIdx = 0, opts = {}) {
   // ── LAYER LAYOUT: 11 righe su una griglia a colonne fisse ──────
   // Prima ogni riga aveva le sue X (0.08/0.27/0.47… vs 0.1/0.3/0.5…): i nodi
   // non si allineavano mai in verticale e con 5 per riga la mappa risultava
@@ -54,7 +55,7 @@ export function generateMap(biomeIdx = 0) {
 
   // ── NPC a comparsa tardiva ──────────────────────────────────
   rows.slice(3).flat().forEach(n => {
-    if (n.type !== "boss" && n.type !== "start" && roll(0.07)) n.type = "poliziotto";
+    if (n.type !== "boss" && n.type !== "start" && roll(opts.poliziottoChance ?? 0.07)) n.type = "poliziotto";
   });
   rows.slice(4).flat().forEach(n => {
     if (n.type !== "boss" && n.type !== "start" && n.type !== "poliziotto" && roll(0.05)) n.type = "anziana";
@@ -290,6 +291,22 @@ export function generateMap(biomeIdx = 0) {
   const vecchioCandidates = rows.slice(2, 9).flat().filter(n => n.type === "evento" && !n.elite && !n.secret);
   if (vecchioCandidates.length > 0) {
     shuffle(vecchioCandidates)[0]._isVecchio = true;
+  }
+
+  // ── IL PEDINARO (G-01): uno per bioma, colonne 4-7 ──
+  // Su un nodo raggiungibile da almeno 2 strade, mai sopra nodi garantiti o
+  // speciali (Guantaio, tabaccai/locande delle quote, Sacerdote, segreti,
+  // élite, Vecchio). Se la colonna non offre niente, allarga a 3-8.
+  const incoming = {};
+  Object.values(connections).forEach(outs => outs.forEach(id => { incoming[id] = (incoming[id] || 0) + 1; }));
+  const PEDINARO_NO = ["guantaio", "tabaccaio", "locanda", "sacerdote", "boss", "start"];
+  const pedinaroCands = (from, to, minIn) => rows.slice(from, to).flat().filter(n =>
+    !PEDINARO_NO.includes(n.type) && !n.secret && !n.elite && !n._isVecchio && (incoming[n.id] || 0) >= minIn);
+  const pedCands = [pedinaroCands(4, 8, 2), pedinaroCands(4, 8, 1), pedinaroCands(3, 9, 1)].find(c => c.length) || [];
+  if (pedCands.length) {
+    const ped = pick(pedCands);
+    ped.type = "pedinaro";
+    delete ped.angry;
   }
 
   // ── NPC VOLATILI: spacciatore/poliziotto hanno il 25% di chance di

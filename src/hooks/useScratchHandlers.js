@@ -8,6 +8,7 @@ import { degradeNailObj, healNail } from "../utils/nail.js";
 import { rng, roll } from "../utils/random.js";
 import { AudioEngine } from "../audio.js";
 import { generateMap } from "../utils/map.js";
+import { scratchPrize, onScratchWin } from "../utils/tokens.js";
 import { STORAGE_KEYS, getStoredNumber, setStoredNumber } from "../utils/storage.js";
 
 // Impianti a usi limitati: stato dell'unghia quando gli usi finiscono.
@@ -28,7 +29,7 @@ export function useScratchHandlers({
   setGameStats, setScratchingCard, setReturnScreen, setCardSelectMode, setSelectedCardIdx,
   setScreen, setIntroCardsLeft, setIntroPrizes, setItemFoundModal,
   setMap, setCurrentRow, setVisitedNodes, setCurrentNode, setCurrentBiome,
-  setPlayer, isAlive,
+  setPlayer, isAlive, makeMap = generateMap,
 }) {
   // { prize, returnTo }: returnTo è la schermata da cui si stava grattando.
   // Prima il Doppio o Nulla azzerava returnScreen e, rifiutando o giocando,
@@ -181,6 +182,15 @@ export function useScratchHandlers({
         addLog(`💸 MONOPOLIO: biglietto tier-1 ×${t1Boost}! +€${boosted - basePrize} bonus cedola`, C.gold);
         basePrize = boosted;
       }
+      // Gettone (Madreperla +15%, Retino −10% sul premio massimo)
+      if (player.tokens) {
+        const isMax = result.prize >= (CARD_BALANCE[card?.id]?.prizeMax ?? Infinity);
+        const withToken = scratchPrize(player.tokens, basePrize, { isMax });
+        if (withToken !== basePrize) {
+          addLog(`🪙 Pedina: vincita ${withToken > basePrize ? "+" : "−"}€${Math.abs(withToken - basePrize)}.`, withToken > basePrize ? C.gold : C.orange);
+          basePrize = withToken;
+        }
+      }
       if (isStreamerLive) {
         addLog(`🔥 CLIP VIRALE! La chat impazzisce! €${result.prize} → €${streamerMultiplied} (x1.5 LIVE)!`, C.gold);
         // Aggiungi clipVirale item (moltiplicatore x2 prossima vincita) se c'è spazio
@@ -202,6 +212,8 @@ export function useScratchHandlers({
         const streakBonus = Math.floor(newConsec / 3) * 0.1;
         const finalPrize = streakBonus > 0 ? Math.round(basePrize * (1 + streakBonus)) : basePrize;
         const newMoney = roundMoney(p.money + finalPrize);
+        // Gettone Aura: una bella vincita accende l'aura (+1 Fortuna per 2 nodi)
+        if (p.tokens) p = {...p, tokens: onScratchWin(p.tokens, finalPrize)};
         if (newConsec >= 3 && !p.grattaMania && !p._grattaManiaOffered) {
           // Non attivare automaticamente — offri scelta al giocatore
           setTimeout(() => {
@@ -228,7 +240,7 @@ export function useScratchHandlers({
         addLog(`🀄 MONETA CINESE! Vincita x5!`, C.gold);
         AudioEngine.china();
         setTimeout(() => {
-          setMap(generateMap(3));
+          setMap(makeMap(3));
           setCurrentRow(0);
           setVisitedNodes([]);
           setCurrentNode(null);

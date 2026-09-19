@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import { C, FONT, MAX_ITEMS, W, R } from "./data/theme.js";
 import { KEYFRAMES, EFFECTS_CSS, ANIM } from "./styles/animations.js";
 import { NAIL_INFO } from "./data/nails.js";
@@ -50,15 +50,33 @@ import { TickerRow } from "./components/shell/TickerRow.jsx";
 import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
 import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
 import { IntroDesk } from "./components/intro/IntroDesk.jsx";
+import { TutorialDesk } from "./components/intro/TutorialDesk.jsx";
 import { SelectCardDesk } from "./components/desk/SelectCardDesk.jsx";
 import { GameOverDesk, VictoryDesk, CedoleDesk } from "./components/desk/EndScreens.jsx";
 import { MK, mkPanel, MkButton, MkScreen, MkTitle } from "./components/desk/mapKit.jsx";
 import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
+import { TokenPouchModal } from "./components/tokens/TokenPouchModal.jsx";
+import { TokenCollection } from "./components/tokens/TokenCollection.jsx";
+import { ResetProgress } from "./components/desk/ResetProgress.jsx";
+import { PedinaroDesk } from "./components/tokens/PedinaroDesk.jsx";
+import { TokenChoiceModal } from "./components/tokens/TokenChoiceModal.jsx";
+import { Pedina } from "./components/map/Pedina.jsx";
+import { TokenDebug, TokenPreviewBar } from "./components/tokens/TokenDebug.jsx";
+import { TokenVisualLayer } from "./components/tokens/TokenVisualLayer.jsx";
+import { TOKEN_VISUAL_CSS, visualOf, visualWrapperStyle, playLiquidPulse } from "./components/tokens/tokenVisuals.js";
+import { onFx } from "./utils/fx.js";
+import { TOKENS, TOKEN_RARITY, TOKEN_RELEASE, PEDINARO } from "./data/tokens.js";
+import {
+  createTokenState, acquireToken, resolveFullPouch, equipToken, discardToken,
+  canSwapToken, onNodeResolved, returnToMap, onNegativeEvent, theftMult,
+  openPedinaro, barterToken, compensationOffer,
+  mapGenParams, onMapGenerated, rewindCombat, callTelefono, telefonoTarget,
+  dadoOptions, rollDado, chargesLeft, firstHitShield,
+} from "./utils/tokens.js";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
-import { CARD_VARIANTS } from "./utils/combat.js";
 import { STORAGE_KEYS, getStored, setStored, removeStored } from "./utils/storage.js";
 import { fmtMoney, roundMoney } from "./utils/money.js";
 
@@ -128,7 +146,7 @@ export default function Grattini() {
   const [firstScratchShown, setFirstScratchShown] = useState(false);
   const [hoveredIntroIdx, setHoveredIntroIdx] = useState(-1);
   const [cellaProgress, setCellaProgress] = useState(0); // graffi al muro in cella (0-8 = evaso)
-  const [tutorialPage, setTutorialPage] = useState(0); // 0 = unghie, 1 = meccaniche
+  const [tutorialPage, setTutorialPage] = useState(0); // capitolo del quaderno: 0 dita · 1 duello · 2 strada · 3 pedina
   // ─── HOOK: useMeta ───
   const {
     achievements, setAchievements,
@@ -138,16 +156,17 @@ export default function Grattini() {
     showTrophies, setShowTrophies,
     showReliquie, setShowReliquie,
     discoveredRelics, discoverRelic,
+    discoverToken, discoveredTokens, resetMeta,
     enabledRelics, setEnabledRelics,
     showAllTimeStats, setShowAllTimeStats,
     unlockAchievement,
     updateAllTimeStats,
-    vintageCollected, collectVintage,
   } = useMeta();
   // ─── SPECIAL MINIGAME STATES ─────────────────────────────────
   const [scratchGameHost, setScratchGameHost] = useState(null); // colonna "sul tavolo" della grattata desktop
   const [labirintoState, setLabirintoState] = useState(null); // {pos, revealed, prize, grid, done}
-  const [showVintage, setShowVintage] = useState(false); // Sprint 5: modal collezione vintage
+  const [showPedine, setShowPedine] = useState(false); // G-01: collezione pedine (Archivio della home)
+  const [showResetProgress, setShowResetProgress] = useState(false); // Impostazioni → azzera progressi
   const [combinaState, setCombinaState] = useState(null); // gratta & combina
   const [tesoroState, setTesoroState] = useState(null); // mappa del tesoro
   // nessuno zoom — il contenuto riempie il frame 16:9 naturalmente
@@ -222,13 +241,13 @@ export default function Grattini() {
       // Sprint 5: Giornaletto Porno
       giornalettoRead: false, // true mentre il giornaletto è letto recentemente → Poliziotto ti becca
       giornalettoTicks: 0,    // grattate rimanenti prima che svanisca l'effetto
-      // Sprint 5: Vintage Collezionabili (achievement meta)
-      vintageCollection: [],  // array di id variant raccolti (FOIL/STRAPPATO/ORO/BN/MULTI)
       grattedCards: [], // storico carte grattate: [{typeId, tier, isWinner, prize, name}]
       lastWonPrize: 0, // ultimo premio vinto (per Doppio o Nulla x2)
       extraTiles: [], // tile extra nel grattino corrente (es. monetaCinese)
       relics: enabledRelics.map(id => RELIC_DEFS[id] ? {id, ...RELIC_DEFS[id]} : null).filter(Boolean), // reliquie abilitate dalla meta
+      tokens: createTokenState(), // G-01: pedina attiva + custodia gettoni (solo run)
     };
+    discoverToken("ottone");
     // Applica cedola attiva se presente
     let finalPlayer = newPlayer;
     const cedolaId = activeCedola;
@@ -346,14 +365,264 @@ export default function Grattini() {
     setItemFoundModal, currentBiome,
   });
 
-  // ─── HOOK: useScratchHandlers ───
+  // ─── GETTONI DEL DESTINO (G-01) ───────────────────────────
+  // Tutta la logica sta in utils/tokens.js: qui solo stato, log e modali.
+  const [pendingToken, setPendingToken] = useState(null); // { id, biome } a custodia piena
+  // Modalità debug dei gettoni (solo sviluppo o ?debug nell'URL): catalogo
+  // grafico + prova degli effetti visivi sullo schermo.
+  const tokenDebugEnabled = import.meta.env.DEV || new URLSearchParams(window.location.search).has("debug");
+  const [tokenDebugOpen, setTokenDebugOpen] = useState(false);
+  const [tokenPreview, setTokenPreview] = useState(null);
+  const [confettiBurst, setConfettiBurst] = useState(false); // Tappo di Spumante
+  const [pedinaroVisit, setPedinaroVisit] = useState(null);   // { sale, barter, gift, first, done }
+  const [pedinaroLine, setPedinaroLine] = useState("");
+  const [tokenChoice, setTokenChoice] = useState(null);       // compensazione del boss: [id, id]
+
+  // Dà un gettone al giocatore. `withModal: false` quando il chiamante ha già
+  // un popup suo (es. sblocco bioma) e vuole solo la riga da aggiungere.
+  // Restituisce una riga di testo che descrive l'esito.
+  // pay: { money, tickets } — prezzo del Pedinaro. Si paga solo quando il
+  // gettone entra davvero in custodia (con la custodia piena, alla scelta).
+  const payFor = (p, pay) => {
+    if (!pay) return p;
+    let scratchCards = p.scratchCards;
+    if (pay.tickets) {
+      // i biglietti meno cari: il Pedinaro si accontenta
+      const idx = p.scratchCards.map((c, i) => [c.cost || 0, i]).sort((a, b) => a[0] - b[0]).slice(0, pay.tickets).map(x => x[1]);
+      scratchCards = p.scratchCards.filter((_, i) => !idx.includes(i));
+    }
+    return {...p, money: roundMoney(p.money - (pay.money || 0)), scratchCards};
+  };
+  const grantToken = useCallback((tokenId, { source = "Trovato", withModal = true, pay = null } = {}) => {
+    const def = TOKENS[tokenId];
+    if (!def || !player?.tokens) return null;
+    discoverToken(tokenId);
+    const biome = currentBiome;
+    const r = acquireToken(player.tokens, tokenId, { biome });
+    if (r.outcome === "full") {
+      setPendingToken({ id: tokenId, biome, pay });
+      addLog(`🪙 ${def.name}: custodia piena, scegli cosa tenere.`, C.gold);
+      return `🪙 GETTONE: ${def.name} — custodia piena, scegli cosa tenere.`;
+    }
+    updatePlayer(p => {
+      const rr = acquireToken(p.tokens, tokenId, { biome });
+      if (rr.outcome === "added") return payFor({...p, tokens: rr.state}, pay);
+      if (rr.outcome === "duplicate") return {...p, money: p.money + rr.money};
+      return p;
+    });
+    AudioEngine.tokenInsert();
+    const line = r.outcome === "duplicate"
+      ? `🪙 ${def.name} già in custodia: rivenduto per €${r.money}.`
+      : `🪙 GETTONE: ${def.name} — ${def.pro}. Fregatura: ${def.contro}.`;
+    addLog(line, C.gold);
+    if (withModal && r.outcome === "added") {
+      setItemFoundModal({
+        emoji: "🪙", tokenId, name: def.name,
+        desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia (zaino → GETTONI). Clicca la pedina sulla mappa per equipaggiarlo.`,
+        subtitle: `${source} · Gettone ${TOKEN_RARITY[def.rarity].label}`,
+      });
+    }
+    return line;
+  }, [player, currentBiome, updatePlayer, addLog, discoverToken]);
+
+  const resolvePendingToken = (opts) => {
+    if (!pendingToken) return;
+    const { id, biome, pay } = pendingToken;
+    const r = resolveFullPouch(player.tokens, id, { ...opts, biome });
+    updatePlayer(p => {
+      const next = {...p, tokens: r.state, money: p.money + (r.money || 0)};
+      return opts.choice === "refuse" ? next : payFor(next, pay); // rifiutato = non paghi
+    });
+    setPendingToken(null);
+    if (opts.choice === "refuse") { addLog(`🪙 Lasci ${TOKENS[id].name} dove l'hai trovato.`, C.dim); return; }
+    if (pay) setPedinaroVisit(v => (v ? {...v, done: {...v.done, [id]: true}} : v));
+    AudioEngine.tokenInsert();
+    addLog(`🪙 Butti ${TOKENS[opts.discardId].name} e tieni ${TOKENS[id].name}${opts.choice === "equip" ? " come pedina" : ""}.`, C.gold);
+  };
+
+  const handleEquipToken = (tokenId) => {
+    if (!player?.tokens || !canSwapToken(player.tokens) || !player.tokens.pouch.includes(tokenId)) { AudioEngine.error(); return; }
+    const r = equipToken(player.tokens, tokenId);
+    updatePlayer(p => ({...p, tokens: r.state, money: p.money + r.money}));
+    AudioEngine.tokenInsert();
+    addLog(`🪙 Pedina: ${TOKENS[tokenId].name}. ${TOKENS[tokenId].pro}.`, C.gold);
+  };
+
+  const handleDiscardToken = (tokenId) => {
+    if (!player?.tokens) return;
+    try {
+      updatePlayer(p => ({...p, tokens: discardToken(p.tokens, tokenId)}));
+      addLog(`🪙 Butti ${TOKENS[tokenId].name}.`, C.dim);
+    } catch { AudioEngine.error(); }
+  };
+
+  // Mappa di un nuovo bioma con gli effetti della pedina (Magnetica: più
+  // Poliziotti · Nero: élite in più · Madreperla/Spumante: un Ladro in più).
+  const makeMap = useCallback((biome) => {
+    const ts = player?.tokens;
+    return ts ? onMapGenerated(ts, generateMap(biome, mapGenParams(ts))) : generateMap(biome);
+  }, [player?.tokens]);
+
+  // Santino Plastificato: prova ad annullare una multa, un furto o una
+  // maledizione. true = annullato (il chiamante salta l'effetto negativo).
+  const NEGATIVE_LABEL = { multa: "multa annullata", furto: "furto annullato", maledizione: "maledizione annullata" };
+  const tokenBlocksNegative = useCallback((kind) => {
+    if (!player?.tokens) return false;
+    const r = onNegativeEvent(player.tokens, kind, currentBiome);
+    if (!r.cancelled) return false;
+    updatePlayer(p => ({...p, tokens: onNegativeEvent(p.tokens, kind, currentBiome).state}));
+    addLog(`🪙 Santino Plastificato: ${NEGATIVE_LABEL[kind]}! In cambio −1 Fortuna per i prossimi 3 nodi.`, C.gold);
+    AudioEngine.tokenInsert();
+    return true;
+  }, [player?.tokens, currentBiome, updatePlayer, addLog]);
+  const tokenTheftMult = player?.tokens ? theftMult(player.tokens) : 1;
+
+  // Gettone VHS: su una sconfitta riavvolge il combattimento (1 per bioma, €10).
+  const [combatRunId, setCombatRunId] = useState(0);
+  const tryRewindCombat = () => {
+    if (!player?.tokens) return false;
+    const r = rewindCombat(player.tokens, currentBiome, player.money);
+    if (!r) return false;
+    updatePlayer(p => ({...p, money: p.money - r.cost, tokens: r.state}));
+    addLog(`📼 Gettone VHS: RIAVVOLGI! Il combattimento riparte da capo (−€${r.cost} di noleggio).`, C.gold);
+    setCombatRunId(n => n + 1);
+    return true;
+  };
+
+  // Telefono: apre il segreto più vicino. Dado: apre un percorso in più.
+  const handleCallTelefono = () => {
+    if (!player?.tokens || !map) return;
+    const target = telefonoTarget(player.tokens, map, currentRow);
+    if (!target) { addLog("📞 Nessun nodo segreto da aprire davanti a te.", C.dim); AudioEngine.error(); return; }
+    if (player.money < 1) { addLog("📞 Ti serve almeno €1 per la chiamata.", C.red); AudioEngine.error(); return; }
+    try {
+      const r = callTelefono(player.tokens, currentBiome, { targetId: target.id });
+      updatePlayer(p => ({...p, tokens: r.state, money: p.money + r.money}));
+      addLog(r.revealed ? "📞 Pronto? Ti hanno aperto il nodo segreto più vicino!" : "📞 Numero sbagliato... la chiamata è persa (−€1).", r.revealed ? C.gold : C.red);
+    } catch { AudioEngine.error(); }
+  };
+  const dadoFrom = map && currentRow > 0 ? map.rows[currentRow - 1]?.find(n => visitedNodes.includes(n.id)) : null;
+  const dadoTargets = player?.tokens && dadoFrom && map ? dadoOptions(player.tokens, map, dadoFrom, currentBiome) : [];
+  const handleRollDado = (targetId) => {
+    try {
+      const r = rollDado(player.tokens, map, dadoFrom, targetId, currentBiome);
+      setMap(r.map);
+      updatePlayer(p => ({...p, tokens: r.state}));
+      addLog("🎲 Dado Scheggiato: si apre un percorso in più... verso un nodo ÉLITE.", C.orange);
+    } catch { AudioEngine.error(); }
+  };
+  const tokenPowers = player?.tokens ? {
+    telefono: player.tokens.equipped === "telefono" ? { left: chargesLeft(player.tokens, "telefono", currentBiome), onUse: handleCallTelefono } : null,
+    dado: player.tokens.equipped === "dado" ? { left: chargesLeft(player.tokens, "dado", currentBiome), targets: dadoTargets, onPick: handleRollDado } : null,
+  } : null;
+
+  // ─── IL PEDINARO (fase 4) ───────────────────────────────
+  const PEDINARO_LINES = {
+    first: "Ehi, ehi. Hai la faccia di uno che cammina ancora col gettone d'ottone. Io sono il Pedinaro: compro, vendo, baratto pedine. Uno per quartiere, e io sono quello onesto. Più o meno.",
+    gift: " E siccome è la prima volta... uno di questi due te lo regalo. Scegli bene.",
+    back: [
+      "Di nuovo tu. Le pedine non si consumano, la fortuna sì.",
+      "Oggi ho roba buona. Almeno una delle due.",
+      "Guarda pure. Toccare costa niente, girare sulla mappa costa tutto.",
+    ],
+    buy: "Affare fatto. Se ti porta sfortuna, non sono stato io.",
+    barter: "Scambio onesto. Il tuo lo metto in vetrina, qualcuno ci casca.",
+    gifted: "Tienilo. Il prossimo lo paghi, eh.",
+    empty: "Hai già tutto quello che ho. Complimenti, o condoglianze.",
+  };
+  const openPedinaroVisit = () => {
+    if (!player?.tokens) return;
+    const r = openPedinaro(player.tokens, { pool: TOKEN_RELEASE });
+    updatePlayer(p => ({...p, tokens: {...p.tokens, counters: {...p.tokens.counters, metPedinaro: true}}}));
+    setPedinaroVisit(r.visit);
+    [r.visit.sale, r.visit.barter].filter(Boolean).forEach(o => discoverToken(o.id)); // visto = in collezione
+    setPedinaroLine(!r.visit.sale ? PEDINARO_LINES.empty
+      : r.visit.first ? PEDINARO_LINES.first + (r.visit.gift ? PEDINARO_LINES.gift : "")
+      : PEDINARO_LINES.back[Math.floor(Math.random() * PEDINARO_LINES.back.length)]);
+    AudioEngine.tokenInsert();
+  };
+  const pedinaroDone = (id, line) => {
+    setPedinaroVisit(v => (v ? {...v, gift: false, done: {...v.done, [id]: true}} : v));
+    setPedinaroLine(line);
+  };
+  const handlePedinaroBuy = (id) => {
+    const price = TOKEN_RARITY[TOKENS[id].rarity].price;
+    if (player.money < price) { AudioEngine.error(); return; }
+    const full = player.tokens.pouch.length >= 3;
+    grantToken(id, { source: "Comprato dal Pedinaro", withModal: false, pay: { money: price } });
+    addLog(`🪙 Compri ${TOKENS[id].name} dal Pedinaro per €${price}.`, C.gold);
+    if (!full) pedinaroDone(id, PEDINARO_LINES.buy);
+    else setPedinaroLine("Custodia piena? Fai spazio, poi ne parliamo.");
+  };
+  const handlePedinaroGift = (id) => {
+    grantToken(id, { source: "Regalo del Pedinaro", withModal: false });
+    pedinaroDone(id, PEDINARO_LINES.gifted);
+  };
+  const handlePedinaroBarterToken = (giveId, wantId) => {
+    try {
+      barterToken(player.tokens, giveId, wantId, { biome: currentBiome }); // valida prima: lancia se non si può
+      updatePlayer(p => ({...p, tokens: barterToken(p.tokens, giveId, wantId, { biome: currentBiome })}));
+      discoverToken(wantId);
+      AudioEngine.tokenInsert();
+      addLog(`🪙 Baratti ${TOKENS[giveId].name} con ${TOKENS[wantId].name}.`, C.gold);
+      pedinaroDone(wantId, PEDINARO_LINES.barter);
+    } catch { AudioEngine.error(); }
+  };
+  const handlePedinaroBarterTickets = (wantId) => {
+    if (player.scratchCards.length < PEDINARO.barterTickets) { AudioEngine.error(); return; }
+    const full = player.tokens.pouch.length >= 3;
+    grantToken(wantId, { source: "Barattato dal Pedinaro", withModal: false, pay: { tickets: PEDINARO.barterTickets } });
+    addLog(`🪙 Dai ${PEDINARO.barterTickets} biglietti al Pedinaro per ${TOKENS[wantId].name}.`, C.gold);
+    if (!full) pedinaroDone(wantId, PEDINARO_LINES.barter);
+    else setPedinaroLine("Custodia piena? Fai spazio, poi ne parliamo.");
+  };
+
+  // Compensazione del boss: nessun gettone preso nel bioma → scegline uno tra due comuni
+  const offerCompensation = () => {
+    if (!player?.tokens) return false;
+    const ids = compensationOffer(player.tokens, { pool: TOKEN_RELEASE });
+    if (!ids.length) return false;
+    ids.forEach(discoverToken);
+    setTokenChoice(ids);
+    return true;
+  };
+
+  // Solo in sviluppo, per il playtest: window.__gettoni.grant("ficheBlu")
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    window.__gettoni = {
+      grant: (id) => grantToken(id, { source: "Dev" }), ids: Object.keys(TOKENS), catalog: () => setTokenDebugOpen(true),
+      pedinaro: () => { openPedinaroVisit(); setScreen("pedinaro"); },
+    };
+  }, [grantToken]);
+
+  // Ritorno sulla mappa: chiude il nodo (effetti di fine nodo) e scongela la pedina.
+  useEffect(() => {
+    if (screen !== "map" || !player?.tokens?.snapshot) return;
+    const r = onNodeResolved(player.tokens, currentNode || { type: "start", row: 0 }, { biome: currentBiome });
+    updatePlayer(p => {
+      if (!p.tokens?.snapshot) return p;
+      let nails = p.nails;
+      // Goccia di Mercurio: un'unghia viva peggiora di uno stato
+      if (r.nailDamage) {
+        nails = [...p.nails];
+        const i = nails.findIndex(n => n.state !== "morta");
+        if (i >= 0) nails[i] = degradeNailObj(nails[i], 1);
+      }
+      return {...p, nails, money: Math.max(0, p.money + r.money), tokens: returnToMap(r.state)};
+    });
+    r.log.forEach(line => addLog(`🪙 ${line}`, C.gold));
+    if (r.confetti) { setConfettiBurst(true); setTimeout(() => setConfettiBurst(false), 3500); }
+  }, [screen, player?.tokens?.snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── HOOK: useScratchHandlers ─── (dopo i gettoni: riceve makeMap)
   const { doppioONulla, handleScratchDone, handleDoppioDecline, handleDoppioResult } = useScratchHandlers({
     player, scratchingCard, returnScreen, currentNode, currentRow, currentBiome,
     updatePlayer, addLog, triggerNpcComment, consumeGrattatore, unlockAchievement,
     setGameStats, setScratchingCard, setReturnScreen, setCardSelectMode, setSelectedCardIdx,
     setScreen, setIntroCardsLeft, setIntroPrizes, setItemFoundModal,
     setMap, setCurrentRow, setVisitedNodes, setCurrentNode, setCurrentBiome,
-    setPlayer, isAlive,
+    setPlayer, isAlive, makeMap,
   });
 
   // ─── HOOK: useNodeHandlers ───
@@ -366,7 +635,9 @@ export default function Grattini() {
     setCombatEnemy, setCurrentBiome, setMap, setPlayer,
     setItemFoundModal, discoverRelic, activeCedola, setPendingCedoleOffer,
     setLabirintoState, setCombinaState, setTesoroState,
-    effectiveFortune, gameStats, isAlive,
+    effectiveFortune, gameStats, isAlive, grantToken,
+    map, makeMap, tokenBlocksNegative, tokenTheftMult, tryRewindCombat,
+    openPedinaroVisit, offerCompensation,
   });
 
   // ─── HOOK: useEventHandlers ───
@@ -375,7 +646,8 @@ export default function Grattini() {
     updatePlayer, addLog, unlockAchievement, showItemFound, discoverRelic,
     setScreen, setCombatEnemy, setGameStats, setCellaProgress,
     setItemFoundModal, setSmokeChoiceModal,
-    setScratchingCard, setReturnScreen,
+    setScratchingCard, setReturnScreen, grantToken,
+    tokenBlocksNegative, tokenTheftMult,
   });
 
   // ─── HOOK: useSpacebarShortcut ───
@@ -485,6 +757,32 @@ export default function Grattini() {
   // iPhone/mobile: layout verticale a colonna singola invece di 3 colonne
   const { isMobile, vw, vh: stageH, scale: stageScale } = useIsMobile();
   const reducedMotion = useReducedMotion();
+  // Effetto visivo attivo: quello in prova nella modalità debug, altrimenti
+  // quello della pedina equipaggiata (solo durante la run).
+  const activeTokenVisual = visualOf(tokenPreview || (screen !== "title" ? player?.tokens?.equipped : null));
+
+  // Lente liquida (per tutto il gioco): onda breve su impatti e power-up,
+  // che arrivano dai suoni semantici via utils/fx.js. La Goccia di Mercurio
+  // la fa partire anche a ogni cambio di schermata. Il filtro resta attivo
+  // solo mentre l'onda corre, per non pesare quando è ferma.
+  const [liquidOn, setLiquidOn] = useState(false);
+  const liquidTimer = useRef(0);
+  const pulseLiquid = useCallback((strength) => {
+    if (reducedMotion) return;
+    setLiquidOn(true);
+    requestAnimationFrame(() => playLiquidPulse(strength));
+    clearTimeout(liquidTimer.current);
+    liquidTimer.current = setTimeout(() => setLiquidOn(false), 650);
+  }, [reducedMotion]);
+  useEffect(() => onFx(({ strength }) => pulseLiquid(strength)), [pulseLiquid]);
+  useEffect(() => { if (activeTokenVisual?.liquid) pulseLiquid(0.9); }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Stato per la palette dell'Umore: soldi e quota di unghie sofferenti.
+  const tokenVisualCtx = {
+    money: player?.money || 0,
+    pain: player?.nails ? player.nails.filter(n => !["sana", "kawaii"].includes(n.state)).length / player.nails.length : 0,
+    liquid: liquidOn,
+  };
   // Desktop largo: c'è spazio per le fiancate attorno al grattino (vedi overlay scratch).
   // Sotto i 1100px la carta resta da sola e centrata, come prima.
   const wideDesk = !isMobile && vw >= 1100;
@@ -510,12 +808,25 @@ export default function Grattini() {
        avere il containing block sbagliato se un ancestor ha transform).
        Il wrapper è un semplice blocco: niente flex, niente centering — così
        S.container con height:100% risolve senza ambiguità. */
-    <div style={{
+    <div
+      // overflow:hidden NON impedisce lo scroll programmatico: quando un
+      // pulsante prende il focus (OK di un popup) il browser faceva scorrere
+      // questo contenitore per mostrarlo, e lo stage restava spostato a
+      // sinistra con una fascia nera a destra. "clip" lo vieta; il reset
+      // sull'evento copre i browser che non lo supportano.
+      onScroll={e => { e.currentTarget.scrollLeft = 0; e.currentTarget.scrollTop = 0; }}
+      style={{
       position:"fixed", inset:0,
       background: "#000",
-      overflow:"hidden",
+      overflow:"clip",
       display:"flex", alignItems:"center", justifyContent:"center",
+      // Effetto visivo della pedina (G-01): qui e non sullo stage, che usa già
+      // filter/animation per neon e scossa.
+      ...visualWrapperStyle(activeTokenVisual, reducedMotion, tokenVisualCtx),
     }}>
+    {/* I coriandoli dello Spumante sono una raffica al primo nodo del bioma, non uno sfondo fisso */}
+    <TokenVisualLayer reducedMotion={reducedMotion} money={player?.money || 0}
+      overlay={activeTokenVisual?.overlay === "confetti" && !tokenPreview && !confettiBurst ? null : activeTokenVisual?.overlay} />
     {/* ── STAGE — sempre grafica desktop: almeno 1280×720 virtuali, scalati
          per stare nella finestra (hooks/useIsMobile.js). A scala 1 riempie
          esattamente il viewport come prima. ── */}
@@ -541,6 +852,7 @@ export default function Grattini() {
       <style>{`
         ${KEYFRAMES}
         ${EFFECTS_CSS}
+        ${TOKEN_VISUAL_CSS}
         html, body { margin: 0; padding: 0; overflow: hidden; background: #000; }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 4px; height: 0px; }
@@ -868,202 +1180,34 @@ export default function Grattini() {
           }}
           achievements={achievements}
           discoveredRelics={discoveredRelics}
-          vintageCollected={vintageCollected}
+          discoveredTokens={discoveredTokens}
           onOpenTrophies={() => setShowTrophies(true)}
           onOpenReliquie={() => setShowReliquie(true)}
-          onOpenVintage={() => setShowVintage(true)}
           onOpenStats={() => setShowAllTimeStats(true)}
+          onOpenPedine={() => setShowPedine(true)}
+          onOpenSettings={() => setShowResetProgress(true)}
         />
       )}
 
-      {/* ═══ TUTORIAL — 3 pagine: Unghie · Combattimento · Mappa/Soldi ═══ */}
-      {screen === "tutorialNails" && (() => {
-        const PAGES = [
-          { emoji:"🖐", title:"LE TUE UNGHIE", sub:"sono la tua VITA", color:C.cyan },
-          { emoji:"⚔️", title:"IL COMBATTIMENTO", sub:"un duello a colpi di grattino", color:C.red },
-          { emoji:"🗺️", title:"LA MAPPA & I SOLDI", sub:"dove vai, cosa compri", color:C.gold },
-        ];
-        const pg = PAGES[tutorialPage] || PAGES[0];
-        // Bordo neutro di default per tutti i box: prima ogni Panel prendeva il
-        // bordo dal proprio accent (rosso/giallo/ciano/arancio...) e la pagina
-        // finiva con 6-8 colori attivi che non indicavano nessuna priorità.
-        // L'accent resta sul titolo (serve comunque a distinguere i blocchi a
-        // colpo d'occhio) e sul bordo SOLO quando strong=true, riservato al
-        // blocco davvero da ricordare (es. TEMPISMO nel combattimento).
-        // step: numera i box in ordine di lettura. Prima erano una pila di
-        // regole senza sequenza dichiarata — il lettore doveva inferire da
-        // solo "cosa viene prima". Un numero fisso risolve senza aggiungere
-        // altro testo.
-        const Panel = ({ accent, head, children, strong=false, step=null }) => (
-          <div style={{
-            position:"relative",
-            // Desktop: pannelli della mappa (nero a filo sottile, ombra dura)
-            background: wideShell ? MK.panel : strong ? C.cardHi : C.card,
-            border: wideShell ? "none" : strong ? `2px solid ${accent}88` : `1px solid ${C.dimLow}`,
-            boxShadow: wideShell ? `inset 0 0 0 2px ${strong ? accent + "88" : MK.line}, 4px 4px 0 #000` : strong ? "4px 4px 0 #000" : "2px 2px 0 #000",
-            padding: step ? "10px 13px 10px 38px" : "10px 13px", marginBottom:"8px", flexShrink:0,
-          }}>
-            {step && (
-              <div style={{
-                position:"absolute", left:"8px", top:"8px",
-                width:"20px", height:"20px", borderRadius:"0",
-                background:"#000", border:`1px solid ${accent}88`,
-                color:accent, fontSize:"10px", fontWeight:"bold",
-                display:"flex", alignItems:"center", justifyContent:"center",
-              }}>{step}</div>
-            )}
-            <div style={{color:accent, fontSize:"13px", fontWeight:"bold", letterSpacing:"1px", marginBottom:"5px"}}>{head}</div>
-            <div style={{color:C.text, fontSize:"13px", lineHeight:"1.5"}}>{children}</div>
-          </div>
-        );
-        return (
-        <div style={wideShell ? { width:"100%", flex:1, minHeight:0, display:"flex", background: MK.bg, overflowY:"auto" } : { display:"contents" }}>
-        <div style={{
-          width:"100%", flex:1, minHeight:0, maxWidth:"720px", margin:"0 auto",
-          // Titolo in alto, contenuto al centro (scorre lui), bottoni SEMPRE in
-          // fondo: AVANTI resta nello stesso punto su tutte e tre le pagine,
-          // così si può andare avanti premendo tre volte senza inseguirlo.
-          display:"flex", flexDirection:"column", justifyContent:"flex-start",
-          padding:"10px 14px 14px", boxSizing:"border-box",
-          overflow:"hidden",
-        }}>
-          {/* ── Header + puntini pagina ── */}
-          <div style={{textAlign:"center", flexShrink:0, marginBottom:"10px"}}>
-            <div style={{color:pg.color, fontFamily:FONT, fontSize:"22px", fontWeight:"bold", letterSpacing:"2px", marginBottom:"2px", textShadow:"2px 2px 0 #000"}}>
-              {pg.emoji} {pg.title}
-            </div>
-            <div style={{color:C.dimMid, fontSize:"10px", letterSpacing:"3px"}}>{pg.sub.toUpperCase()} — {tutorialPage+1}/3</div>
-            <div style={{display:"flex", justifyContent:"center", gap:"5px", marginTop:"6px"}}>
-              {PAGES.map((_, i) => (
-                <div key={i} style={{
-                  width: i === tutorialPage ? "18px" : "6px", height:"6px",
-                  background: i === tutorialPage ? pg.color : C.dim+"66",
-                  boxShadow: i === tutorialPage ? `0 0 6px ${pg.color}` : "none",
-                  transition:"width 0.2s, background 0.2s",
-                }}/>
-              ))}
-            </div>
-          </div>
-
-          <div style={{flex:1, minHeight:0, overflowY:"auto", WebkitOverflowScrolling:"touch", display:"flex", flexDirection:"column", justifyContent:"center"}}>
-          <div style={{margin:"auto 0"}}>
-          {/* Testi rivisti (set. 2026): brevi, orientati a cosa fare, e allineati
-              alle regole vere del codice (consumo unghie, grattatori, mosse del
-              nemico, parata parziale, bottino, soglia del boss). */}
-          {/* ══ PAGINA 1 — UNGHIE ══ */}
-          {tutorialPage === 0 && (<>
-            <div style={{color:C.text, fontSize:"13px", lineHeight:"1.5", textAlign:"center", marginBottom:"8px"}}>
-              Gratti i biglietti con le unghie, e le unghie sono anche la tua vita: ne hai <strong style={{color:C.bright}}>5</strong>. Quando muoiono tutte, la partita finisce.
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"10px", flexShrink:0 }}>
-              {[
-                { label:"Sana",         color:C.green,   badge:"100%",  desc:"Come nuova." },
-                { label:"Graffiata",    color:C.gold,    badge:"100%",  desc:"Primo segno di usura." },
-                { label:"Sanguinante",  color:C.orange,  badge:"100%",  desc:"Ancora un livello e marcisce." },
-                { label:"Marcia",       color:C.red,     badge:"25%",   desc:"Vinci solo un quarto del premio." },
-                { label:"Morta ✝",      color:"#555",    badge:"0%",    desc:"Non gratta più: il biglietto si annulla." },
-                { label:"Kawaii ♡",     color:"#ff88cc", badge:"×2",    desc:"Premio doppio. Si fa con la manicure in locanda." },
-              ].map(({label, color, badge, desc}) => (
-                <div key={label} style={{ background: wideShell ? MK.panel : C.card, border:`2px solid ${color}88`, padding:"8px 10px", display:"flex", flexDirection:"column", gap:"3px", boxShadow:"2px 2px 0 #000" }}>
-                  <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
-                    <div style={{width:"8px", height:"8px", background:color, flexShrink:0}}/>
-                    <span style={{color, fontSize:"14px", fontWeight:"bold", letterSpacing:"0.5px"}}>{label}</span>
-                    <span style={{ marginLeft:"auto", fontSize:"10px", fontWeight:"bold", color: color === "#555" ? "#777" : color, background:"#00000066", padding:"1px 5px", border:`1px solid ${color}33` }}>premio {badge}</span>
-                  </div>
-                  <div style={{color:C.dim, fontSize:"12px", lineHeight:"1.35"}}>{desc}</div>
-                </div>
-              ))}
-            </div>
-            <Panel accent={C.gold} head="⚠ COME SI CONSUMANO" strong>
-              Ogni <strong style={{color:C.bright}}>3 caselle grattate</strong> l'unghia in uso peggiora di un livello.<br/>
-              Con un <strong style={{color:C.bright}}>grattatore in mano</strong> gratta lui e l'unghia non si consuma, finché ha usi.<br/>
-              Se un'unghia muore passi alla successiva. Curale con i consumabili (🩹 cerotto, 💧 disinfettante) o in locanda.
-            </Panel>
-          </>)}
-
-          {/* ══ PAGINA 2 — COMBATTIMENTO ══ */}
-          {tutorialPage === 1 && (<>
-            <Panel accent={C.red} head="🎯 L'OBIETTIVO" step={1}>
-              Porta a zero la <span style={{color:C.red}}>vita</span> del nemico prima che lui ti rovini le unghie. Il suo <span style={{color:C.blue}}>scudo</span> assorbe i colpi prima della vita.
-            </Panel>
-            <Panel accent={C.gold} head="🎫 OGNI TURNO GRATTI 3 CARTE SU 9" step={2}>
-              <span style={{color:C.red}}>▲ BOTTA</span>: colpisci il nemico.<br/>
-              <span style={{color:C.blue}}>◆ PARATA</span>: ti prepari a parare il suo prossimo attacco.<br/>
-              <span style={{color:C.gold}}>€ PREMIO</span>: soldi nel bottino, che incassi se vinci.<br/>
-              Dopo ogni tua carta il nemico fa una mossa. In alto vedi le sue 3 mosse del turno e la prossima lampeggia: <strong style={{color:C.bright}}>se sta per attaccare, cerca una PARATA.</strong>
-            </Panel>
-            <Panel accent={C.cyan} head="⏱ TEMPISMO: FERMA IL CURSORE NEL VERDE" strong step={3}>
-              <div style={{ position:"relative", height:"14px", margin:"2px 0 10px", background:"#3a1010", border:`1px solid ${C.dimLow}` }}>
-                <div style={{ position:"absolute", left:"26%", width:"48%", top:0, bottom:0, background:C.gold }}/>
-                <div style={{ position:"absolute", left:"44%", width:"12%", top:0, bottom:0, background:C.green }}/>
-                <div style={{ position:"absolute", left:"48%", top:"-4px", width:0, height:0, borderLeft:"5px solid transparent", borderRight:"5px solid transparent", borderTop:`7px solid ${C.bright}` }}/>
-              </div>
-              <span style={{color:C.red}}>BOTTA</span>: verde = <strong style={{color:C.green}}>colpo perfetto</strong> (+40%), giallo = normale, rosso = metà danno.<br/>
-              <span style={{color:C.blue}}>PARATA</span>: verde = nessun danno e contrattacco, giallo = paghi poco.<br/>
-              <strong style={{color:C.red}}>Senza una parata, il suo attacco ti rovina un'unghia.</strong>
-            </Panel>
-            <Panel accent={C.orange} head="🔥 COMBO E FURIA" step={4}>
-              3 BOTTE nello stesso turno = <strong style={{color:C.magenta}}>combo</strong>, +25% di danno.<br/>
-              Dal <strong style={{color:C.orange}}>turno 3</strong> il nemico è in furia: non si cura più e picchia più forte a ogni turno. Chiudi in fretta.
-            </Panel>
-          </>)}
-
-          {/* ══ PAGINA 3 — MAPPA & SOLDI ══ */}
-          {tutorialPage === 2 && (<>
-            <Panel accent={C.cyan} head="🗺️ IL PERCORSO" step={1}>
-              La mappa va da sinistra a destra: scegli un nodo per colonna fino al <strong style={{color:C.red}}>👹 boss</strong>. Battilo e passi alla zona successiva. Prima di entrare in un nodo puoi grattare fino a 3 biglietti che hai in tasca.
-            </Panel>
-            <Panel accent={C.gold} head="📍 I NODI" step={2}>
-              {[
-                { icon:"🗡️",  body: <><span style={{color:C.red}}>combattimento</span>: vinci soldi, perdi unghie se va male.</> },
-                { icon:"🏪",  body: <><span style={{color:C.cyan}}>tabaccaio</span>: biglietti, grattatori, consumabili e la slot.</> },
-                { icon:"🏨",  body: <><span style={{color:C.magenta}}>locanda</span>: paghi e curi le unghie.</> },
-                { icon:"❓",  body: <><span style={{color:C.text}}>incontri</span>: ogni personaggio ti propone delle scelte. Può aiutarti o fregarti: leggi bene.</> },
-                { icon:"🧤",  body: <><span style={{color:"#88ccff"}}>guantaio</span>: vende il Guanto da boss, che ti protegge nello scontro finale.</> },
-              ].map((row, i, arr) => (
-                <div key={i} style={{ display:"flex", gap:"8px", marginBottom: i < arr.length - 1 ? "4px" : 0 }}>
-                  <span style={{flex:"0 0 22px", textAlign:"right"}}>{row.icon}</span>
-                  <span style={{flex:1}}>{row.body}</span>
-                </div>
-              ))}
-            </Panel>
-            <Panel accent={C.gold} head="💰 I SOLDI" step={3}>
-              Li vinci grattando e combattendo, e li spendi per curarti, comprare biglietti e attrezzi.<br/>
-              <span style={{color:C.orange}}>⚠ Il boss ti fa entrare solo se hai abbastanza soldi (€{BOSS_MIN_MONEY[BIOMES[0].boss]} nella prima zona). Altrimenti ti rimanda all'inizio della mappa.</span>
-            </Panel>
-            <Panel accent={C.green} head="💡 CONSIGLIO">
-              Passa il mouse su biglietti, oggetti e nodi: ti dicono cosa fanno prima di sceglierli.
-            </Panel>
-          </>)}
-
-          </div>
-          </div>
-
-          {/* ── NAV: indietro / avanti / inizia — fissa in fondo ── */}
-          <div style={{display:"flex", gap:"8px", flexShrink:0, marginTop:"10px"}}>
-            {/* INDIETRO occupa sempre il suo posto (invisibile a pagina 1):
-                così AVANTI non cambia larghezza né posizione. */}
-            <Btn onClick={() => setTutorialPage(p => Math.max(0, p - 1))}
-              style={{fontSize:"13px", padding:"12px", letterSpacing:"1px", flex:"0 0 auto",
-                visibility: tutorialPage > 0 ? "visible" : "hidden"}}>
-              ← INDIETRO
-            </Btn>
-            {tutorialPage < 2 ? (
-              <Btn variant="gold" onClick={() => setTutorialPage(p => p + 1)}
-                style={{fontSize:"14px", padding:"12px", letterSpacing:"2px", flex:1}}>
-                AVANTI →
-              </Btn>
-            ) : (
-              <Btn variant="gold" onClick={() => setScreen("introScratch")}
-                style={{fontSize:"14px", padding:"12px", letterSpacing:"2px", flex:1}}>
-                ░ HO CAPITO — INIZIAMO ░
-              </Btn>
-            )}
-          </div>
+      {/* ═══ TUTORIAL — Il quaderno di Nonno Carmelo, 4 capitoli (components/intro/TutorialDesk.jsx) ═══ */}
+      {screen === "tutorialNails" && (
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <TutorialDesk page={tutorialPage}
+            onPage={(p) => setTutorialPage(Math.max(0, Math.min(3, p)))}
+            onDone={() => setScreen("introScratch")} />
         </div>
+      )}
+
+      {/* ═══ IL PEDINARO — bottega dei gettoni (G-01 fase 4) ═══ */}
+      {screen === "pedinaro" && player?.tokens && pedinaroVisit && (
+        <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
+          <PedinaroDesk visit={pedinaroVisit} line={pedinaroLine} tokens={player.tokens}
+            money={player.money} tickets={player.scratchCards.length}
+            onBuy={handlePedinaroBuy} onGift={handlePedinaroGift}
+            onBarterToken={handlePedinaroBarterToken} onBarterTickets={handlePedinaroBarterTickets}
+            onLeave={() => { setPedinaroVisit(null); setScreen("map"); }} />
         </div>
-        );
-      })()}
+      )}
 
       {/* ═══ INTRO SCRATCH (scratch 2 starting cards, pocket 1 prize) ═══ */}
       {screen === "introScratch" && player && wideShell && !scratchingCard && (
@@ -1941,6 +2085,11 @@ export default function Grattini() {
             onSelectNode={selectNode}
             currentBiome={currentBiome}
             playerFortuna={effectiveFortune || player.fortune || 0}
+            tokens={player.tokens}
+            onEquipToken={handleEquipToken}
+            onDiscardToken={handleDiscardToken}
+            mirror={activeTokenVisual?.map === "mirror"}
+            tokenPowers={tokenPowers}
           />
           ) : (
           <MapView
@@ -1951,6 +2100,7 @@ export default function Grattini() {
             onSelectNode={selectNode}
             currentBiome={currentBiome}
             playerFortuna={effectiveFortune || player.fortune || 0}
+            tokens={player.tokens}
           />
           )}
           </Suspense>
@@ -2122,6 +2272,8 @@ export default function Grattini() {
         <div style={{flex:1, minHeight:0, width:"100%", maxWidth: wideShell ? "none" : W.content, display:"flex", flexDirection:"column", overflow:"hidden"}}>
           <Suspense fallback={<LazyFallback />}>
           <CombatView
+            key={combatRunId /* Gettone VHS: riavvolgere rimonta il combattimento da capo */}
+            tokenCombat={player.tokens ? { firstHitShield: firstHitShield(player.tokens), stealMult: tokenTheftMult } : undefined}
             table={wideShell}
             onEquipGrattatore={handleRailEquipGrattatore}
             enemy={combatEnemy}
@@ -2130,13 +2282,6 @@ export default function Grattini() {
             onCellScratch={handleCombatCellScratch}
             onGrattatoreConsumed={consumeGrattatore}
             onCombo={() => { unlockAchievement("combo_master"); setGameStats(s => ({...s, combosFired: (s.combosFired || 0) + 1})); }}
-            onVariantRevealed={(variantId) => {
-              if (!vintageCollected.includes(variantId)) {
-                collectVintage(variantId);
-                addLog(`🎨 Nuova variante vintage scoperta: ${variantId}!`, C.magenta);
-                if (vintageCollected.length + 1 >= 5) unlockAchievement("vintage_collector");
-              }
-            }}
             onNailHeal={(count) => updatePlayer(p => ({ ...p, nails: healDamagedNails(p.nails, count) }))}
             onNailDamage={(count) => {
               updatePlayer(p => {
@@ -3264,7 +3409,9 @@ export default function Grattini() {
                 <div style={{position:"absolute", inset:0, borderRadius:"50%", background:`radial-gradient(circle,${accent}44 0%,${accent}16 50%,transparent 70%)`, animation:"itemGlowRing 2.2s ease-in-out infinite"}}/>
                 <div style={{position:"absolute", inset:"18%", borderRadius:"50%", border:`1px solid ${accent}44`, animation:"itemGlowRing 2.2s ease-in-out infinite 0.7s"}}/>
                 <div style={{fontSize:"50px", position:"relative", zIndex:1, filter:`drop-shadow(0 0 14px ${accent})`, animation:isDanger?ANIM.pulseActive:"none"}}>
-                  <Asset id={itemFoundModal.assetId || assetIdByName(itemFoundModal.name)} emoji={em} size={64} />
+                  {itemFoundModal.tokenId
+                    ? <Pedina id={itemFoundModal.tokenId} size={64} />
+                    : <Asset id={itemFoundModal.assetId || assetIdByName(itemFoundModal.name)} emoji={em} size={64} />}
                 </div>
               </div>
 
@@ -3532,6 +3679,37 @@ export default function Grattini() {
         />
       )}
 
+      {/* ═══ DEBUG GETTONI — catalogo grafico (solo sviluppo / ?debug) ═══ */}
+      {tokenDebugEnabled && !tokenDebugOpen && !tokenPreview && (
+        <button type="button" onClick={() => setTokenDebugOpen(true)} style={{
+          position:"fixed", left:8, bottom:8, zIndex:99996, fontFamily:FONT, fontSize:"10px", letterSpacing:"1px",
+          padding:"4px 8px", border:"none", cursor:"pointer", background:"#e07aff", color:"#1e0830", boxShadow:"2px 2px 0 #000",
+        }}>DEBUG GETTONI</button>
+      )}
+      {tokenDebugOpen && (
+        <TokenDebug reducedMotion={reducedMotion}
+          onClose={() => setTokenDebugOpen(false)}
+          onPreview={(id) => { setTokenPreview(id); setTokenDebugOpen(false); }}
+          canGive={!!player?.tokens && screen !== "title"}
+          onGive={(id) => grantToken(id, { source: "Debug" })} />
+      )}
+      {tokenPreview && (
+        <TokenPreviewBar id={tokenPreview} onStop={() => setTokenPreview(null)}
+          onCatalog={() => { setTokenPreview(null); setTokenDebugOpen(true); }} />
+      )}
+
+      {/* ═══ COMPENSAZIONE DEL BOSS — scegli un gettone tra due (G-01) ═══ */}
+      {tokenChoice && !pendingToken && (
+        <TokenChoiceModal ids={tokenChoice}
+          onPick={(id) => { setTokenChoice(null); grantToken(id, { source: "Lasciato dal boss" }); }} />
+      )}
+
+      {/* ═══ CUSTODIA GETTONI PIENA — scelta obbligatoria (G-01) ═══ */}
+      {pendingToken && player?.tokens && (
+        <TokenPouchModal tokens={player.tokens} newId={pendingToken.id}
+          canEquip={canSwapToken(player.tokens)} onResolve={resolvePendingToken} />
+      )}
+
       {/* ═══ SMOKE EFFECT OVERLAY ═══ */}
       {showSmokeEffect && (
         <div style={{
@@ -3766,155 +3944,15 @@ export default function Grattini() {
         </div>
       )}
 
-      {/* ═══ VINTAGE COLLEZIONABILI (Sprint 5) ═══ */}
-      {showVintage && (
-        <div style={{
-          position:"fixed", inset:0, background:"rgba(0,0,0,0.94)", zIndex:99000,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontFamily:FONT, padding:"16px",
-        }} onClick={() => setShowVintage(false)}>
-          <div style={{
-            background:"#08080f", border:"2px solid #ffaa88",
-            maxWidth:"640px", width:"96vw", maxHeight:"92vh", overflowY:"auto",
-            padding:"18px 20px 16px",
-            boxShadow:"0 0 40px #ffaa8844, inset 0 0 40px #ffaa8811",
-          }} onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{color:"#ffaa88", fontSize:"18px", fontWeight:"bold", letterSpacing:"4px", textAlign:"center", marginBottom:"2px", textShadow:"0 0 12px #ffaa8888"}}>
-              🎨 VINTAGE COLLEZIONABILI
-            </div>
-            <div style={{color:C.dim, fontSize:"10px", textAlign:"center", letterSpacing:"1px", marginBottom:"4px"}}>
-              Varianti ULTRA-rare delle carte combat
-            </div>
-            {/* Progress bar */}
-            <div style={{margin:"8px auto 18px", maxWidth:"360px"}}>
-              <div style={{display:"flex", justifyContent:"space-between", fontSize:"10px", color:"#ffaa88", marginBottom:"3px", letterSpacing:"1px"}}>
-                <span>COLLEZIONE</span>
-                <span>{vintageCollected.length} / 5</span>
-              </div>
-              <div style={{height:"6px", background:"#1a1a22", border:"1px solid #2a2a3a", position:"relative"}}>
-                <div style={{
-                  height:"100%", width:`${(vintageCollected.length/5)*100}%`,
-                  background:"linear-gradient(90deg, #ffaa88, #ffd700)",
-                  boxShadow:"0 0 8px #ffaa88aa",
-                  transition:"width 0.4s",
-                }} />
-              </div>
-            </div>
-            {/* Grid cards — 2 colonne su mobile, 3 su desktop, con preview stile carta combat */}
-            <div style={{
-              display:"grid",
-              gridTemplateColumns:"repeat(auto-fit, minmax(170px, 1fr))",
-              gap:"12px", marginBottom:"16px",
-            }}>
-              {Object.entries(CARD_VARIANTS).map(([id, v]) => {
-                const known = vintageCollected.includes(id);
-                const rarityPct = (v.chance * 100).toFixed(1);
-                return (
-                  <div key={id} style={{
-                    background: known ? "#0d0d14" : "#0a0a10",
-                    border: `2px solid ${known ? v.color : "#252538"}`,
-                    padding:"0", position:"relative",
-                    overflow:"hidden",
-                    boxShadow: known ? v.glow : "none",
-                    opacity: known ? 1 : 0.72,
-                    display:"flex", flexDirection:"column",
-                  }}>
-                    {/* Preview — mini "carta combat" stilizzata */}
-                    <div style={{
-                      height:"92px", position:"relative",
-                      background: known
-                        ? (id === "ORO" ? "#2a1f00"
-                          : id === "BN" ? "#1a1a1a"
-                          : id === "STRAPPATO" ? "#1a1208"
-                          : id === "FOIL" ? "#0a1428"
-                          : id === "MULTI" ? "#1f0a1a"
-                          : "#0a0a12")
-                        : "#060608",
-                      borderBottom: `1px solid ${known ? v.color+"66" : "#1a1a28"}`,
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      filter: known ? (id === "BN" ? "grayscale(100%) contrast(1.2)" : id === "STRAPPATO" ? "saturate(0.55) brightness(0.82)" : "none") : "grayscale(100%) brightness(0.4)",
-                      overflow:"hidden",
-                    }}>
-                      {/* Shimmer per foil/oro/multi */}
-                      {known && (id === "FOIL" || id === "ORO" || id === "MULTI") && (
-                        <div style={{
-                          position:"absolute", inset:0, pointerEvents:"none",
-                          background:`linear-gradient(110deg, transparent 30%, ${v.color}55 48%, ${v.color}aa 50%, ${v.color}55 52%, transparent 70%)`,
-                          backgroundSize:"200% 100%",
-                          animation:"variantShimmer 2.4s linear infinite",
-                          mixBlendMode:"screen",
-                        }} />
-                      )}
-                      {/* Angolo strappato */}
-                      {known && id === "STRAPPATO" && (
-                        <div style={{position:"absolute", top:0, right:0, width:0, height:0,
-                          borderTop:"22px solid #1a1208", borderLeft:"22px solid transparent", zIndex:2}} />
-                      )}
-                      {/* Emoji centrale */}
-                      <div style={{
-                        fontSize:"36px", position:"relative", zIndex:2,
-                        color: known ? v.color : "#2a2a3a",
-                        textShadow: known ? `0 0 14px ${v.color}` : "none",
-                      }}>
-                        {known ? "🃏" : "❓"}
-                      </div>
-                      {/* Sparkle */}
-                      {known && (id === "ORO" || id === "FOIL") && (
-                        <div style={{
-                          position:"absolute", top:8, right:10, fontSize:"14px",
-                          color: v.color, zIndex:3,
-                          animation:"variantSparkle 1.6s ease-in-out infinite",
-                          textShadow:`0 0 8px ${v.color}`,
-                        }}>✦</div>
-                      )}
-                    </div>
-                    {/* Badge label — grosso sotto la preview */}
-                    <div style={{
-                      background: known ? v.color : "#1a1a28",
-                      color: known ? "#000" : "#3a3a52",
-                      padding:"4px 6px", fontSize:"11px", fontWeight:"bold",
-                      letterSpacing:"2px", textAlign:"center",
-                      textShadow: known && id === "ORO" ? "0 0 4px #fff8" : "none",
-                    }}>
-                      ★ {known ? v.label : "???"} ★
-                    </div>
-                    {/* Body: desc + stats */}
-                    <div style={{padding:"8px 8px 10px", flex:1, display:"flex", flexDirection:"column", gap:"6px"}}>
-                      <div style={{
-                        color: known ? v.color : "#2a2a4a",
-                        fontSize:"10px", lineHeight:"1.35", minHeight:"28px",
-                      }}>
-                        {known ? v.desc : "Scopri questa variante gratt­ando una carta in combat."}
-                      </div>
-                      <div style={{
-                        display:"flex", justifyContent:"space-between",
-                        fontSize:"10px", color:C.dim,
-                        borderTop:`1px solid ${known ? v.color+"33" : "#1a1a28"}`,
-                        paddingTop:"5px", letterSpacing:"0.5px",
-                      }}>
-                        <span>VAL <span style={{color: known ? (v.valueMult >= 1 ? C.green : C.red) : C.dim, fontWeight:"bold"}}>
-                          ×{known ? v.valueMult.toFixed(2) : "?"}
-                        </span></span>
-                        <span>DROP <span style={{color: known ? v.color : C.dim, fontWeight:"bold"}}>
-                          {known ? rarityPct+"%" : "?"}
-                        </span></span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{color:"#ffaa88", fontSize:"10px", textAlign:"center", marginBottom:"10px", letterSpacing:"1px"}}>
-              ✦ Collezionale tutte e 5 per "Collezionista Vintage" ✦
-            </div>
-            <div style={{textAlign:"center"}}>
-              <Btn onClick={() => setShowVintage(false)} style={{borderColor:"#ffaa88", color:"#ffaa88", fontSize:"11px"}}>
-                Chiudi
-              </Btn>
-            </div>
-          </div>
-        </div>
+      {/* ═══ COLLEZIONE PEDINE (G-01) — sostituisce i Vintage nella home ═══ */}
+      {showPedine && <TokenCollection discovered={discoveredTokens} onClose={() => setShowPedine(false)} />}
+      {showResetProgress && (
+        <ResetProgress onReset={resetMeta} onClose={() => setShowResetProgress(false)} counts={{
+          trophies: `${Object.keys(achievements).length} sbloccati`,
+          relics: `${discoveredRelics.length} scoperte`,
+          tokens: `${discoveredTokens.length} scoperte`,
+          stats: `${getStored(STORAGE_KEYS.alltime, {}).totalRuns || 0} run`,
+        }} />
       )}
 
       {/* ═══ ACHIEVEMENT TOAST ═══ */}

@@ -5,7 +5,7 @@ export const NODE_ICONS = {
   boss:"👹", evento:"❓", start:"🚩", stregone:"🧙",
   poliziotto:"🚔", anziana:"👵", sacerdote:"⛪", bambino:"👦",
   streamer:"📱", macellaio:"🔪",
-  maestroTe:"🍵", guantaio:"🧤",
+  maestroTe:"🍵", guantaio:"🧤", pedinaro:"🪙",
 };
 
 // Pesi ribilanciati: il combattimento (ladro/miniboss) è ora il tipo di
@@ -43,4 +43,5 @@ export const NODE_TOOLTIPS = {
   macellaio:   "🔪 Il Chirurgo Macellaio — impianti d'avanguardia. 25% di complicazioni.",
   maestroTe:   "🍵 Il Maestro del Tè — tè speciali che curano e potenziano. Solo nel Quartiere Cinese.",
   guantaio:    "🧤 Il Guantaio — vende guanti rari, incluso il GUANTO DA BOSS (protegge dal prossimo combattimento).",
+  pedinaro:    "🪙 Il Pedinaro — vende e baratta gettoni: la pedina che cammina per te. Uno per quartiere.",
 };

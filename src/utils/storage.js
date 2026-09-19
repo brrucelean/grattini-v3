@@ -9,7 +9,8 @@ export const STORAGE_KEYS = {
   cedola:            'grattini_cedola',
   relicsDiscovered:  'grattini_relics_discovered',
   relicsEnabled:     'grattini_relics_enabled',
-  vintage:           'grattini_vintage',
+  vintageLegacy:     'grattini_vintage', // meccanica rimossa: solo per cancellare i vecchi dati
+  tokensDiscovered:  'grattini_tokens_discovered', // G-01: catalogo gettoni scoperti
   alltime:           'grattini_alltime',
   totalScratches:    'grattini_totalScratches',
 };

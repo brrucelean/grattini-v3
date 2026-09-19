@@ -1,4 +1,5 @@
 import { prefersReducedMotion } from "./utils/motion.js";
+import { emitFx } from "./utils/fx.js";
 
 // ─── AUDIO ENGINE ────────────────────────────────────────────
 export const AudioEngine = (() => {
@@ -145,6 +146,7 @@ export const AudioEngine = (() => {
       } catch(e) {}
     },
     win: () => {
+      emitFx("powerup", 0.6); // lente liquida e aura (utils/fx.js)
       [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,0.24,"triangle",0.058), i*105));
     },
     lose: () => {
@@ -220,6 +222,7 @@ export const AudioEngine = (() => {
       playTone(520 + reel*130, .045, "square", .025, .018);
     },
     slotResult: (kind="lose") => {
+      if (kind === "jackpot" || kind === "superjackpot") emitFx("powerup", kind === "superjackpot" ? 1.3 : 1);
       if (kind === "superjackpot") {
         [659,784,988,1318].forEach((f,i) => playTone(f,.22,"triangle",.062,i*.075));
         playNoise({duration:.22, volume:.035, frequency:2600, startTime:.08});
@@ -251,6 +254,17 @@ export const AudioEngine = (() => {
       playTone(880, .055, "triangle", .055);
       playTone(1320, .09, "sine", .04, .055);
     },
+    // Gettone inserito nella slot: tintinnio d'ottone, scivolata nella
+    // fessura, fermo della camma. Firma "Oggetto" (vedi AUDIO-DESIGN-SYSTEM).
+    tokenInsert: () => {
+      emitFx("powerup", 0.35);
+      if (!mayPlay("token", 180)) return;
+      playTone(1480, .05, "triangle", .04);
+      playTone(2220, .07, "sine", .026, .018);
+      playNoise({duration:.09, volume:.02, frequency:3200, q:.8, startTime:.05});
+      playTone(240, .07, "square", .035, .15);
+      playTone(560, .035, "triangle", .022, .17);
+    },
     crtGlitch: () => {
       if (!mayPlay("crt", 5000)) return;
       playNoise({duration:.18, volume:.055, frequency:1550, q:.7});
@@ -273,11 +287,13 @@ export const AudioEngine = (() => {
     },
     // ─── SFX COMBATTIMENTO ─────────────────────────────────────
     heal: () => {
+      emitFx("powerup", 0.5);
       // Cura: chime caldo ascendente + sparkle — sensazione positiva
       [523, 659, 880].forEach((f, i) => playHarp(f, 0.06, i * 0.07));
       playTone(1760, 0.18, "sine", 0.05, 0.14);
     },
     hitEnemy: () => {
+      emitFx("impact", 0.55);
       // Colpo inflitto: impatto secco "thud" + crack corto (diverso dal dolore player)
       playTone(180, 0.07, "square", 0.16);
       playTone(95, 0.13, "sawtooth", 0.13, 0.02);
@@ -294,18 +310,21 @@ export const AudioEngine = (() => {
       } catch {}
     },
     perfectHit: () => {
+      emitFx("impact", 1);
       // Colpo PERFETTO: doppio ding brillante + shimmer
       playTone(1320, 0.08, "triangle", 0.12);
       playTone(1980, 0.14, "triangle", 0.09, 0.06);
       playHarp(2637, 0.06, 0.02);
     },
     parry: () => {
+      emitFx("impact", 0.45);
       // Parata riuscita: "cling" metallico acuto e corto
       playTone(2400, 0.05, "square", 0.10);
       playTone(3300, 0.10, "triangle", 0.07, 0.03);
       playTone(1600, 0.06, "square", 0.05, 0.01);
     },
     nailCrack: () => {
+      emitFx("impact", 0.9);
       // Crack secco + eco quando un'unghia si rompe
       playTone(80, 0.15, "sawtooth", 0.20);
       playTone(60, 0.25, "square", 0.12, 0.08);
@@ -319,11 +338,13 @@ export const AudioEngine = (() => {
       playTone(130, 1.5, "triangle", 0.12, notes.length * 0.15);
     },
     bossEntrance: () => {
+      emitFx("impact", 1.3);
       // Chord drammatico — minore, pesante
       [130, 156, 196, 262].forEach((f, i) => playTone(f, 0.8, "sawtooth", 0.10, i * 0.08));
       playTone(65, 1.2, "square", 0.08, 0.3); // sub bass
     },
     achievementJingle: () => {
+      emitFx("powerup", 0.7);
       // 4 note ascendenti brillanti
       [523, 659, 784, 1047].forEach((f, i) => playHarp(f, 0.10, i * 0.12));
       playTone(1047, 0.4, "triangle", 0.06, 0.5); // sustain finale
@@ -344,6 +365,7 @@ export const AudioEngine = (() => {
       } catch {}
     },
     painScream: () => {
+      emitFx("impact", 0.8);
       if (masterVolume === 0) return;
       try {
         const ac = getCtx();

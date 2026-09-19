@@ -6,6 +6,9 @@ import { rng, roll, pick } from "../utils/random.js";
 import { generateCard } from "../utils/card.js";
 import { pickNewRelic } from "../utils/hasRelic.js";
 import { AudioEngine } from "../audio.js";
+import { TOKEN_RELEASE } from "../data/tokens.js";
+import { randomDrop } from "../utils/tokens.js";
+import { surgeonPrice } from "../utils/shop.js";
 
 // Toglie UNA copia dell'oggetto: il Cappello si consuma uno alla volta
 const withoutOne = (items, itemId) => {
@@ -27,7 +30,8 @@ export function useEventHandlers({
   updatePlayer, addLog, unlockAchievement, showItemFound, discoverRelic,
   setScreen, setCombatEnemy, setGameStats, setCellaProgress,
   setItemFoundModal, setSmokeChoiceModal,
-  setScratchingCard, setReturnScreen,
+  setScratchingCard, setReturnScreen, grantToken,
+  tokenBlocksNegative, tokenTheftMult = 1,
 }) {
   const handleEventChoice = (action) => {
     // Handle streamer live card selection (action = "streamerLive_N")
@@ -80,6 +84,12 @@ export function useEventHandlers({
         }
         if (roll(0.5)) {
           addLog("Sei scappato!", C.green);
+          setScreen("map");
+        } else if (tokenBlocksNegative?.("furto")) {
+          addLog("Il ladro ti afferra... ma il Santino ti protegge.", C.green);
+          setScreen("map");
+        } else if (tokenTheftMult < 1 && roll(1 - tokenTheftMult)) {
+          addLog("🪨 Il ladro ti afferra, ma il Sassolino in tasca pesa: gli scivola via tutto.", C.green);
           setScreen("map");
         } else {
           addLog("Non sei riuscito a scappare! Il ladro ti ruba un oggetto!", C.red);
@@ -199,12 +209,13 @@ export function useEventHandlers({
         // Costo e slot da CHIRURGO_OSCURO_IMPLANTS (prima scritti a mano: la
         // Plastica costava ancora €10 per 2 slot invece di €6 per 3)
         const impl = CHIRURGO_OSCURO_IMPLANTS.find(x => x.id === action.replace("implant_", ""));
-        if (!impl || player.money < impl.cost) { setScreen("map"); break; }
+        const implCost = impl ? surgeonPrice(player, impl.cost) : 0; // Dente d'Oro −20%
+        if (!impl || player.money < implCost) { setScreen("map"); break; }
         updatePlayer(p => {
           const nails = [...p.nails];
           const worst = findWorstNailIdx(nails);
           nails[worst] = {...nails[worst], state:"sana", implant: impl.id, implantUses: impl.uses, scratchCount:0};
-          return {...p, money: p.money - impl.cost, nails};
+          return {...p, money: p.money - implCost, nails};
         });
         setGameStats(s => { const n = (s._chirurgoUses || 0) + 1; if (n >= 3) unlockAchievement("surgeon"); return {...s, _chirurgoUses: n}; });
         addLog(`${impl.emoji} ${impl.name} impiantata! ${impl.desc}`, impl.id === "oro" ? C.gold : C.cyan);
@@ -263,10 +274,15 @@ export function useEventHandlers({
         break;
       }
       case "openBag": {
+        // G-01: 20% delle volte dentro c'è un gettone (solo quelli già in gioco)
+        const tokenDrop = grantToken && player.tokens ? randomDrop(player.tokens, { pool: TOKEN_RELEASE }) : null;
         if (roll(0.15)) {
           addLog("ERA UNA TRAPPOLA! Un ladro esce dallo zaino!", C.red);
           setCombatEnemy({ name: "Ladro Nascosto", isBoss: false });
           setScreen("combat");
+        } else if (tokenDrop && roll(0.2)) {
+          grantToken(tokenDrop, { source: "Trovato nello zaino" });
+          setScreen("map");
         } else if (roll(0.4)) {
           const gratId = pick(["bottone","bullone","unghiaFinta"]);
           const def = GRATTATORE_DEFS[gratId];
@@ -494,6 +510,7 @@ export function useEventHandlers({
         setScreen("map"); break;
       }
       case "pagaMulta": {
+        if (tokenBlocksNegative?.("multa")) { setScreen("map"); break; }
         // Sprint 5: multa doppia se beccato col Giornaletto — e sequestro!
         const busted = !!player.giornalettoRead;
         const amount = busted ? 40 : 20;
@@ -509,6 +526,7 @@ export function useEventHandlers({
         setScreen("map"); break;
       }
       case "multaNail": {
+        if (tokenBlocksNegative?.("multa")) { setScreen("map"); break; }
         updatePlayer(p => {
           const nails = [...p.nails];
           const idx = nails.findIndex(n => n.state !== "morta");
@@ -552,6 +570,8 @@ export function useEventHandlers({
           }));
           addLog("👵 Le sue dita fredde... guariscono! Tutte le unghie migliorano di 1 stato.", C.green);
           showItemFound("👵", "Benedizione dell'Anziana", "Tutte le unghie risalgono di 1 stato grazie alla sua magia.", "Guarigione");
+        } else if (tokenBlocksNegative?.("maledizione")) {
+          addLog("👵 \"Ah... la vedo la maledizione su di te.\" Ma scivola sul Santino e cade a terra.", C.green);
         } else {
           updatePlayer(p => ({
             ...p,
@@ -802,7 +822,8 @@ export function useEventHandlers({
       case "macellaio_marcione":
       case "macellaio_baddie": {
         const implId = action.replace("macellaio_", "");
-        const impl = MACELLAIO_IMPLANTS.find(x => x.id === implId);
+        const impl0 = MACELLAIO_IMPLANTS.find(x => x.id === implId);
+        const impl = impl0 && {...impl0, cost: surgeonPrice(player, impl0.cost)}; // Dente d'Oro −20%
         if (!impl || player.money < impl.cost) { setScreen("map"); break; }
         if (roll(0.25)) {
           updatePlayer(p => {

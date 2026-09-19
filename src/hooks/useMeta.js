@@ -1,10 +1,19 @@
 import { useState, useCallback } from "react";
 import { ACHIEVEMENTS } from "../data/achievements.js";
 import { AudioEngine } from "../audio.js";
-import { STORAGE_KEYS, getStored, setStored } from "../utils/storage.js";
+import { STORAGE_KEYS, getStored, setStored, removeStored } from "../utils/storage.js";
 
 export function useMeta() {
-  const [achievements, setAchievements] = useState(() => getStored(STORAGE_KEYS.achievements, {}));
+  // Solo trofei che esistono ancora: il "Collezionista Vintage" è stato tolto
+  // insieme alla meccanica dei vintage, e falserebbe il conteggio (18/17).
+  const [achievements, setAchievements] = useState(() => {
+    const stored = getStored(STORAGE_KEYS.achievements, {});
+    const known = new Set(ACHIEVEMENTS.map(a => a.id));
+    const clean = Object.fromEntries(Object.entries(stored).filter(([id]) => known.has(id)));
+    if (Object.keys(clean).length !== Object.keys(stored).length) setStored(STORAGE_KEYS.achievements, clean);
+    removeStored(STORAGE_KEYS.vintageLegacy); // vecchia collezione vintage
+    return clean;
+  });
   const [activeCedola, setActiveCedola] = useState(() => getStored(STORAGE_KEYS.cedola, null));
   const [pendingCedoleOffer, setPendingCedoleOffer] = useState(null);
   const [achievementToast, setAchievementToast] = useState(null);
@@ -12,15 +21,15 @@ export function useMeta() {
   const [showReliquie, setShowReliquie] = useState(false);
   const [discoveredRelics, setDiscoveredRelics] = useState(() => getStored(STORAGE_KEYS.relicsDiscovered, []));
   const [enabledRelics, setEnabledRelics] = useState(() => getStored(STORAGE_KEYS.relicsEnabled, []));
-  // Sprint 5: Vintage Collezionabili — varianti carte combat scoperte (meta, persiste tra run)
-  const [vintageCollected, setVintageCollected] = useState(() => getStored(STORAGE_KEYS.vintage, []));
   const [showAllTimeStats, setShowAllTimeStats] = useState(false);
+  // G-01: catalogo dei gettoni visti almeno una volta (solo vetrina, nessun effetto)
+  const [discoveredTokens, setDiscoveredTokens] = useState(() => getStored(STORAGE_KEYS.tokensDiscovered, []));
 
-  const collectVintage = useCallback((variantId) => {
-    setVintageCollected(prev => {
-      if (prev.includes(variantId)) return prev;
-      const next = [...prev, variantId];
-      setStored(STORAGE_KEYS.vintage, next);
+  const discoverToken = useCallback((tokenId) => {
+    setDiscoveredTokens(prev => {
+      if (prev.includes(tokenId)) return prev;
+      const next = [...prev, tokenId];
+      setStored(STORAGE_KEYS.tokensDiscovered, next);
       return next;
     });
   }, []);
@@ -60,7 +69,23 @@ export function useMeta() {
     setStored(STORAGE_KEYS.alltime, updated);
   }, []);
 
+  // Impostazioni → azzera progressi. parts: { trophies, relics, tokens, stats }.
+  // Solo dati locali della metaprogressione; la run in corso non si tocca.
+  const resetMeta = useCallback((parts) => {
+    if (parts.trophies) {
+      setAchievements({}); removeStored(STORAGE_KEYS.achievements);
+      removeStored(STORAGE_KEYS.totalScratches); // contatore dei trofei "gratta N volte"
+    }
+    if (parts.relics) {
+      setDiscoveredRelics([]); removeStored(STORAGE_KEYS.relicsDiscovered);
+      setEnabledRelics([]); removeStored(STORAGE_KEYS.relicsEnabled);
+    }
+    if (parts.tokens) { setDiscoveredTokens([]); removeStored(STORAGE_KEYS.tokensDiscovered); }
+    if (parts.stats) removeStored(STORAGE_KEYS.alltime);
+  }, []);
+
   return {
+    resetMeta,
     achievements, setAchievements,
     activeCedola, setActiveCedola,
     pendingCedoleOffer, setPendingCedoleOffer,
@@ -72,6 +97,6 @@ export function useMeta() {
     showAllTimeStats, setShowAllTimeStats,
     unlockAchievement,
     updateAllTimeStats,
-    vintageCollected, collectVintage,
+    discoveredTokens, discoverToken,
   };
 }

@@ -1,13 +1,14 @@
 import { ACHIEVEMENTS } from "../data/achievements.js";
 import { CEDOLE } from "../data/biomes.js";
 import { RELIC_DEFS } from "../data/items.js";
+import { TOKENS } from "../data/tokens.js";
 import { C, FONT, FONT_TITLE } from "../data/theme.js";
 
 const META_CARDS = [
   { key:"trophies", mark:"I", label:"TROFEI", accent:C.gold },
   { key:"relics", mark:"R", label:"RELIQUIE", accent:"#c060ff" },
-  { key:"vintage", mark:"V", label:"VINTAGE", accent:"#e58a68" },
   { key:"stats", mark:"%", label:"STATS", accent:C.cyan },
+  { key:"tokens", mark:"P", label:"PEDINE", accent:"#e58a68" },
 ];
 
 export function TitleScreen({
@@ -16,24 +17,25 @@ export function TitleScreen({
   onRemoveCedola,
   achievements,
   discoveredRelics,
-  vintageCollected,
+  discoveredTokens,
   onOpenTrophies,
   onOpenReliquie,
-  onOpenVintage,
   onOpenStats,
+  onOpenPedine,
+  onOpenSettings,
 }) {
   const cedola = CEDOLE.find(c => c.id === activeCedola);
   const counts = {
     trophies: [Object.keys(achievements || {}).length, ACHIEVEMENTS.length],
     relics: [(discoveredRelics || []).length, Object.keys(RELIC_DEFS).length],
-    vintage: [(vintageCollected || []).length, 5],
     stats: null,
+    tokens: [(discoveredTokens || []).length, Object.keys(TOKENS).length],
   };
   const actions = {
     trophies:onOpenTrophies,
     relics:onOpenReliquie,
-    vintage:onOpenVintage,
     stats:onOpenStats,
+    tokens:onOpenPedine,
   };
 
   return (
@@ -115,6 +117,9 @@ export function TitleScreen({
         .title-meta-label { display:block; margin-top:14px; font:16px/1 ${FONT_TITLE}; letter-spacing:2px; }
         .title-meter { display:block; height:6px; margin-top:8px; border:1px solid var(--accent); background:#050706; }
         .title-meter > span { display:block; height:100%; background:var(--accent); }
+        .title-settings { width:100%; padding:9px 12px; border:0; border-top:1px solid #35413d; background:#080b0a;
+          color:${C.dim}; font:11px ${FONT}; letter-spacing:2px; text-align:left; cursor:pointer; }
+        .title-settings:hover,.title-settings:focus-visible { color:var(--paper); background:#111816; outline:none; }
         .title-cedola { padding:10px 12px 12px; color:var(--paper); background:#17140a; border-top:2px dashed var(--gold); }
         .title-cedola-label { color:var(--gold); font-size:10px; letter-spacing:2px; }
         .title-cedola-name { margin:4px 0; font-size:14px; }
@@ -205,6 +210,7 @@ export function TitleScreen({
               );
             })}
           </div>
+          <button className="title-settings" onClick={onOpenSettings}>⚙ IMPOSTAZIONI · AZZERA PROGRESSI</button>
           {cedola && (
             <div className="title-cedola">
               <div className="title-cedola-label">CEDOLA ATTIVA</div>

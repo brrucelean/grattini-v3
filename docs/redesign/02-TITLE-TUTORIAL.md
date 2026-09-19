@@ -1,6 +1,6 @@
 # 02 — Titolo, onboarding e tutorial unghie
 
-Status: title checkpoint implemented; tutorial visual migration remains open.
+Status: titolo e tutorial migrati (2026-09-19).
 
 ## Stati
 
@@ -26,4 +26,14 @@ CTA sempre visibile, nessun contenuto sotto la piega, tutorial utilizzabile a to
 - verificati titolo e archivio a viewport reale desktop, 390×844 e 375×667;
 - verificato il passaggio `INIZIA LA RUN` → tutorial unghie;
 - build di produzione superata;
-- aperto: migrare le tre pagine tutorial nello stesso sistema prima di dichiarare completata la schermata 02.
+- fatto (2026-09-19): tutorial rifatto come **Il quaderno di Nonno Carmelo**
+  (`components/intro/TutorialDesk.jsx`), stesso sistema della scena al
+  bancone: 4 capitoli (Le dita · Il duello · La strada · La pedina), voce del
+  vecchio scritta a macchina, illustrazione con sprite veri a sinistra, regole
+  numerate a destra, navigazione fissa in basso, frecce ← → per sfogliare. Il
+  testo non cita il bancone: in quel momento il giocatore non è ancora lì.
+- fatto (2026-09-19): archivio della home = Trofei · Reliquie · Stats ·
+  **Pedine** (collezione dei gettoni scoperti, `TokenCollection.jsx`). I
+  Vintage sono stati rimossi del tutto (varianti delle carte in combattimento,
+  collezione e trofeo "Collezionista Vintage"); i vecchi dati si puliscono al
+  caricamento.

@@ -3,6 +3,7 @@ import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
 import { Asset } from "./Asset.jsx";
 import { LocandaDesk } from "./locanda/LocandaDesk.jsx";
+import { locandaRoom } from "../utils/tokens.js";
 
 // ─── RoomTile: card per singola stanza della locanda ──────────
 function RoomTile({ room, canAfford, onClick }) {
@@ -129,14 +130,20 @@ function RoomTile({ room, canAfford, onClick }) {
   );
 }
 
+const BASE_ROOMS = [
+  { name: "Per Terra", emoji: "🛏️", img: "room-perterra", cost: 0, heals: 0, risk: "pavimento", desc: "Dormi sul pavimento lurido. Recuperi metà stato unghie. 50% chance ladro ti sveglia!", isFloor: true, accent: "#6a6a7a" },
+  { name: "Bettola", emoji: "🍺", img: "room-bettola", cost: 6, heals: 1, risk: "ladri", desc: "Recuperi 1 unghia (anche morta). Rischio ladri!", accent: C.cyan },
+  { name: "Camera Media", emoji: "🛌", img: "room-cameramedia", cost: 22, heals: 2, risk: null, desc: "Recuperi 2 unghie (anche morte). Conta raschiature azzerate.", accent: C.magenta },
+  { name: "Suite", emoji: "🏨", img: "room-suite", cost: 110, heals: 5, risk: null, desc: "Recuperi TUTTE le unghie a Sana!", kawaii: false, accent: C.gold },
+  { name: "Manicure Kawaii", emoji: "💅", img: "room-kawaii", cost: 175, heals: 5, risk: null, desc: "✨ Tutte le unghie diventano KAWAII (x2 premio)!", kawaii: true, accent: C.pink },
+];
+
 export function LocandaView({ player, onRest, onLeave, table = false }) {
-  const rooms = [
-    { name: "Per Terra", emoji: "🛏️", img: "room-perterra", cost: 0, heals: 0, risk: "pavimento", desc: "Dormi sul pavimento lurido. Recuperi metà stato unghie. 50% chance ladro ti sveglia!", isFloor: true, accent: "#6a6a7a" },
-    { name: "Bettola", emoji: "🍺", img: "room-bettola", cost: 6, heals: 1, risk: "ladri", desc: "Recuperi 1 unghia (anche morta). Rischio ladri!", accent: C.cyan },
-    { name: "Camera Media", emoji: "🛌", img: "room-cameramedia", cost: 22, heals: 2, risk: null, desc: "Recuperi 2 unghie (anche morte). Conta raschiature azzerate.", accent: C.magenta },
-    { name: "Suite", emoji: "🏨", img: "room-suite", cost: 110, heals: 5, risk: null, desc: "Recuperi TUTTE le unghie a Sana!", kawaii: false, accent: C.gold },
-    { name: "Manicure Kawaii", emoji: "💅", img: "room-kawaii", cost: 175, heals: 5, risk: null, desc: "✨ Tutte le unghie diventano KAWAII (x2 premio)!", kawaii: true, accent: C.pink },
-  ];
+  // Il gettone cambia le stanze a pagamento (Moneta del Vicolo +€5, Debito,
+  // Umore −20% se soffri, Sassolino 1 unghia in meno): prezzo e cure mostrati
+  // sono quelli che handleRest applica, perché viaggiano dentro `room`.
+  const pain = player.nails.filter(n => !["sana", "kawaii"].includes(n.state)).length / player.nails.length;
+  const rooms = player.tokens ? BASE_ROOMS.map(r => locandaRoom(player.tokens, r, { pain })) : BASE_ROOMS;
 
   // Desktop: insegna + listino, stile della soglia.
   if (table) return <LocandaDesk rooms={rooms} player={player} onRest={onRest} onLeave={onLeave} />;

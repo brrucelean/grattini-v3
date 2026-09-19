@@ -8,7 +8,11 @@ Stato: `DA FARE` · `IN PROGETTAZIONE` · `IN SVILUPPO` · `FATTO`.
 
 ---
 
-## G-01 — Pedine collezionabili · **DA FARE · PRIORITÀ ALTA**
+## G-01 — Pedine collezionabili · **IN SVILUPPO · PRIORITÀ ALTA**
+
+> Design completo in [`G-01-MAP-TOKENS.md`](G-01-MAP-TOKENS.md) (approvato
+> 2026-09-19): 33 gettoni, Pedinaro, custodia da 3, piano in 7 fasi. Fatte le fasi 2–4 (logica, interfaccia, effetti verificati, Pedinaro); mancano regali NPC, sprite e bilanciamento. Le note
+> qui sotto restano come storico della richiesta.
 
 Richiesta del proprietario, 2026-09-18: "la cosa della pedina dobbiamo
 assolutamente bloccarla".

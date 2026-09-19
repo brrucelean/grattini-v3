@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect } from "react";
 import { C, FONT, FS, T } from "../data/theme.js";
 import { NODE_ICONS, NODE_TOOLTIPS } from "../data/map.js";
+import { isSecretOpen, secretThreshold as tokenSecretThreshold } from "../utils/tokens.js";
 import { Asset } from "./Asset.jsx";
 import { hasAsset } from "../assets/registry.js";
 import { BIOMES, BIOME_MODIFIERS, BOSS_SPRITE } from "../data/biomes.js";
@@ -22,7 +23,7 @@ const MAP_CHROME_H = 240;
 const MAP_W_MOBILE = 780;    // larghezza max su telefono
 const MAP_W_DESKTOP = 1180;  // su Mac a schermo intero i nodi non restano ammassati al centro
 const DANGER_TYPES = new Set(["ladro","spacciatore","miniboss","poliziotto"]);
-const SAFE_TYPES   = new Set(["locanda","tabaccaio","mendicante","sacerdote","chirurgo","maestroTe"]);
+const SAFE_TYPES   = new Set(["locanda","tabaccaio","mendicante","sacerdote","chirurgo","maestroTe","pedinaro"]);
 
 const LEGEND = [
   { col:"#ff4444", label:"PERICOLO" },
@@ -32,7 +33,7 @@ const LEGEND = [
   { col:"#ff6600", label:"ELITE"    },
 ];
 
-export function MapView({ map, currentRow, visitedNodes, onSelectNode, reachableNodes, currentBiome = 0, playerFortuna = 0 }) {
+export function MapView({ map, currentRow, visitedNodes, onSelectNode, reachableNodes, currentBiome = 0, playerFortuna = 0, tokens = null }) {
   const scrollRef = useRef(null);
   const { isMobile, vw, vh } = useIsMobile();
 
@@ -569,8 +570,10 @@ export function MapView({ map, currentRow, visitedNodes, onSelectNode, reachable
             const isBoss    = node.type === "boss";
             const isSecret  = !!node.secret;
             const isElite   = !!node.elite && !visited;
-            const secretThreshold = BIOME_MODIFIERS[currentBiome]?.secretFortuneThreshold ?? 2;
-            const secretUnlocked  = isSecret && playerFortuna >= secretThreshold;
+            // Soglia del bioma, poi gettone (Fiche Truccata, Telefono): utils/tokens.js
+            const baseSecret = BIOME_MODIFIERS[currentBiome]?.secretFortuneThreshold ?? 2;
+            const secretThreshold = tokens ? tokenSecretThreshold(tokens, baseSecret) : baseSecret;
+            const secretUnlocked  = isSecret && (tokens ? isSecretOpen(tokens, node, playerFortuna, baseSecret) : playerFortuna >= secretThreshold);
             const effectivelyHidden = isSecret && !secretUnlocked && !visited;
 
             const icon = effectivelyHidden ? "🔒" : isSecret ? "🔮" : NODE_ICONS[node.type] || "?";
