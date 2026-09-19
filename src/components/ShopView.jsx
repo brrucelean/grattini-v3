@@ -14,6 +14,7 @@ import { ticketArtCrop, TICKET_ART_ASPECT } from "../data/ticketLayout.js";
 import { VintageBadge } from "./Vintage.jsx";
 import { ANIM } from "../styles/animations.js";
 import { useIsMobile } from "../hooks/useIsMobile.js";
+import { ShopDesk } from "./shop/ShopDesk.jsx";
 
 // ─── SLOT MACHINE ────────────────────────────────────────────
 // 6 simboli su 3 rulli: 777 esce 1 volta su 216, un altro tris 5, una coppia 90.
@@ -275,7 +276,7 @@ function SectionHeader({ icon, label, count, accent = C.gold, subtitle, scrollHi
   );
 }
 
-export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeave, onScratch, onSlotResult, currentRow=0, currentBiome=0, wideDesk=false }) {
+export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeave, onScratch, onSlotResult, currentRow=0, currentBiome=0, wideDesk=false, desk=false }) {
   const punchline = useRef(TABACCAIO_LINES[Math.floor(rng() * TABACCAIO_LINES.length)]);
   const { isMobile: mobile } = useIsMobile(600);
 
@@ -396,6 +397,31 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
   // Prezzo mostrato = prezzo pagato (sconti e cedola Monopolio inclusi)
   const priceOfCard = (c) => cardPrice(player, currentBiome, c);
   const priceOfItem = (def) => itemPrice(player, currentBiome, def.cost);
+
+  // Desktop (≥1024): il bancone chiaro, tutto in vista (shop/ShopDesk.jsx).
+  if (desk) {
+    const tip = (c) => `${ticketGuide(c).how} · Max: €${c.maxPrize}${c.malus ? ` · ⚠ ${c.malus.desc}` : ""}`;
+    const shelf = (ids, defs, extra = {}) => ids.map(id => defs[id] ? { id, def: defs[id], price: priceOfItem(defs[id]), rarity: defs[id].rarity, ...extra } : null).filter(Boolean);
+    return (
+      <ShopDesk
+        player={player}
+        punchline={punchline.current}
+        cards={shopCards.map(c => ({ card: c, price: priceOfCard(c), rarity: cardRarity(c), tooltip: tip(c) }))}
+        vipCards={vipCards.map(c => ({ card: c, price: priceOfCard(c), rarity: "VIP", tooltip: tip(c) }))}
+        grattatori={shelf(allGrattatoriIds, GRATTATORE_DEFS).map(g => g.id === "portaChiavi" ? { ...g, rarity: "VIP" } : g)}
+        consumabili={shelf(allConsumabili, ITEM_DEFS)}
+        vipItems={vipItems.map(id => {
+          const def = ITEM_DEFS[id] || GRATTATORE_DEFS[id];
+          return def ? { id, def, price: priceOfItem(def), rarity: "VIP", isGrattatore: !ITEM_DEFS[id] } : null;
+        }).filter(Boolean)}
+        slot={{ reels: slotReels, spinning: slotSpinning, result: slotResult, cost: SLOT_SPIN_COST, prizes: SLOT_PRIZES,
+          canPay: player.money >= SLOT_SPIN_COST, onSpin: spinSlot }}
+        broker={{ offer: !player.brokerLoan && player.money < 30, debt: player.brokerLoan || 0, onAccept: () => onBuyItem("__brokerLoan__") }}
+        onBuyCard={onBuyCard} onBuyItem={onBuyItem} onBuyGrattatore={onBuyGrattatore}
+        onScratch={onScratch} onLeave={onLeave}
+      />
+    );
+  }
 
   return (
     <div style={{

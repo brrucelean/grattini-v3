@@ -8,6 +8,8 @@ import { Asset } from "./Asset.jsx";
 import { hasAsset } from "../assets/registry.js";
 import { Tooltip } from "./Tooltip.jsx";
 import { AudioEngine } from "../audio.js";
+import { useIsMobile } from "../hooks/useIsMobile.js";
+import { EventStage } from "./event/EventStage.jsx";
 
 // ─── NPC CATEGORIES ─────────────────────────────────────────────
 // Ogni tipo NPC ha categoria, icona e colore primario per UI
@@ -534,6 +536,26 @@ export function EventView({ node, player, onChoice }) {
     if (ch === " " || ch === "\n") return;
     AudioEngine.talkBlip((TALK_PITCH[node.type] || 220) + (ch.charCodeAt(0) % 8) * 15);
   }, [typedChars]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Desktop (>=1024px): stesso palco della soglia (event/EventStage.jsx).
+  // Stessi testi, scelte, condizioni e callback; cambia solo la presentazione.
+  const { vw, vh } = useIsMobile();
+  if (vw >= 1024) {
+    return (
+      <EventStage
+        node={node} ev={ev} cat={cat} bigArt={bigArt} blink={blink} vw={vw} vh={vh}
+        typedText={fullText.slice(0, typedChars)} typingDone={typingDone}
+        onSkip={() => { if (!typingDone) setTypedChars(fullText.length); }}
+        choices={ev.choices.map(ch => ({
+          ...ch,
+          isDisabled: ch.condition === false,
+          badge: actionMeta(ch.action, ch.label).badge,
+          cost: extractCost(ch.label),
+        }))}
+        onChoice={onChoice}
+      />
+    );
+  }
 
   const cb = cornerBrackets(accent, 13, -3, 2);
   const cbInner = cornerBrackets(pal[1], 8, -2, 1);

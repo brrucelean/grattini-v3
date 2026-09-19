@@ -47,6 +47,9 @@ import { RunBar } from "./components/shell/RunBar.jsx";
 import { NailRail } from "./components/shell/NailRail.jsx";
 import { LogColumn } from "./components/shell/LogColumn.jsx";
 import { TickerRow } from "./components/shell/TickerRow.jsx";
+import { Dossier, RightRail, TABLE_BG, MAT_STYLE, TableTopBar } from "./components/scratch/ScratchTable.jsx";
+import { NodeThreshold } from "./components/node/NodeThreshold.jsx";
+import { Backpack } from "./components/inventory/Backpack.jsx";
 import { TitleScreen } from "./components/TitleScreen.jsx";
 import { RunStatsRail, ScratchLogRail } from "./components/ScratchSideRails.jsx";
 // ScratchCell usato solo dentro ScratchCardView — non serve importarlo qui
@@ -137,6 +140,7 @@ export default function Grattini() {
     vintageCollected, collectVintage,
   } = useMeta();
   // ─── SPECIAL MINIGAME STATES ─────────────────────────────────
+  const [scratchGameHost, setScratchGameHost] = useState(null); // colonna "sul tavolo" della grattata desktop
   const [labirintoState, setLabirintoState] = useState(null); // {pos, revealed, prize, grid, done}
   const [showVintage, setShowVintage] = useState(false); // Sprint 5: modal collezione vintage
   const [combinaState, setCombinaState] = useState(null); // gratta & combina
@@ -579,7 +583,7 @@ export default function Grattini() {
       {scratchingCard && player && (
         <div style={{
           position:"fixed", inset:0, zIndex:9000,
-          background: bioPal.bg,
+          background: wideShell ? "#2a170c" : bioPal.bg,
           display:"flex", flexDirection:"column",
           overflow:"hidden",
         }}>
@@ -590,12 +594,15 @@ export default function Grattini() {
             paddingBottom: "10px",
             paddingLeft: "14px",
             paddingRight: "14px",
-            background:"#030308",
-            borderBottom:`2px solid ${scratchingCard.theme?.border || C.dim}`,
+            background: wideShell ? "#2a170c" : "#030308",
+            borderBottom: wideShell ? "2px solid #e9c46a" : `2px solid ${scratchingCard.theme?.border || C.dim}`,
             display:"flex", alignItems:"center", gap:"10px",
             animation:"scratchTopBarIn 0.22s ease-out both",
-            boxShadow:`0 2px 18px #00000088`,
+            boxShadow: wideShell ? "none" : `0 2px 18px #00000088`,
           }}>
+            {wideShell ? (
+              <TableTopBar card={scratchingCard} nails={player.nails} activeNail={player.activeNail} money={player.money} />
+            ) : (<>
             {/* Card info */}
             <div style={{flex:1, minWidth:0}}>
               <div style={{color:C.dim, fontSize:"10px", letterSpacing:"3px", fontFamily:FONT, marginBottom:"2px"}}>
@@ -662,15 +669,18 @@ export default function Grattini() {
             }}>
               €{fmtMoney(player.money)}
             </div>
+            </>)}
           </div>
 
-          {/* ── SCROLL AREA con la schedina ── */}
+          {/* ── SCROLL AREA con la schedina ── (desktop: niente scroll, tutto in vista) */}
           <div style={{
-            flex:1, overflowY:"auto", overflowX:"hidden",
+            flex:1, minHeight:0, overflowY: wideShell ? "hidden" : "auto", overflowX:"hidden",
             WebkitOverflowScrolling:"touch",
             display:"flex", justifyContent:"center",
-            padding:"10px 4px 32px",
-            backgroundImage:"repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
+            padding: wideShell ? "8px" : "10px 4px 32px",
+            // Desktop: il tavolo da grattata (bancone di legno) sotto tutto.
+            ...(wideShell ? { background: TABLE_BG } : {}),
+            backgroundImage: wideShell ? undefined : "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)",
             backgroundAttachment:"local",
           }}>
             {/* ── BANCO — su desktop largo la carta resta della sua dimensione
@@ -678,18 +688,23 @@ export default function Grattini() {
                  dal dossier della run e dal log dei colpi. Il tetto è W.content,
                  così su monitor enormi il banco non si sfilaccia. ── */}
             <div style={{
-              width:"100%", maxWidth: W.content, margin:"0 auto",
-              display:"flex", alignItems:"flex-start", justifyContent:"center",
+              width:"100%", maxWidth: wideShell ? "none" : W.content, margin:"0 auto",
+              display:"flex", alignItems: wideShell ? "stretch" : "flex-start", justifyContent:"center",
               gap: wideDesk ? "14px" : "0",
+              ...(wideShell ? { height:"100%", minHeight:0 } : {}),
             }}>
-            {wideDesk && (
+            {wideShell ? (
+              <Dossier biome={BIOMES[currentBiome]} player={player} gameStats={gameStats} />
+            ) : wideDesk && (
               <RunStatsRail biome={BIOMES[currentBiome]} palette={bioPal} player={player} gameStats={gameStats} onEquipGrattatore={handleRailEquipGrattatore} />
             )}
             {/* animation wrapper */}
-            <div style={{animation:"scratchCardSlideIn 0.28s ease-out both", flex:"1 1 auto", minWidth:0, display:"flex", justifyContent:"center", alignItems:"flex-start"}}>
+            <div style={{animation:"scratchCardSlideIn 0.28s ease-out both", flex:"1 1 auto", minWidth:0, display:"flex", justifyContent:"center", alignItems: wideShell ? "stretch" : "flex-start", ...(wideShell ? { minHeight:0, padding:"16px", ...MAT_STYLE } : {})}}>
               <Suspense fallback={<LazyFallback />}>
               <ScratchCardView
                 card={scratchingCard}
+                fit={wideShell}
+                gameHost={wideShell ? scratchGameHost : null}
                 nailState={getActiveNailState()}
                 nailImplant={player.nails[player.activeNail]?.implant || null}
                 grattaMania={player.grattaMania}
@@ -728,7 +743,9 @@ export default function Grattini() {
               />
               </Suspense>
             </div>
-            {wideDesk && log.length > 0 && (
+            {wideShell ? (
+              <RightRail player={player} onEquipGrattatore={handleRailEquipGrattatore} log={log} setGameHost={setScratchGameHost} />
+            ) : wideDesk && log.length > 0 && (
               <ScratchLogRail log={log} palette={bioPal} />
             )}
             </div>
@@ -743,12 +760,12 @@ export default function Grattini() {
 
       {/* ── HUD PERSISTENTE (tutte le screen tranne title e tutorial) ── */}
       {inRun && wideShell && (
-        <RunBar player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} hideInventoryButton={screen === "shop" && wideDesk} />
+        <RunBar player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} hideInventoryButton={screen === "shop" && wideDesk && !wideShell} />
       )}
       {inRun && wideShell && screen === "map" && <TickerRow currentBiome={currentBiome} />}
       {inRun && !wideShell && (
         <div style={{width:"100%", flexShrink:0, paddingTop:"6px"}}>
-          <HUD player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} currentBiome={currentBiome} hideInventoryButton={screen === "shop" && wideDesk} />
+          <HUD player={player} onOpenInventory={toggleInventoryPanel} inventoryOpen={showInventoryPanel} moneyBling={moneyBling} currentBiome={currentBiome} hideInventoryButton={screen === "shop" && wideDesk && !wideShell} />
         </div>
       )}
 
@@ -1465,6 +1482,22 @@ export default function Grattini() {
         const isBoss = currentNode.type === "boss";
         const isElite = !!currentNode.elite;
 
+        // Desktop: la soglia — carta del luogo + cosa fare prima di entrare.
+        if (wideShell) {
+          const bn = currentNode.bossName || "Il Broker";
+          const minMoney = isBoss ? BOSS_MIN_MONEY[bn] : undefined;
+          return (
+            <div style={{ flex: 1, minHeight: 0, width: "100%", display: "flex" }}>
+              <NodeThreshold
+                node={currentNode} player={player} preScratchCount={preScratchCount}
+                onPreScratch={handlePreScratch} onEnter={enterNode}
+                bossGate={minMoney !== undefined ? { minMoney, canEnter: player.money >= minMoney } : null}
+                onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} maxItems={MAX_ITEMS}
+              />
+            </div>
+          );
+        }
+
         // Corner brackets helper
         const CornerBrackets = ({ color = accent, size = 14, inset = 10, shadow = true }) => (
           <>{["tl","tr","bl","br"].map(pos => {
@@ -1938,7 +1971,7 @@ export default function Grattini() {
            lasciare che il layout lo ricentri in un'isola: flex-start lo tiene
            subito dopo la sidebar UNGHIE, la fiancata ZAINO segue a ruota. */}
       {screen === "shop" && player && (
-        <div style={{
+        <div style={wideShell ? { flex:1, minHeight:0, width:"100%", display:"flex" } : {
           width:"100%",
           display:"flex", justifyContent: wideDesk ? "flex-start" : "center",
           gap: wideDesk ? "14px" : "0",
@@ -1949,6 +1982,7 @@ export default function Grattini() {
             currentRow={currentRow}
             currentBiome={currentBiome}
             wideDesk={wideDesk}
+            desk={wideShell}
             onBuyCard={handleBuyCard}
             onBuyItem={handleBuyItem}
             onBuyGrattatore={handleBuyGrattatore}
@@ -1956,7 +1990,8 @@ export default function Grattini() {
             onScratch={handleShopScratch}
             onSlotResult={handleSlotResult}
           />
-          {wideDesk && (
+          {/* Su desktop niente fiancata ZAINO: c'è il bottone ZAINO in alto. */}
+          {wideDesk && !wideShell && (
             <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
           )}
           </Suspense>
@@ -1967,9 +2002,10 @@ export default function Grattini() {
           Resta centrata (non flex-start): richiesto esplicitamente
           dall'utente dopo un tentativo di allinearla come Shop/Event/Combat. */}
       {screen === "locanda" && player && (
-        <div style={{maxWidth:W.content, width:"100%"}}>
+        <div style={wideShell ? { flex:1, minHeight:0, width:"100%", display:"flex" } : {maxWidth:W.content, width:"100%"}}>
           <Suspense fallback={<LazyFallback />}>
           <LocandaView
+            table={wideShell}
             player={player}
             onRest={handleRest}
             onLeave={() => setScreen("map")}
@@ -1985,20 +2021,15 @@ export default function Grattini() {
            prima solo il negozio faceva così, evento e combattimento restavano
            centrati "a isola" con più spazio morto ai lati. */}
       {screen === "event" && player && currentNode && (
-        <div style={{width:"100%", display:"flex", justifyContent: wideDesk ? "flex-start" : "center", gap: wideDesk ? "14px" : "0"}}>
+        <div style={{width:"100%", display:"flex", justifyContent:"center"}}>
           <Suspense fallback={<LazyFallback />}>
           <EventView
             node={currentNode}
             player={player}
             onChoice={handleEventChoice}
           />
-          {/* Aganciando il pannello alla sidebar (vedi sopra) resta spazio vuoto
-              a destra su schermo largo — stessa fiancata ZAINO già usata nel
-              negozio, richiesta esplicitamente anche qui. ShopZainoRail è un
-              lazy import: deve restare dentro lo stesso Suspense di EventView. */}
-          {wideDesk && (
-            <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
-          )}
+          {/* Niente fiancata ZAINO qui: duplicava il bottone ZAINO della barra
+              in alto (richiesto dall'utente). Lo stage resta centrato. */}
           </Suspense>
         </div>
       )}
@@ -2019,9 +2050,11 @@ export default function Grattini() {
            centrato "a isola" con margini vuoti su entrambi i lati. */}
       {screen === "combat" && player && combatEnemy && (
         <div style={{flex:1, minHeight:0, width:"100%", display:"flex", justifyContent: wideDesk ? "flex-start" : "center", overflow:"hidden"}}>
-        <div style={{flex:1, minHeight:0, width:"100%", maxWidth:W.content, display:"flex", flexDirection:"column", overflow:"hidden"}}>
+        <div style={{flex:1, minHeight:0, width:"100%", maxWidth: wideShell ? "none" : W.content, display:"flex", flexDirection:"column", overflow:"hidden"}}>
           <Suspense fallback={<LazyFallback />}>
           <CombatView
+            table={wideShell}
+            onEquipGrattatore={handleRailEquipGrattatore}
             enemy={combatEnemy}
             player={player}
             onEnd={handleCombatEnd}
@@ -2059,7 +2092,7 @@ export default function Grattini() {
         </div>
         {/* Stessa fiancata ZAINO del negozio/evento — a schermo largo il
             duello (maxWidth W.content) lascia spazio a destra della sidebar. */}
-        {wideDesk && (
+        {wideDesk && !wideShell && (
           <ShopZainoRail player={player} onEquipGrattatore={handleRailEquipGrattatore} onUseItem={handleUseItem} />
         )}
         </div>
@@ -3208,115 +3241,18 @@ export default function Grattini() {
         <div
           onClick={() => setShowInventoryPanel(false)}
           style={{
-            position:"fixed", inset:0, top:"52px",
-            background:"rgba(0,0,0,0.55)", zIndex:99990, cursor:"pointer",
+            position:"fixed", inset:0,
+            background:"rgba(0,0,0,0.7)", zIndex:99990, cursor:"pointer",
           }}
         />
       )}
       {showInventoryPanel && player && (
-        <div style={{
-          position:"fixed",
-          top:"56px",
-          bottom:0,
-          right:0,
-          width:"min(400px, 100vw)",
-          background:C.card,
-          border:`2px solid ${C.magenta}`,
-          borderRight:"none",
-          boxShadow:`-4px 0 20px ${C.magenta}33, inset 0 0 30px ${C.magenta}08`,
-          zIndex:99995, overflowY:"auto", overflowX:"hidden",
-          display:"flex", flexDirection:"column",
-          fontFamily:FONT,
-          animation:"inventorySlideIn 0.2s ease-out",
-        }}>
-          <div style={{padding:"12px 14px 0"}}>
-            <div style={{marginBottom:"12px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-              <div style={{color:C.magenta, fontWeight:"bold", fontSize:"14px", letterSpacing:"1px"}}>
-                🎒 ZAINO
-              </div>
-              <div onClick={() => setShowInventoryPanel(false)} style={{
-                color:C.magenta, fontSize:"18px", cursor:"pointer", lineHeight:1,
-                padding:"2px 6px", opacity:0.7,
-              }}>✕</div>
-            </div>
-
-            {/* Consumabili */}
-            <div style={{marginBottom:"14px"}}>
-              <div style={{color:C.dim, fontSize:"10px", letterSpacing:"2px", borderBottom:`1px solid #2a2a3a`, paddingBottom:"4px", marginBottom:"8px"}}>
-                💊 CONSUMABILI ({player.items.length})
-              </div>
-              {player.items.length === 0 && (
-                <div style={{color:C.dim, fontSize:"12px", fontStyle:"italic"}}>Nessun consumabile nello zaino.</div>
-              )}
-              <div style={{display:"flex", flexWrap:"wrap", gap:"6px"}}>
-                {player.items.map((itemId, idx) => {
-                  const item = ITEM_DEFS[itemId];
-                  if (!item) return null;
-                  const ZAINO_RC = { comune:"#7a8aaa", media:C.cyan, rara:"#cc66ff", epica:C.orange, rarissimo:C.gold, rarissima:C.gold };
-                  const rc = ZAINO_RC[item.rarity] || C.magenta;
-                  return (
-                    <Tooltip key={idx} text={item.desc}>
-                      <div
-                        onClick={() => { handleUseItem(idx); if (itemId !== "cappelloSbirro") setShowInventoryPanel(false); }}
-                        style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"2px",
-                          padding:"7px 9px", background:`${rc}11`, border:`1px solid ${rc}55`,
-                          cursor:"pointer", minWidth:"62px", fontFamily:FONT, userSelect:"none"}}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${rc}22`}
-                        onMouseLeave={e=>e.currentTarget.style.background=`${rc}11`}
-                      >
-                        <div style={{fontSize:"22px", filter:`drop-shadow(0 0 5px ${rc}88)`}}><Asset id={`item-${itemId}`} emoji={item.emoji} size={26} /></div>
-                        <div style={{color:C.bright, fontSize:"10px", fontWeight:"bold", whiteSpace:"nowrap", maxWidth:"68px", overflow:"hidden", textOverflow:"ellipsis"}}>{item.name}</div>
-                        <div style={{color:rc, fontSize:"10px", letterSpacing:"1px"}}>{(item.rarity||"").toUpperCase()}</div>
-                      </div>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Grattatori */}
-            <div>
-              <div style={{color:C.dim, fontSize:"10px", letterSpacing:"2px", borderBottom:`1px solid #2a2a3a`, paddingBottom:"4px", marginBottom:"8px"}}>
-                🔧 GRATTATORI ({player.grattatori.length})
-              </div>
-              {player.grattatori.length === 0 && (
-                <div style={{color:C.dim, fontSize:"12px", fontStyle:"italic"}}>Nessun grattatore nello zaino.</div>
-              )}
-              <div style={{display:"flex", flexWrap:"wrap", gap:"6px"}}>
-                {player.grattatori.map((g, idx) => {
-                  const def = GRATTATORE_DEFS[g.id];
-                  const isEquipped = player.equippedGrattatore?.inventoryIdx === idx;
-                  const ZAINO_RC2 = { comune:"#7a8aaa", media:C.cyan, rara:"#cc66ff", epica:C.orange, rarissimo:C.gold, rarissima:C.gold };
-                  const rc = def ? (ZAINO_RC2[def.rarity] || C.cyan) : C.cyan;
-                  return (
-                    <Tooltip key={idx} text={`${g.desc || def?.desc} · ${g.usesLeft} usi rimasti`}>
-                      <div
-                        onClick={() => { if (isEquipped) unequipGrattatore(); else equipGrattatore(idx); }}
-                        style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"2px",
-                          padding:"7px 9px", background:isEquipped?`${rc}22`:`${rc}0c`,
-                          border:`1px solid ${isEquipped?rc:rc+"44"}`,
-                          boxShadow:isEquipped?`0 0 8px ${rc}44`:"none",
-                          cursor:"pointer", minWidth:"62px", fontFamily:FONT, userSelect:"none"}}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${rc}28`}
-                        onMouseLeave={e=>e.currentTarget.style.background=isEquipped?`${rc}22`:`${rc}0c`}
-                      >
-                        <div style={{fontSize:"22px", filter:`drop-shadow(0 0 5px ${rc}88)`}}><Asset id={`item-${g.id}`} emoji={g.emoji} size={26} /></div>
-                        <div style={{color:C.bright, fontSize:"10px", fontWeight:"bold", whiteSpace:"nowrap", maxWidth:"68px", overflow:"hidden", textOverflow:"ellipsis"}}>{g.name}</div>
-                        <div style={{color:isEquipped?rc:C.dim, fontSize:"10px", letterSpacing:"1px"}}>
-                          {isEquipped ? "✓ ATTIVO" : `${g.usesLeft} usi`}
-                        </div>
-                      </div>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-
-          </div>
-          <div style={{marginTop:"10px", padding:"10px 12px", borderTop:`1px solid #1a1a2a`, color:C.dim, fontSize:"10px", textAlign:"center"}}>
-            Puoi usare oggetti in qualsiasi momento · Grattatori vanno equipaggiati prima di grattare
-          </div>
-        </div>
+        <Backpack
+          player={player} maxItems={MAX_ITEMS}
+          onUseItem={(idx, itemId) => { handleUseItem(idx); if (itemId !== "cappelloSbirro") setShowInventoryPanel(false); }}
+          onToggleTool={(idx, inHand) => { if (inHand) unequipGrattatore(); else equipGrattatore(idx); }}
+          onClose={() => setShowInventoryPanel(false)}
+        />
       )}
 
       {/* ═══ SMOKE EFFECT OVERLAY ═══ */}

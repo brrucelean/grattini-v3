@@ -193,10 +193,10 @@ export function CarmeloScratchStrip({ messages, color }) {
     <div onClick={skip} style={{
       flexShrink:0, height:"96px",
       display:"flex", alignItems:"stretch",
-      background:"#030308",
-      borderTop:`1px solid ${color}44`,
+      // Stesso legno scuro della barra del tavolo da grattata: niente nero pieno.
+      background:"#2a170c",
+      borderTop:"2px solid #e9c46a",
       overflow:"hidden",
-      boxShadow:`0 -4px 20px #00000088`,
       cursor:"pointer",
     }}>
       {/* Badge NPC fisso — allineato in alto */}
