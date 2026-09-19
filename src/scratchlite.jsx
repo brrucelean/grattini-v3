@@ -478,7 +478,7 @@ export default function Grattini() {
     : bioPal.bg;
 
   // iPhone/mobile: layout verticale a colonna singola invece di 3 colonne
-  const { isMobile, vw } = useIsMobile();
+  const { isMobile, vw, vh: stageH, scale: stageScale } = useIsMobile();
   const reducedMotion = useReducedMotion();
   // Desktop largo: c'è spazio per le fiancate attorno al grattino (vedi overlay scratch).
   // Sotto i 1100px la carta resta da sola e centrata, come prima.
@@ -511,10 +511,17 @@ export default function Grattini() {
       overflow:"hidden",
       display:"flex", alignItems:"center", justifyContent:"center",
     }}>
-    {/* ── STAGE A PIENO SCHERMO — riempie tutto il viewport (niente letterbox) ── */}
+    {/* ── STAGE — sempre grafica desktop: almeno 1280×720 virtuali, scalati
+         per stare nella finestra (hooks/useIsMobile.js). A scala 1 riempie
+         esattamente il viewport come prima. ── */}
     <div style={{...S.container, cursor: globalNailCursor,
-      width: "100vw",
-      height: "100dvh",
+      width: `${vw}px`,
+      height: `${stageH}px`,
+      flexShrink: 0,
+      // `scale` (non transform): la scossa dello schermo usa transform e
+      // non deve azzerare la scala.
+      scale: stageScale < 1 ? String(stageScale) : undefined,
+      transformOrigin: "center center",
       position:"relative", overflow:"hidden",
       background: stageBg,
       boxShadow:"0 0 0 1px #000, 0 0 40px rgba(0,0,0,0.8)",
@@ -908,9 +915,12 @@ export default function Grattini() {
         <div style={wideShell ? { width:"100%", flex:1, minHeight:0, display:"flex", background: MK.bg, overflowY:"auto" } : { display:"contents" }}>
         <div style={{
           width:"100%", flex:1, minHeight:0, maxWidth:"720px", margin:"0 auto",
-          display:"flex", flexDirection:"column", justifyContent:"center",
+          // Titolo in alto, contenuto al centro (scorre lui), bottoni SEMPRE in
+          // fondo: AVANTI resta nello stesso punto su tutte e tre le pagine,
+          // così si può andare avanti premendo tre volte senza inseguirlo.
+          display:"flex", flexDirection:"column", justifyContent:"flex-start",
           padding:"10px 14px 14px", boxSizing:"border-box",
-          overflowY:"auto", WebkitOverflowScrolling:"touch",
+          overflow:"hidden",
         }}>
           {/* ── Header + puntini pagina ── */}
           <div style={{textAlign:"center", flexShrink:0, marginBottom:"10px"}}>
@@ -930,6 +940,8 @@ export default function Grattini() {
             </div>
           </div>
 
+          <div style={{flex:1, minHeight:0, overflowY:"auto", WebkitOverflowScrolling:"touch", display:"flex", flexDirection:"column", justifyContent:"center"}}>
+          <div style={{margin:"auto 0"}}>
           {/* ══ PAGINA 1 — UNGHIE ══ */}
           {tutorialPage === 0 && (<>
             <div style={{color:C.text, fontSize:"13px", lineHeight:"1.5", textAlign:"center", marginBottom:"8px"}}>
@@ -1033,14 +1045,18 @@ export default function Grattini() {
             </Panel>
           </>)}
 
-          {/* ── NAV: indietro / avanti / inizia ── */}
-          <div style={{display:"flex", gap:"8px", flexShrink:0, marginTop:"4px"}}>
-            {tutorialPage > 0 && (
-              <Btn onClick={() => setTutorialPage(p => p - 1)}
-                style={{fontSize:"13px", padding:"12px", letterSpacing:"1px", flex:"0 0 auto"}}>
-                ← INDIETRO
-              </Btn>
-            )}
+          </div>
+          </div>
+
+          {/* ── NAV: indietro / avanti / inizia — fissa in fondo ── */}
+          <div style={{display:"flex", gap:"8px", flexShrink:0, marginTop:"10px"}}>
+            {/* INDIETRO occupa sempre il suo posto (invisibile a pagina 1):
+                così AVANTI non cambia larghezza né posizione. */}
+            <Btn onClick={() => setTutorialPage(p => Math.max(0, p - 1))}
+              style={{fontSize:"13px", padding:"12px", letterSpacing:"1px", flex:"0 0 auto",
+                visibility: tutorialPage > 0 ? "visible" : "hidden"}}>
+              ← INDIETRO
+            </Btn>
             {tutorialPage < 2 ? (
               <Btn variant="gold" onClick={() => setTutorialPage(p => p + 1)}
                 style={{fontSize:"14px", padding:"12px", letterSpacing:"2px", flex:1}}>
