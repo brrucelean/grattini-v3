@@ -67,6 +67,7 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
     <Tooltip text={tipFor(n, info, chirurgo, meter)} color={col}>
       <button type="button" disabled={!canSwitch && !active}
         data-audio="nail"
+        data-audio-variant={i}
         onClick={canSwitch ? () => onSelect(i) : undefined}
         aria-pressed={active}
         aria-label={`Dito ${i + 1}: ${chirurgo ? chirurgo.label : info.label}, ${chirurgo ? mult + " slot" : mult + " premio"}${active ? ", in uso" : ""}${isDead ? ", fuori gioco" : ""}`}

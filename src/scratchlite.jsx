@@ -335,7 +335,10 @@ export default function Grattini() {
   } = useItemHandlers({ player, updatePlayer, addLog });
   // Riferimento stabile per HUD (memoizzato) — un'arrow function inline nel JSX
   // sarebbe una nuova identità ad ogni render, vanificando il memo.
-  const toggleInventoryPanel = useCallback(() => setShowInventoryPanel(v => !v), [setShowInventoryPanel]);
+  const toggleInventoryPanel = useCallback(() => setShowInventoryPanel(v => {
+    AudioEngine.bagToggle(!v);
+    return !v;
+  }), [setShowInventoryPanel]);
 
   // ─── HOOK: useShopHandlers ───
   const { handleBuyCard, handleBuyItem, handleBuyGrattatore, handleSlotResult, handleShopScratch } = useShopHandlers({

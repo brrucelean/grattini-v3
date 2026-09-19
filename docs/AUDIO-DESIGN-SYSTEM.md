@@ -35,11 +35,13 @@ Ogni feedback deve essere breve, leggibile e meno forte dell'evento che conferma
 |---|---|---|---:|
 | UI hover | vetro/plastica | tick sinusoidale + polvere quasi muta | 0.018 |
 | UI press | tasto meccanico | doppio corpo 540/260 Hz + click filtrato | 0.055 |
-| Unghia | cheratina/polpastrello | tap organico, 4 varianti 410–565 Hz | 0.038 |
+| Unghia | cheratina/polpastrello | 5 firme per dito, 330–760 Hz + micro-variazioni | 0.040 |
 | Biglietto | cartoncino | colpo carta filtrato + corpo morbido | 0.027 |
 | Oggetto | metallo/plastica | tick brillante + micro-rumore | 0.035 |
 | Transizione | carta trascinata | fruscio medio + thump morbido | 0.025 |
 | Apertura pannello | cassetto | soffio corto, corpo basso, fermo alto | 0.035 |
+| Zaino | tela/zip/fibbia | fruscio lungo + doppio fermo apertura/chiusura | 0.038 |
+| Slot | rulli/camma/campana | avvio, tick crescenti, 3 stop, esito per tier | 0.062 max |
 | Scratch | patina argentata | rumore band-pass variabile | 0.20 nel bus SFX |
 | Reveal | carta scoperta | carta secca + piccolo ping | 0.040 |
 | Acquisto | moneta/cassa | click carta + due armoniche ascendenti | 0.055 |
@@ -49,6 +51,8 @@ Ogni feedback deve essere breve, leggibile e meno forte dell'evento che conferma
 | Combat | impatti distinti | basso/rumore, metallo, shimmer | 0.20 max |
 
 I valori sono moltiplicati dal master (`0…1`). Nessun suono bypassa il master.
+Un compressore master morbido (-20 dB, ratio 5:1) contiene jackpot, incassi e
+impatti sovrapposti senza alzare artificialmente hover e feedback minuti.
 
 ## Matrice evento → suono
 

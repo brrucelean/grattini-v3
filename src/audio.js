@@ -4,6 +4,7 @@ import { prefersReducedMotion } from "./utils/motion.js";
 export const AudioEngine = (() => {
   let ctx = null;
   let masterGain = null;        // nodo gain globale — volume istantaneo su tutto
+  let masterLimiter = null;     // contiene jackpot/impatti senza alzare gli hover
   let bgIntervalId = null;
   let switchTimeoutId = null;
   let currentTheme = null;
@@ -50,7 +51,13 @@ export const AudioEngine = (() => {
     if (!masterGain || masterGain.context.state === "closed") {
       masterGain = ac.createGain();
       masterGain.gain.value = masterVolume;
-      masterGain.connect(ac.destination);
+      masterLimiter = ac.createDynamicsCompressor();
+      masterLimiter.threshold.value = -20;
+      masterLimiter.knee.value = 16;
+      masterLimiter.ratio.value = 5;
+      masterLimiter.attack.value = 0.004;
+      masterLimiter.release.value = 0.16;
+      masterGain.connect(masterLimiter); masterLimiter.connect(ac.destination);
     }
     return masterGain;
   };
@@ -138,10 +145,10 @@ export const AudioEngine = (() => {
       } catch(e) {}
     },
     win: () => {
-      [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,0.3,"square",0.12), i*110));
+      [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,0.24,"triangle",0.058), i*105));
     },
     lose: () => {
-      [330,220,150].forEach((f,i) => setTimeout(()=>playTone(f,0.25,"sawtooth",0.1), i*120));
+      [330,220,150].forEach((f,i) => setTimeout(()=>playTone(f,0.22,"sawtooth",0.06), i*115));
     },
     // UI tattile: carta/plastica morbida, non bleeps da menu generico.
     hover: () => {
@@ -155,12 +162,21 @@ export const AudioEngine = (() => {
       playTone(260, .045, "sine", .025, .008);
       playNoise({duration:.025, volume:.016, frequency:1450});
     },
-    nailTap: () => {
+    nailTap: (variant = null) => {
       if (!mayPlay("nail", 55)) return;
-      const variants = [410, 455, 505, 565];
-      const f = variants[Math.floor(Math.random() * variants.length)];
-      playTone(f, .032, "triangle", .038);
-      playNoise({duration:.018, volume:.012, frequency:900 + Math.random()*350, q:.9});
+      const profiles = [
+        {f:330,type:"sine",noise:720}, {f:410,type:"triangle",noise:930},
+        {f:505,type:"sine",noise:1180}, {f:620,type:"triangle",noise:1460},
+        {f:760,type:"sine",noise:1780},
+      ];
+      const index = Number.isFinite(Number(variant))
+        ? Math.abs(Number(variant)) % profiles.length
+        : Math.floor(Math.random() * profiles.length);
+      const p = profiles[index];
+      const detune = .975 + Math.random() * .05;
+      playTone(p.f * detune, .04, p.type, .04);
+      playTone(p.f * 1.5 * detune, .025, "sine", .013, .008);
+      playNoise({duration:.02, volume:.011, frequency:p.noise, q:.9});
     },
     cardTap: () => {
       if (!mayPlay("card", 55)) return;
@@ -181,6 +197,39 @@ export const AudioEngine = (() => {
       playNoise({duration:.09, volume:.022, frequency:1050});
       playTone(190, .11, "sine", .035);
       playTone(430, .07, "triangle", .025, .04);
+    },
+    bagToggle: (opening = true) => {
+      if (!mayPlay("bag", 140)) return;
+      playNoise({duration:.11, volume:.035, frequency:opening ? 1750 : 1250, q:.45});
+      playTone(opening ? 285 : 220, .10, "triangle", .038);
+      playTone(opening ? 690 : 510, .045, "sine", .024, .055);
+    },
+    slotStart: () => {
+      playNoise({duration:.12, volume:.035, frequency:760, q:.45});
+      playTone(105, .16, "sawtooth", .04);
+      playTone(420, .055, "square", .035, .05);
+    },
+    slotTick: (step=0) => {
+      if (!mayPlay("slotTick", 42)) return;
+      const lift = Math.min(180, step * 7);
+      playTone(260 + lift + Math.random()*25, .025, "square", .035);
+      playNoise({duration:.018, volume:.012, frequency:1250 + lift*2, q:1});
+    },
+    slotStop: (reel=0) => {
+      playTone(210 + reel*85, .065, "triangle", .052);
+      playTone(520 + reel*130, .045, "square", .025, .018);
+    },
+    slotResult: (kind="lose") => {
+      if (kind === "superjackpot") {
+        [659,784,988,1318].forEach((f,i) => playTone(f,.22,"triangle",.062,i*.075));
+        playNoise({duration:.22, volume:.035, frequency:2600, startTime:.08});
+      } else if (kind === "jackpot") {
+        [523,659,784].forEach((f,i) => playTone(f,.18,"triangle",.052,i*.08));
+      } else if (kind === "small") {
+        playTone(660,.09,"triangle",.045); playTone(880,.12,"sine",.035,.07);
+      } else {
+        playTone(185,.08,"square",.035); playTone(125,.12,"sawtooth",.025,.06);
+      }
     },
     transition: () => {
       if (!mayPlay("transition", 260)) return;
@@ -217,10 +266,10 @@ export const AudioEngine = (() => {
     dialogueTick: () => playTone(520 + Math.random()*160, 0.018, "square", 0.018),
     cash: () => {
       // Ka-ching! coin drop + register bell
-      playTone(1200, 0.06, "square", 0.10);
-      playTone(1800, 0.08, "square", 0.08, 0.06);
-      playTone(2400, 0.12, "triangle", 0.06, 0.12);
-      playHarp(1568, 0.08, 0.10); // G6 shimmer
+      playTone(1200, 0.06, "triangle", 0.055);
+      playTone(1800, 0.08, "triangle", 0.045, 0.06);
+      playTone(2400, 0.12, "sine", 0.035, 0.12);
+      playHarp(1568, 0.04, 0.10); // G6 shimmer
     },
     // ─── SFX COMBATTIMENTO ─────────────────────────────────────
     heal: () => {
@@ -449,7 +498,8 @@ export const AudioEngine = (() => {
         const el = e.target.closest?.(interactive);
         if (!el || el.classList.contains("btn-ui")) return;
         const family = el.dataset.audio;
-        if (family === "nail") AudioEngine.nailTap();
+        if (family === "none") return;
+        if (family === "nail") AudioEngine.nailTap(el.dataset.audioVariant);
         else if (family === "card") AudioEngine.cardTap();
         else if (family === "item") AudioEngine.itemTap();
         else AudioEngine.click();

@@ -15,6 +15,7 @@ import { VintageBadge } from "./Vintage.jsx";
 import { ANIM } from "../styles/animations.js";
 import { useIsMobile } from "../hooks/useIsMobile.js";
 import { ShopDesk } from "./shop/ShopDesk.jsx";
+import { AudioEngine } from "../audio.js";
 
 // ─── SLOT MACHINE ────────────────────────────────────────────
 // 6 simboli su 3 rulli: 777 esce 1 volta su 216, un altro tris 5, una coppia 90.
@@ -307,6 +308,7 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
 
   const spinSlot = () => {
     if (slotSpinning || player.money < SLOT_SPIN_COST) return;
+    AudioEngine.slotStart();
     onSlotResult({ type: "pay", amount: SLOT_SPIN_COST });
     pendingSpinRef.current = rollSlot();
     setSlotResult(null);
@@ -316,12 +318,15 @@ export function ShopView({ player, onBuyCard, onBuyItem, onBuyGrattatore, onLeav
     slotIntervalRef.current = setInterval(() => {
       setSlotReels(rollSlot().reels);
       ticks++;
+      AudioEngine.slotTick(ticks);
       if (ticks >= maxTicks) {
         clearInterval(slotIntervalRef.current);
         const spin = settleSpin();
         setSlotReels(spin.reels);
         setSlotSpinning(false);
         setSlotResult(spin);
+        [0,1,2].forEach((reel) => window.setTimeout(() => AudioEngine.slotStop(reel), reel * 85));
+        window.setTimeout(() => AudioEngine.slotResult(spin.type), 280);
       }
     }, 80);
   };

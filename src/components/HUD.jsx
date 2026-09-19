@@ -195,6 +195,7 @@ function HUDImpl({ player, onOpenInventory, inventoryOpen = false, moneyBling = 
               u={u}
               color={inventoryOpen || tot > 0 ? C.magenta : C.dim}
               onClick={onOpenInventory}
+              data-audio="none"
               style={{
                 fontSize:`${u.fsValue}px`,
                 background: inventoryOpen ? `${C.magenta}18` : "transparent",
@@ -313,6 +314,7 @@ function HUDImpl({ player, onOpenInventory, inventoryOpen = false, moneyBling = 
               <HudPill
                 u={u} color={col} strong
                 onClick={onOpenInventory}
+                data-audio="none"
                 style={{
                   fontWeight:"bold",
                   border:`2px solid ${col}`,

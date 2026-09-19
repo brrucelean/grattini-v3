@@ -15,10 +15,10 @@ import { SH, edge } from "./shellTokens.js";
 
 const PILL_H = 32;
 
-function Pill({ color, children, strong = false, onClick, label, style = {} }) {
+function Pill({ color, children, strong = false, onClick, label, audio, style = {} }) {
   const Tag = onClick ? "button" : "span";
   return (
-    <Tag type={onClick ? "button" : undefined} onClick={onClick} aria-label={label}
+    <Tag type={onClick ? "button" : undefined} onClick={onClick} aria-label={label} data-audio={audio}
       style={{
         display:"inline-flex", alignItems:"center", gap:"8px",
         height:`${PILL_H}px`, boxSizing:"border-box", padding:"0 12px",
@@ -117,7 +117,7 @@ function RunBarImpl({ player, onOpenInventory, inventoryOpen = false, moneyBling
       {onOpenInventory && !hideInventoryButton && (() => {
         const col = bagCount > 0 || inventoryOpen ? C.gold : C.dim;
         return (
-          <Pill color={col} strong onClick={onOpenInventory}
+          <Pill color={col} strong onClick={onOpenInventory} audio="none"
             label={`Zaino, ${bagCount} oggetti${inventoryOpen ? ", aperto" : ""}`}
             style={{fontSize:"13px", letterSpacing:"1.5px",
               background: inventoryOpen ? `${col}33` : SH.panel}}>
