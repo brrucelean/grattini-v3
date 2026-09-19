@@ -88,7 +88,7 @@ export const VECCHIO_DIALOGHI = [
     title: "🧓 Un Vecchio Sconosciuto",
     text: "Un uomo anziano ti blocca il passo. Ha occhi che hanno visto troppo. \"Ti conosco, ragazzo. Le tue unghie... le ho già viste. In un sogno, forse. O in un'altra vita.\"",
     choices: [
-      { label: "Chi sei?", action: "vecchio_ascolta" },
+      { label: "Insisti: chi sei davvero?", action: "vecchio_ascolta" },
       { label: "Non ho tempo per i pazzi", action: "leave" },
     ],
   },

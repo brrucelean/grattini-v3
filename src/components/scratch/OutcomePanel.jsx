@@ -21,7 +21,7 @@ function Brackets({ color }) {
 }
 
 // Nessuna vincita: 😔, badge rosso, motivo in corsivo, OK →.
-export function NoWinPanel({ reason, onOk, okLabel = "OK →" }) {
+export function NoWinPanel({ reason, onOk, okLabel = "OK →", prominent = false }) {
   return (
     <div role="status" style={{
       position: "relative", marginTop: "6px", padding: "10px 14px",
@@ -39,7 +39,12 @@ export function NoWinPanel({ reason, onOk, okLabel = "OK →" }) {
         }}>★ NESSUNA VINCITA ★</div>
         <div style={{ color: C.dim, fontSize: "10px", fontStyle: "italic" }}>{reason}</div>
       </div>
-      <Btn variant="default" onClick={onOk} style={{ fontSize: "11px", padding: "5px 14px", flexShrink: 0 }}>{okLabel}</Btn>
+      <Btn variant={prominent ? "gold" : "default"} onClick={onOk} style={{
+        fontSize: prominent ? "13px" : "11px",
+        padding: prominent ? "10px 18px" : "5px 14px",
+        flexShrink: 0,
+        boxShadow: prominent ? `0 0 16px ${C.gold}88` : undefined,
+      }}>{okLabel}</Btn>
     </div>
   );
 }

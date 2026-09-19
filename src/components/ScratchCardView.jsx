@@ -37,7 +37,7 @@ const IMPLANT_PRIZE_MULT = {
 };
 
 // ─── SCRATCH CARD COMPONENT (per-cell nail damage + early stop) ───
-export function ScratchCardView({ card, onDone, nailState, nailImplant=null, grattaMania, equippedGrattatore, onCellScratch, onNailDamage=null, onItemFound=null, showFirstWarning, ambidestri=false, onCardActivate=null, lastWonPrize=0, extraTiles=[], onExtraTileUsed=null, relicEffects=[], onAdviceShown=null, layoutOverride=null, fit=false, gameHost=null }) {
+export function ScratchCardView({ card, onDone, nailState, nailImplant=null, grattaMania, equippedGrattatore, onCellScratch, onNailDamage=null, onItemFound=null, showFirstWarning, ambidestri=false, onCardActivate=null, lastWonPrize=0, extraTiles=[], onExtraTileUsed=null, relicEffects=[], onAdviceShown=null, layoutOverride=null, fit=false, gameHost=null, finalIntroTicket=false }) {
   // null, non l'id della carta montata: la vista si monta a ogni grattino, e con
   // l'id già impostato l'effetto di preparazione qui sotto non partiva mai
   // (Malocchio, Chiave d'Ottone e maledizione del Maledetto non si attivavano).
@@ -1391,7 +1391,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
             })()}
             <div style={{display:"flex", justifyContent:"center", gap:"8px"}}>
               <Btn variant={isDirty ? "danger" : "gold"} onClick={() => handleFinish(true)} style={{fontSize:"14px"}}>
-                {cancelled ? "Chiudi" : nailCalc ? `${nailCalc.positive ? "✨" : "🩸"} RITIRA €${winPrize} (${nailCalc.percent}% di €${winPrizeFull})` : card.mechanic === "collect" ? `✓ CONFERMA €${winPrize}` : `✓ RITIRA €${winPrize}`}
+                {finalIntroTicket ? `CONTINUA AI PREMI →` : cancelled ? "Chiudi" : nailCalc ? `${nailCalc.positive ? "✨" : "🩸"} RITIRA €${winPrize} (${nailCalc.percent}% di €${winPrizeFull})` : card.mechanic === "collect" ? `✓ CONFERMA €${winPrize}` : `✓ RITIRA €${winPrize}`}
               </Btn>
               {!cancelled && scratched < totalCells && !locked && (
                 <span style={{color:C.dim, fontSize:"11px", alignSelf:"center"}}>o continua a grattare →</span>
@@ -1484,7 +1484,14 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
 
       {/* NO WIN — Vintage */}
       {toOverlay(showNoWin && !finished && (
-        <NoWinPanel reason={lossReason()} onOk={() => handleFinish(false)} />
+        <NoWinPanel
+          reason={finalIntroTicket
+            ? `${lossReason()} Hai completato i tre biglietti: continua per scegliere quale premio intascare.`
+            : lossReason()}
+          onOk={() => handleFinish(false)}
+          okLabel={finalIntroTicket ? "CONTINUA AI PREMI →" : "OK →"}
+          prominent={finalIntroTicket}
+        />
       ))}
 
       {/* FINISHED RESULT — Vintage hero */}

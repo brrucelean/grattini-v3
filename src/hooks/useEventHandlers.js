@@ -856,7 +856,14 @@ export function useEventHandlers({
       }
       case "vecchio_ascolta":
         updatePlayer(p => ({...p, vecchioVisits: (p.vecchioVisits || 0) + 1, fortune: p.fortune + 1, fortuneTurns: p.fortuneTurns + 3}));
-        addLog("🧓 Il Vecchio ti legge le unghie. +1 Fortuna per 3 turni.", C.gold);
+        addLog("🧓 «Mi chiamavano Carmelo. Prima che il gioco si prendesse il mio nome.» Il Vecchio ti legge le unghie. +1 Fortuna per 3 turni.", C.gold);
+        setItemFoundModal({
+          emoji: "🧓",
+          name: "Un nome, finalmente",
+          subtitle: "Il Vecchio Sconosciuto",
+          desc: "«Mi chiamavano Carmelo. Prima che il gioco si prendesse il mio nome. Il resto te lo dirò se ci rivedremo.»\n\nTi stringe la mano e segue con il dito le crepe delle tue unghie.\n\n+1 Fortuna per 3 turni.",
+          buttonLabel: "Ci rivedremo →",
+        });
         setScreen("map"); break;
       case "vecchio_dono":
         updatePlayer(p => ({...p, vecchioVisits: (p.vecchioVisits || 0) + 1, nails: healDamagedNails(p.nails, 1)}));

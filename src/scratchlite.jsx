@@ -1052,6 +1052,7 @@ export default function Grattini() {
               <Suspense fallback={<LazyFallback />}>
               <ScratchCardView
                 card={scratchingCard}
+                finalIntroTicket={returnScreen === "introScratch" && player.scratchCards.length === 1}
                 fit={wideShell}
                 gameHost={wideShell ? scratchGameHost : null}
                 nailState={getActiveNailState()}
@@ -2253,7 +2254,7 @@ export default function Grattini() {
            prima solo il negozio faceva così, evento e combattimento restavano
            centrati "a isola" con più spazio morto ai lati. */}
       {screen === "event" && player && currentNode && (
-        <div style={{width:"100%", display:"flex", justifyContent:"center"}}>
+        <div style={{width:"100%", flex:"1 1 0", minHeight:0, display:"flex", justifyContent:"center"}}>
           <Suspense fallback={<LazyFallback />}>
           <EventView
             node={currentNode}

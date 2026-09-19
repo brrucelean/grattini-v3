@@ -78,8 +78,8 @@ export function EventStage({
 
   return (
     <div ref={rootRef} style={{
-      flex: "1 1 0", minWidth: 0, width: "100%", margin: "10px 0",
-      height: height ? `${height}px` : "auto", boxSizing: "border-box",
+      flex: "1 1 0", minWidth: 0, minHeight: 0, width: "100%", margin: 0,
+      height: height ? `${height}px` : "100%", boxSizing: "border-box",
       background: TABLE, boxShadow: "none",
       overflowY: "auto", padding: compact ? "14px 20px" : "20px",
       justifyContent: "center",
