@@ -1,4 +1,4 @@
-import { FONT } from "../../data/theme.js";
+import { FONT, FONT_TITLE } from "../../data/theme.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../../data/items.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
@@ -13,7 +13,7 @@ import { groupItems, groupGrattatori } from "../../utils/backpack.js";
 // grattatore = prendilo in mano / posalo.
 // Oggetti uguali in una casella sola con "×n" (P-04): il raggruppamento è solo
 // visivo (utils/backpack.js), il clic agisce su un pezzo e il numero scala.
-// La Tessera VIP sta nel taschino trasparente della patta (P-05).
+// La Tessera VIP spunta dal portatessera cucito sulla patta (P-05).
 
 const LEATHER = "repeating-conic-gradient(#6b3a1e 0% 25%, #74411f 0% 50%) 0 0 / 4px 4px";
 const LEATHER_DARK = "repeating-conic-gradient(#4e2a14 0% 25%, #573016 0% 50%) 0 0 / 4px 4px";
@@ -55,39 +55,94 @@ function CountTag({ count }) {
   );
 }
 
-// ─── TESSERA VIP nel taschino di plastica della patta ──
-// Non è un consumabile: con player.hasVIP (Mendicante, o tessera usata) resta
-// sempre in vista qui e non occupa caselle. Solo presentazione: l'effetto
-// (Zona VIP del tabaccaio) è lo stesso di prima.
-function VipSleeve() {
+// ─── TESSERA VIP nel portatessera della patta ──
+// Non è un consumabile: con player.hasVIP (elemosina al Mendicante, o tessera
+// usata) la tessera d'oro spunta da un taschino di plastica cucito sulla
+// patta, e non occupa caselle. Senza tessera il taschino resta vuoto, con la
+// sagoma tratteggiata: si capisce che lì va qualcosa. Solo presentazione:
+// l'effetto (Zona VIP del tabaccaio) è lo stesso di prima.
+// Oro a gradini (niente sfumature morbide): dithering di due ori, bevel duro,
+// un riflesso che attraversa la tessera a scatti e scintille che lampeggiano.
+const GOLD_DITHER = "repeating-conic-gradient(#f7d64e 0% 25%, #eec23a 0% 50%) 0 0 / 2px 2px";
+const VIP_CSS = `
+  @keyframes vipShine { 0%, 55% { background-position: -140px 0; } 85%, 100% { background-position: 160px 0; } }
+  @keyframes vipTwinkle { 0%, 100% { opacity: 0; } 40%, 60% { opacity: 1; } }
+  @keyframes vipGlow { 0%, 100% { box-shadow: 0 0 0 2px #3a2808, 0 0 0 4px #f7d64e55; } 50% { box-shadow: 0 0 0 2px #3a2808, 0 0 0 4px #fff3b0cc; } }
+  @media (prefers-reduced-motion: reduce) { .vip-anim { animation: none !important; } }
+`;
+
+// Scintilla a quattro punte, fatta di "pixel".
+function Sparkle({ style, delay = 0 }) {
   return (
-    <Tooltip text={"Tessera VIP\nZona VIP aperta nel tabaccaio"}>
-      <span role="img" aria-label="Tessera VIP: Zona VIP aperta nel tabaccaio" style={{
-        position: "relative", display: "block", width: "92px", height: "58px", boxSizing: "border-box", padding: "5px",
-        // taschino cucito: bordo di plastica chiara + cucitura
-        background: "#2a1608",
-        boxShadow: "inset 0 0 0 2px #9fb8bf, inset 0 0 0 3px #1a0c04, 3px 3px 0 #1a0c04",
-        outline: `2px dashed ${STITCH}`, outlineOffset: "3px",
+    <span aria-hidden className="vip-anim" style={{ position: "absolute", width: 9, height: 9, pointerEvents: "none",
+      animation: `vipTwinkle 1.8s steps(4) ${delay}s infinite`, opacity: 0, ...style }}>
+      <span style={{ position: "absolute", left: 3, top: 0, width: 3, height: 9, background: "#fff8d0" }} />
+      <span style={{ position: "absolute", left: 0, top: 3, width: 9, height: 3, background: "#fff8d0" }} />
+      <span style={{ position: "absolute", left: 3, top: 3, width: 3, height: 3, background: "#ffffff" }} />
+    </span>
+  );
+}
+
+function VipCard() {
+  return (
+    <span className="vip-anim" style={{
+      position: "absolute", left: 6, right: 6, top: 0, height: 74, boxSizing: "border-box", padding: "6px 8px",
+      display: "flex", flexDirection: "column", justifyContent: "space-between",
+      background: GOLD_DITHER, color: "#4a3008", fontFamily: FONT,
+      // bevel a gradini: luce in alto a sinistra, ombra in basso a destra
+      boxShadow: "inset 0 0 0 2px #3a2808, inset 3px 3px 0 1px #fff3b0, inset -3px -3px 0 1px #b88a1c",
+      animation: "vipGlow 2.4s steps(6) infinite",
+    }}>
+      <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 8, letterSpacing: 1 }}>GRATTINI CLUB</span>
+        {/* chip */}
+        <span aria-hidden style={{ width: 14, height: 10, background: "#c9c2a8",
+          boxShadow: "inset 0 0 0 1px #4a3008, inset 0 4px 0 -3px #4a3008, inset 5px 0 0 -4px #4a3008" }} />
+      </span>
+      <span style={{ fontFamily: FONT_TITLE, fontSize: 24, lineHeight: 1, letterSpacing: 4, marginTop: -4,
+        textShadow: "2px 2px 0 #b88a1c" }}>VIP</span>
+      <span style={{ fontSize: 7, letterSpacing: 1 }}>SOCIO ORO · N° 0001 ★★★</span>
+      {/* riflesso che attraversa la tessera */}
+      <span aria-hidden className="vip-anim" style={{ position: "absolute", inset: 2, pointerEvents: "none", overflow: "hidden",
+        background: "linear-gradient(105deg, transparent 0 42%, #ffffffcc 42% 47%, transparent 47% 52%, #ffffff77 52% 54%, transparent 54%) no-repeat",
+        backgroundSize: "140px 100%", animation: "vipShine 3.2s steps(16) infinite" }} />
+    </span>
+  );
+}
+
+function VipHolder({ has }) {
+  const tip = has
+    ? "Tessera VIP\nZona VIP aperta nel tabaccaio"
+    : "Portatessera vuoto\nLa Tessera VIP te la dà il Mendicante, per un'elemosina";
+  return (
+    <Tooltip text={tip}>
+      <span role="img" aria-label={has ? "Tessera VIP: Zona VIP aperta nel tabaccaio" : "Portatessera vuoto: qui va la Tessera VIP"} style={{
+        position: "relative", display: "block", width: 132, height: 96,
       }}>
-        {/* la tessera: cartoncino dorato con scritta e banda magnetica */}
-        <span style={{
-          position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between",
-          width: "100%", height: "100%", boxSizing: "border-box", padding: "4px 5px",
-          background: BRASS.hi, color: BRASS.dark, fontFamily: FONT,
-          boxShadow: `inset 0 0 0 2px ${BRASS.dark}, inset -2px -2px 0 2px ${BRASS.lo}`,
+        <style>{VIP_CSS}</style>
+        {has ? <VipCard /> : (
+          // sagoma della tessera che manca
+          <span style={{ position: "absolute", left: 6, right: 6, top: 6, height: 68, boxSizing: "border-box",
+            outline: "2px dashed #8a6a3a", outlineOffset: "-2px", display: "grid", placeItems: "center",
+            color: "#8a6a3a", fontFamily: FONT, fontSize: 10, letterSpacing: 2 }}>TESSERA VIP</span>
+        )}
+        {/* taschino di plastica cucito: copre la parte bassa della tessera */}
+        <span aria-hidden style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: 38, boxSizing: "border-box",
+          background: "rgba(214,238,244,0.16)",
+          boxShadow: "inset 0 2px 0 0 #cfe6ec, inset 0 0 0 1px #9fb8bf, 3px 3px 0 #1a0c04",
+          outline: `2px dashed ${STITCH}`, outlineOffset: "3px",
         }}>
-          <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "14px", letterSpacing: "2px", lineHeight: 1 }}>VIP</span>
-            <Asset id="item-tesseraVIP" emoji={ITEM_DEFS.tesseraVIP?.emoji || "🎫"} size={14} />
-          </span>
-          <span style={{ display: "block", height: "5px", background: BRASS.dark }} />
+          {/* riflessi netti sulla plastica */}
+          <span style={{ position: "absolute", left: 16, top: 4, width: 4, height: 28, background: "rgba(255,255,255,0.3)", transform: "skewX(-20deg)" }} />
+          <span style={{ position: "absolute", left: 24, top: 4, width: 2, height: 28, background: "rgba(255,255,255,0.2)", transform: "skewX(-20deg)" }} />
+          {!has && <span style={{ position: "absolute", right: 6, bottom: 4, fontFamily: FONT, fontSize: 8, color: "#cfe6ec99" }}>vuoto</span>}
         </span>
-        {/* plastica trasparente sopra: riflessi netti a strisce, niente sfocature */}
-        <span aria-hidden style={{ position: "absolute", inset: "5px", pointerEvents: "none", overflow: "hidden",
-          background: "rgba(214,238,244,0.14)" }}>
-          <span style={{ position: "absolute", left: "12px", top: 0, width: "4px", height: "100%", background: "rgba(255,255,255,0.35)", transform: "skewX(-20deg)" }} />
-          <span style={{ position: "absolute", left: "20px", top: 0, width: "2px", height: "100%", background: "rgba(255,255,255,0.25)", transform: "skewX(-20deg)" }} />
-        </span>
+        {has && <>
+          <Sparkle style={{ left: -6, top: -4 }} delay={0} />
+          <Sparkle style={{ right: -4, top: 10 }} delay={0.7} />
+          <Sparkle style={{ right: 20, top: -8 }} delay={1.3} />
+        </>}
       </span>
     </Tooltip>
   );
@@ -135,14 +190,13 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
         animation: "bpOpen 0.18s steps(3)", position: "relative", display: "flex", flexDirection: "column",
       }}>
         {/* ── Patta con targhetta, cinghia e fibbia ── */}
-        <div style={{ position: "relative", background: LEATHER_DARK, padding: "18px 24px 22px", display: "flex", alignItems: "center", justifyContent: "center",
+        <div style={{ position: "relative", background: LEATHER_DARK, padding: "18px 24px 22px", minHeight: "128px", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "inset 0 -4px 0 0 #2a1608", outline: `2px dashed ${STITCH}`, outlineOffset: "-10px" }}>
           <span style={{ ...brassPlate, fontSize: "20px", letterSpacing: "6px", padding: "8px 22px" }}>ZAINO</span>
-          {player.hasVIP && (
-            <span style={{ position: "absolute", left: "26px", top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
-              <VipSleeve />
-            </span>
-          )}
+          {/* portatessera cucito a sinistra della targhetta: pieno o vuoto */}
+          <span style={{ position: "absolute", left: "34px", top: "50%", transform: "translateY(-50%) rotate(-3deg)", zIndex: 1 }}>
+            <VipHolder has={!!player.hasVIP} />
+          </span>
           {/* cinghia verticale con fibbia */}
           <span aria-hidden style={{ position: "absolute", left: "50%", bottom: "-18px", transform: "translateX(-50%)", width: "34px", height: "30px",
             background: "#3e2010", boxShadow: "inset 0 0 0 2px #1a0c04", zIndex: 2 }}>

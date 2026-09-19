@@ -646,6 +646,7 @@ export default function Grattini() {
       grant: (id) => grantToken(id, { source: "Prova sviluppatore" }), ids: Object.keys(TOKENS), catalog: () => setTokenDebugOpen(true),
       pedinaro: () => { openPedinaroVisit(); setScreen("pedinaro"); },
       gift: (npc) => giftFromNpc(npc, { always: true }),
+      vip: () => updatePlayer(p => ({...p, hasVIP: !p.hasVIP})), // tessera VIP sì/no
     };
   }, [grantToken, giftFromNpc]); // eslint-disable-line react-hooks/exhaustive-deps
 
