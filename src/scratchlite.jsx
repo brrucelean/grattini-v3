@@ -942,106 +942,92 @@ export default function Grattini() {
 
           <div style={{flex:1, minHeight:0, overflowY:"auto", WebkitOverflowScrolling:"touch", display:"flex", flexDirection:"column", justifyContent:"center"}}>
           <div style={{margin:"auto 0"}}>
+          {/* Testi rivisti (set. 2026): brevi, orientati a cosa fare, e allineati
+              alle regole vere del codice (consumo unghie, grattatori, mosse del
+              nemico, parata parziale, bottino, soglia del boss). */}
           {/* ══ PAGINA 1 — UNGHIE ══ */}
           {tutorialPage === 0 && (<>
             <div style={{color:C.text, fontSize:"13px", lineHeight:"1.5", textAlign:"center", marginBottom:"8px"}}>
-              Le tue <strong style={{color:C.bright}}>5 unghie</strong> sono la barra vita: le consumi grattando i biglietti <em>e</em> le perdi quando un nemico ti colpisce in combattimento.
+              Gratti i biglietti con le unghie, e le unghie sono anche la tua vita: ne hai <strong style={{color:C.bright}}>5</strong>. Quando muoiono tutte, la partita finisce.
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px", marginBottom:"10px", flexShrink:0 }}>
               {[
-                { label:"Sana",         color:C.green,   badge:"💚 PIENO",   desc:"Intatta. Premio al 100%." },
-                { label:"Graffiata",    color:C.gold,    badge:"💛 PIENO",   desc:"Usura iniziale. Premio pieno." },
-                { label:"Sanguinante",  color:C.orange,  badge:"🩸 PIENO",   desc:"Fa male, ma il premio resta intero." },
-                { label:"Marcia",       color:C.red,     badge:"🦠 −75%",    desc:"Solo 25% del premio." },
-                { label:"Morta ✝",      color:"#555",    badge:"💀 FUORI",   desc:"Inutilizzabile. Prossima." },
-                { label:"Kawaii ♡",     color:"#ff88cc", badge:"✨ ×2",      desc:"Rara. Premio raddoppiato." },
+                { label:"Sana",         color:C.green,   badge:"100%",  desc:"Come nuova." },
+                { label:"Graffiata",    color:C.gold,    badge:"100%",  desc:"Primo segno di usura." },
+                { label:"Sanguinante",  color:C.orange,  badge:"100%",  desc:"Ancora un livello e marcisce." },
+                { label:"Marcia",       color:C.red,     badge:"25%",   desc:"Vinci solo un quarto del premio." },
+                { label:"Morta ✝",      color:"#555",    badge:"0%",    desc:"Non gratta più: il biglietto si annulla." },
+                { label:"Kawaii ♡",     color:"#ff88cc", badge:"×2",    desc:"Premio doppio. Si fa con la manicure in locanda." },
               ].map(({label, color, badge, desc}) => (
-                <div key={label} style={{ background:C.card, border:`2px solid ${color}88`, padding:"8px 10px", display:"flex", flexDirection:"column", gap:"3px", boxShadow:"2px 2px 0 #000" }}>
+                <div key={label} style={{ background: wideShell ? MK.panel : C.card, border:`2px solid ${color}88`, padding:"8px 10px", display:"flex", flexDirection:"column", gap:"3px", boxShadow:"2px 2px 0 #000" }}>
                   <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
-                    <div style={{width:"8px", height:"8px", background:color, flexShrink:0, boxShadow:`0 0 4px ${color}`}}/>
+                    <div style={{width:"8px", height:"8px", background:color, flexShrink:0}}/>
                     <span style={{color, fontSize:"14px", fontWeight:"bold", letterSpacing:"0.5px"}}>{label}</span>
-                    <span style={{ marginLeft:"auto", fontSize:"10px", fontWeight:"bold", color: color === "#555" ? "#555" : color, background:"#00000066", padding:"1px 5px", border:`1px solid ${color}33` }}>{badge}</span>
+                    <span style={{ marginLeft:"auto", fontSize:"10px", fontWeight:"bold", color: color === "#555" ? "#777" : color, background:"#00000066", padding:"1px 5px", border:`1px solid ${color}33` }}>premio {badge}</span>
                   </div>
                   <div style={{color:C.dim, fontSize:"12px", lineHeight:"1.35"}}>{desc}</div>
                 </div>
               ))}
             </div>
-            {/* strong: è la regola con la condizione di game over, l'equivalente
-                di TEMPISMO a pagina 2 — un blocco critico per pagina, non tutti. */}
             <Panel accent={C.gold} head="⚠ COME SI CONSUMANO" strong>
-              Ogni <strong style={{color:C.bright}}>3 celle grattate</strong> → l'unghia peggiora di uno stato.<br/>
-              Quando una muore, passi automaticamente alla prossima.<br/>
-              Tutte e 5 morte → <strong style={{color:C.red}}>GAME OVER</strong>. Le unghie <strong style={{color:C.bright}}>non ricrescono</strong> (ma puoi curarle).
+              Ogni <strong style={{color:C.bright}}>3 caselle grattate</strong> l'unghia in uso peggiora di un livello.<br/>
+              Con un <strong style={{color:C.bright}}>grattatore in mano</strong> gratta lui e l'unghia non si consuma, finché ha usi.<br/>
+              Se un'unghia muore passi alla successiva. Curale con i consumabili (🩹 cerotto, 💧 disinfettante) o in locanda.
             </Panel>
           </>)}
 
           {/* ══ PAGINA 2 — COMBATTIMENTO ══ */}
           {tutorialPage === 1 && (<>
-            <Panel accent={C.red} head="🗡️ È UN DUELLO, NON UNA GARA DI SOLDI" step={1}>
-              Il nemico ha una barra <span style={{color:C.red}}>❤️ HP</span> (rossa) e uno <span style={{color:C.blue}}>🛡 scudo</span> (blu). Portalo a <strong style={{color:C.bright}}>0 HP</strong> prima che le tue unghie finiscano.
+            <Panel accent={C.red} head="🎯 L'OBIETTIVO" step={1}>
+              Porta a zero la <span style={{color:C.red}}>vita</span> del nemico prima che lui ti rovini le unghie. Il suo <span style={{color:C.blue}}>scudo</span> assorbe i colpi prima della vita.
             </Panel>
-            <Panel accent={C.gold} head="🎫 OGNI TURNO: GRATTA 3 DELLE 9 CARTE" step={2}>
-              <span style={{color:C.red}}>🗡️ ATTACCO</span> → fa danno al nemico.<br/>
-              <span style={{color:C.blue}}>🛡 DIFESA</span> → ti prepara a PARARE il prossimo colpo.<br/>
-              <span style={{color:C.gold}}>💰 DENARO</span> → bottino in € (non fa danno).<br/>
-              Gratti una carta → il nemico risponde subito (vedi <strong style={{color:C.bright}}>«IN ARRIVO ▸»</strong>).
+            <Panel accent={C.gold} head="🎫 OGNI TURNO GRATTI 3 CARTE SU 9" step={2}>
+              <span style={{color:C.red}}>▲ BOTTA</span>: colpisci il nemico.<br/>
+              <span style={{color:C.blue}}>◆ PARATA</span>: ti prepari a parare il suo prossimo attacco.<br/>
+              <span style={{color:C.gold}}>€ PREMIO</span>: soldi nel bottino, che incassi se vinci.<br/>
+              Dopo ogni tua carta il nemico fa una mossa. In alto vedi le sue 3 mosse del turno e la prossima lampeggia: <strong style={{color:C.bright}}>se sta per attaccare, cerca una PARATA.</strong>
             </Panel>
-            <Panel accent={C.cyan} head="🎯 TEMPISMO (la barra col cursore)" strong step={3}>
-              {/* Mini illustrazione della barra: zona verde al centro, cursore
-                  a metà — un solo elemento visivo spiega TEMPISMO più delle
-                  4 righe di testo sotto, e riempie lo spazio laterale che
-                  altrimenti resta nero. */}
+            <Panel accent={C.cyan} head="⏱ TEMPISMO: FERMA IL CURSORE NEL VERDE" strong step={3}>
               <div style={{ position:"relative", height:"14px", margin:"2px 0 10px", background:"#3a1010", border:`1px solid ${C.dimLow}` }}>
-                <div style={{ position:"absolute", left:"38%", width:"24%", top:0, bottom:0, background:C.green, boxShadow:`0 0 6px ${C.green}` }}/>
-                <div style={{ position:"absolute", left:"48%", top:"-4px", width:0, height:0, borderLeft:"5px solid transparent", borderRight:"5px solid transparent", borderTop:`7px solid ${C.bright}`, filter:`drop-shadow(0 0 3px ${C.bright})` }}/>
+                <div style={{ position:"absolute", left:"26%", width:"48%", top:0, bottom:0, background:C.gold }}/>
+                <div style={{ position:"absolute", left:"44%", width:"12%", top:0, bottom:0, background:C.green }}/>
+                <div style={{ position:"absolute", left:"48%", top:"-4px", width:0, height:0, borderLeft:"5px solid transparent", borderRight:"5px solid transparent", borderTop:`7px solid ${C.bright}` }}/>
               </div>
-              {/* Un solo elemento in risalto per riga invece di 3: se tutto è
-                  grassetto/colorato, niente si distingue davvero. Il colore da
-                  solo (senza bold) basta a richiamare ATTACCO/DIFESA, già
-                  stabiliti nel box sopra — il grassetto resta solo sull'esito. */}
-              Quando attacchi: ferma il cursore nel <span style={{color:C.green}}>VERDE</span> = <strong style={{color:C.green}}>COLPO PERFETTO</strong> (più danno).<br/>
-              Se hai giocato una <span style={{color:C.blue}}>DIFESA</span> e il nemico attacca, parte la PARATA: perfetta = <strong style={{color:C.green}}>annulli il colpo e contrattacchi</strong>.<br/>
-              <strong style={{color:C.red}}>Senza difesa, il colpo ti rovina un'unghia.</strong>
+              <span style={{color:C.red}}>BOTTA</span>: verde = <strong style={{color:C.green}}>colpo perfetto</strong> (+40%), giallo = normale, rosso = metà danno.<br/>
+              <span style={{color:C.blue}}>PARATA</span>: verde = nessun danno e contrattacco, giallo = paghi poco.<br/>
+              <strong style={{color:C.red}}>Senza una parata, il suo attacco ti rovina un'unghia.</strong>
             </Panel>
-            <Panel accent={C.orange} head="🔥 FURIA & COMBO" step={4}>
-              3 attacchi di fila in un turno = <strong style={{color:C.magenta}}>COMBO</strong> (danno bonus).<br/>
-              Dal <span style={{color:C.orange}}>turno 3</span> il nemico va in <strong style={{color:C.orange}}>FURIA</strong>: non si cura più e picchia sempre più forte. <strong style={{color:C.bright}}>Chiudi in fretta.</strong>
+            <Panel accent={C.orange} head="🔥 COMBO E FURIA" step={4}>
+              3 BOTTE nello stesso turno = <strong style={{color:C.magenta}}>combo</strong>, +25% di danno.<br/>
+              Dal <strong style={{color:C.orange}}>turno 3</strong> il nemico è in furia: non si cura più e picchia più forte a ogni turno. Chiudi in fretta.
             </Panel>
           </>)}
 
           {/* ══ PAGINA 3 — MAPPA & SOLDI ══ */}
           {tutorialPage === 2 && (<>
             <Panel accent={C.cyan} head="🗺️ IL PERCORSO" step={1}>
-              Scegli il cammino a nodi fino al <strong style={{color:C.red}}>👹 BOSS</strong> del bioma. Battilo per sbloccare il bioma successivo.
+              La mappa va da sinistra a destra: scegli un nodo per colonna fino al <strong style={{color:C.red}}>👹 boss</strong>. Battilo e passi alla zona successiva. Prima di entrare in un nodo puoi grattare fino a 3 biglietti che hai in tasca.
             </Panel>
             <Panel accent={C.gold} head="📍 I NODI" step={2}>
-              {/* Una riga per voce, UNA sola icona ciascuna (prima "combattimenti"
-                  ne aveva due — 🗡️💀 — senza spiegare perché, e l'ultima riga tre:
-                  doppia/tripla emoji senza senso a colpo d'occhio). Colonna icona
-                  allineata a DESTRA invece che a sinistra: prima un'emoji stretta
-                  come ❓ lasciava un vuoto enorme prima del testo; ora l'icona sta
-                  a ridosso del testo e il vuoto residuo, se c'è, resta a sinistra
-                  dove non si nota. */}
               {[
-                { icon:"🗡️",  body: <span style={{color:C.red}}>combattimenti</span> },
-                { icon:"🏪",  body: <><span style={{color:C.cyan}}>tabaccaio</span> (grattini & grattatori)</> },
-                { icon:"🏨",  body: <><span style={{color:C.magenta}}>locanda</span> (curi le unghie con €)</> },
-                { icon:"❓",  body: <span style={{color:C.text}}>eventi/NPC</span> },
-                { icon:"🧤",  body: <><span style={{color:"#88ccff"}}>guantaio</span> (l'unico che vende il <strong style={{color:C.bright}}>Guanto da BOSS</strong>, protezione per la boss-fight)</> },
-                { icon:"🙏",  body: <span style={{color:C.dimMid}}>sacerdote, anziana, mendicante: possono aiutarti… o fregarti. Leggi sempre le scelte.</span> },
-              ].map((row, i) => (
-                <div key={i} style={{ display:"flex", gap:"8px", marginBottom: i < 5 ? "4px" : 0 }}>
+                { icon:"🗡️",  body: <><span style={{color:C.red}}>combattimento</span>: vinci soldi, perdi unghie se va male.</> },
+                { icon:"🏪",  body: <><span style={{color:C.cyan}}>tabaccaio</span>: biglietti, grattatori, consumabili e la slot.</> },
+                { icon:"🏨",  body: <><span style={{color:C.magenta}}>locanda</span>: paghi e curi le unghie.</> },
+                { icon:"❓",  body: <><span style={{color:C.text}}>incontri</span>: ogni personaggio ti propone delle scelte. Può aiutarti o fregarti: leggi bene.</> },
+                { icon:"🧤",  body: <><span style={{color:"#88ccff"}}>guantaio</span>: vende il Guanto da boss, che ti protegge nello scontro finale.</> },
+              ].map((row, i, arr) => (
+                <div key={i} style={{ display:"flex", gap:"8px", marginBottom: i < arr.length - 1 ? "4px" : 0 }}>
                   <span style={{flex:"0 0 22px", textAlign:"right"}}>{row.icon}</span>
                   <span style={{flex:1}}>{row.body}</span>
                 </div>
               ))}
             </Panel>
-            <Panel accent={C.gold} head="💰 I SOLDI (€)" step={3}>
-              Sono il bottino di combattimenti e grattate. Servono per <strong style={{color:C.bright}}>curarti in locanda</strong>, comprare <strong style={{color:C.bright}}>grattatori da combattimento</strong> e consumabili.<br/>
-              <span style={{color:C.orange}}>⚠ I boss chiedono un minimo di € per farti entrare: non arrivare al verde.</span>
+            <Panel accent={C.gold} head="💰 I SOLDI" step={3}>
+              Li vinci grattando e combattendo, e li spendi per curarti, comprare biglietti e attrezzi.<br/>
+              <span style={{color:C.orange}}>⚠ Il boss ti fa entrare solo se hai abbastanza soldi (€{BOSS_MIN_MONEY[BIOMES[0].boss]} nella prima zona). Altrimenti ti rimanda all'inizio della mappa.</span>
             </Panel>
             <Panel accent={C.green} head="💡 CONSIGLIO">
-              Cura le unghie prima che sia tardi. Tieni la <strong style={{color:"#ff88cc"}}>Kawaii</strong> per i colpi grossi, e passa il mouse sugli oggetti dello zaino per sapere cosa fanno.
+              Passa il mouse su biglietti, oggetti e nodi: ti dicono cosa fanno prima di sceglierli.
             </Panel>
           </>)}
 
