@@ -3,3 +3,6 @@ dist/
 .DS_Store
 *.log
 
+
+# Copie di lavoro temporanee degli agenti di Claude Code
+.claude/worktrees/
