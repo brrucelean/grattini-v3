@@ -63,6 +63,7 @@ import { TokenCollection } from "./components/tokens/TokenCollection.jsx";
 import { ResetProgress } from "./components/desk/ResetProgress.jsx";
 import { PedinaroDesk } from "./components/tokens/PedinaroDesk.jsx";
 import { TokenChoiceModal } from "./components/tokens/TokenChoiceModal.jsx";
+import { GameToasts } from "./components/shell/GameToasts.jsx";
 import { Pedina } from "./components/map/Pedina.jsx";
 import { TokenDebug, TokenPreviewBar } from "./components/tokens/TokenDebug.jsx";
 import { TokenVisualLayer } from "./components/tokens/TokenVisualLayer.jsx";
@@ -357,9 +358,17 @@ export default function Grattini() {
     handleUseItem,
   } = useItemHandlers({ player, updatePlayer, addLog });
 
+  // Avvisi che spariscono da soli (components/shell/GameToasts.jsx)
+  const [toasts, setToasts] = useState([]);
+  const showToast = useCallback(({ emoji = "🔔", title = "", text, ms = 3200 }) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setToasts(t => [...t.slice(-3), { id, emoji, title, text, ms }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), ms);
+  }, []);
+
   // ─── HOOK: useNailHandlers ───
   const { playerRelicEffects, effectiveFortune, getActiveNailState, handleCellScratch, handleNailDamage, handleCombatCellScratch, consumeGrattatore } = useNailHandlers({
-    player, updatePlayer, triggerNpcComment, scratchingCard, addLog, setItemFoundModal,
+    player, updatePlayer, triggerNpcComment, scratchingCard, addLog, showToast,
   });
   // Riferimento stabile per HUD (memoizzato) — un'arrow function inline nel JSX
   // sarebbe una nuova identità ad ogni render, vanificando il memo.
@@ -647,6 +656,7 @@ export default function Grattini() {
       pedinaro: () => { openPedinaroVisit(); setScreen("pedinaro"); },
       gift: (npc) => giftFromNpc(npc, { always: true }),
       vip: () => updatePlayer(p => ({...p, hasVIP: !p.hasVIP})), // tessera VIP sì/no
+      toast: (text = "La Fascia da Polso si è consumata.") => showToast({ emoji: "🥊", title: "GRATTATORE CONSUMATO", text }),
     };
   }, [grantToken, giftFromNpc]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -4021,6 +4031,8 @@ export default function Grattini() {
           stats: `${getStored(STORAGE_KEYS.alltime, {}).totalRuns || 0} run`,
         }} />
       )}
+
+      <GameToasts toasts={toasts} />
 
       {/* ═══ ACHIEVEMENT TOAST ═══ */}
       {achievementToast && (

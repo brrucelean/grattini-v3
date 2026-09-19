@@ -207,13 +207,22 @@ export function matchWinSymbol(cells, matchNeeded) {
   return null;
 }
 
+// Premio normale di un biglietto vincente: tra prizeMin e prizeMax di
+// CARD_BALANCE, mai sotto il costo. Stesso tiro di generateCard.
+export function normalWinPrize(type) {
+  const cb = CARD_BALANCE[type.id];
+  const pMin = cb?.prizeMin ?? type.cost;
+  const pMax = cb?.prizeMax ?? type.maxPrize;
+  return Math.max(type.cost, Math.round(pMin + rng() * (pMax - pMin)));
+}
+
 // Premio nominale di una combinazione trovata sulla schedina. Con il Malocchio
 // le trappole della Bocca del Drago diventano jolly DOPO la generazione: su un
 // biglietto nato perdente (prize 0) il poker col jolly pagava €0. Ogni vincita
-// riconosciuta paga un premio vero: se il biglietto non ne aveva, vale la
-// stessa consolazione che le carte col jolly (Porta Sfortuna) già usano.
+// riconosciuta paga il premio NORMALE del biglietto, senza riduzioni
+// (proprietario, 2026-09-19): la reliquia deve valere davvero.
 export function matchWinPrize(card) {
-  return card.prize > 0 ? card.prize : jollyConsolationPrize(card);
+  return card.prize > 0 ? card.prize : normalWinPrize(card);
 }
 
 export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
@@ -228,7 +237,7 @@ export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
   // Fallback a type.cost/type.maxPrize per eventuali carte senza balance entry.
   const pMin = cb?.prizeMin ?? type.cost;
   const pMax = cb?.prizeMax ?? type.maxPrize;
-  const rollPrize = () => Math.max(type.cost, Math.round(pMin + rng() * (pMax - pMin)));
+  const rollPrize = () => normalWinPrize(type);
   let cells = [];
   let prize = 0;
   let extra = {};

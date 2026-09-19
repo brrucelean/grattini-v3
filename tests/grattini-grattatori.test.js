@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { CARD_TYPES, CARD_BALANCE } from "../src/data/cards.js";
 import { GRATTATORE_DEFS, makeGrattatore } from "../src/data/items.js";
 import {
-  generateCard, applyTrapToJolly, matchWinSymbol, matchWinPrize, jollyConsolationPrize,
+  generateCard, applyTrapToJolly, matchWinSymbol, matchWinPrize, jollyConsolationPrize, normalWinPrize,
 } from "../src/utils/card.js";
 import {
   COMBAT_ONLY_EFFECTS, combatOnlyScratchBlock, grattatoreSpentAtFightEnd,
@@ -49,7 +49,7 @@ test("P-01: biglietto perdente + Malocchio che fa 4 uguali col jolly → premio 
       jollyWins++;
       const prize = matchWinPrize(card);
       assert.ok(prize > 0, "una vincita riconosciuta non paga mai €0");
-      assert.ok(prize >= type.cost && prize <= cb.prizeMax, `premio ${prize} fuori tabella`);
+      assert.ok(prize >= Math.max(type.cost, cb.prizeMin) && prize <= cb.prizeMax, `premio ${prize} fuori tabella`);
     }
     assert.ok(jollyWins > 0, "il caso del bug deve presentarsi nel campione");
   });
@@ -163,4 +163,18 @@ test("P-03: avviso di fine grattatore con articolo e genere giusti", () => {
   assert.equal(grattatoreGoneText(g("fasciaPolso"), 2), "La Fascia da Polso: effetto finito, restano 2 usi.");
   assert.equal(grattatoreGoneText(g("fasciaPolso"), 1), "La Fascia da Polso: effetto finito, resta 1 uso.");
   assert.equal(grattatoreConArticolo(g("moneta_oro")), "la Moneta d'Oro");
+});
+
+test("P-01: la vincita col jolly del Malocchio paga il premio NORMALE, non ridotto", () => {
+  withSeed(11, () => {
+    const type = CARD_TYPES.find(t => t.id === "boccaDrago");
+    const cb = CARD_BALANCE.boccaDrago;
+    const prizes = Array.from({ length: 2000 }, () => matchWinPrize({ ...type, prize: 0 }));
+    const mean = prizes.reduce((a, b) => a + b, 0) / prizes.length;
+    // premio normale: media a metà tabella, e si arriva vicino al massimo
+    assert.ok(Math.abs(mean - (cb.prizeMin + cb.prizeMax) / 2) < 5, `media ${mean}`);
+    assert.ok(Math.max(...prizes) > cb.prizeMax * 0.9, "deve poter uscire un premio alto");
+    assert.ok(prizes.every(p => p >= cb.prizeMin && p <= cb.prizeMax));
+    assert.equal(typeof normalWinPrize, "function");
+  });
 });

@@ -5,7 +5,7 @@ import { hasRelic } from "../utils/hasRelic.js";
 import { spendGrattatoreUse, grattatoreAtLastUse, grattatoreGoneText, COMBAT_ONLY_EFFECTS } from "../utils/grattatore.js";
 import { fortuneModifier } from "../utils/tokens.js";
 
-export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scratchingCard, addLog, setItemFoundModal }) {
+export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scratchingCard, addLog, showToast }) {
   // Reliquie: lista effetti attivi per passare ai componenti figli
   const playerRelicEffects = useMemo(() => (player?.relics || []).map(r => r.effect), [player?.relics]);
   // Fortuna effettiva: base + gettone (Mezzo Corno, Moneta Incollata, Prisma,
@@ -105,20 +105,14 @@ export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scrat
   }, [updatePlayer, addLog, triggerNpcComment]);
 
   // Avviso quando un grattatore finisce (consumato, rotto, effetto esaurito):
-  // riga nel registro + popup. Il popup parte a fine giro e, se nello stesso
-  // momento se n'è aperto un altro (reliquia, bioma sbloccato, bluff...), si
-  // aggiunge in fondo al suo testo invece di sovrascriverlo o esserne coperto.
+  // riga nello scontrino + avviso che sparisce da solo (niente OK da premere:
+  // proprietario, 2026-09-19). Non copre né interrompe gli altri popup.
   const notifyGrattatoreGone = useCallback((g, usesLeft = 0) => {
     const emoji = g.emoji || "🔧";
     const text = grattatoreGoneText(g, usesLeft);
     addLog(`${emoji} ${text}`, C.orange);
-    if (!setItemFoundModal) return;
-    setTimeout(() => setItemFoundModal(cur => cur
-      ? {...cur, desc: `${cur.desc || ""}\n\n${emoji} ${text}`}
-      : { emoji, name: g.name, desc: text, buttonLabel: "OK →",
-          subtitle: usesLeft > 0 ? "Grattatore: effetto finito" : "Grattatore consumato" }
-    ), 0);
-  }, [addLog, setItemFoundModal]);
+    showToast?.({ emoji, text, title: usesLeft > 0 ? "EFFETTO FINITO" : "GRATTATORE CONSUMATO" });
+  }, [addLog, showToast]);
 
   // Consuma 1 uso del grattatore equipaggiato (grattini, fine fight per Fascia
   // da Polso e Guanto da BOSS, e CombatView quando l'effetto di un grattatore
