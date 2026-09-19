@@ -1,4 +1,4 @@
-import { FONT } from "../../data/theme.js";
+import { FONT, FONT_TITLE } from "../../data/theme.js";
 import { NODE_ICONS, NODE_TOOLTIPS } from "../../data/map.js";
 import { BOSS_SPRITE } from "../../data/biomes.js";
 import { ITEM_DEFS } from "../../data/items.js";
@@ -9,8 +9,9 @@ import { groupItems } from "../../utils/backpack.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
 import { ToolTray } from "../scratch/ScratchTable.jsx";
-import { nodeFamily, FAMILY, GOLD, dither, bevel } from "../map/mapTheme.js";
+import { nodeFamily, FAMILY, GOLD } from "../map/mapTheme.js";
 import { MK } from "../desk/mapKit.jsx";
+import { StagePortrait } from "../desk/StagePortrait.jsx";
 
 // ─── LA SOGLIA — sosta prima di entrare in un nodo (desktop) ─────
 // Stesso sistema delle schermate di passaggio che funzionano (Nonno Carmelo,
@@ -73,35 +74,31 @@ export function NodeThreshold({ node, player, preScratchCount, onPreScratch, onE
   return (
     <div style={{
       width: "100%", height: "100%", boxSizing: "border-box", padding: "20px", background: MK.bg, overflowY: "auto",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: "18px",
+      // ancorato a sinistra come il dialogo: il riquadro non si sposta cambiando pagina
+      display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start", gap: "18px",
       fontFamily: FONT, color: MK.txt, minHeight: 0,
     }}>
       {/* ══ Il luogo ══ */}
       <article aria-label={`Prossima tappa: ${name}`} style={{
-        width: "min(100%, 1040px)", boxSizing: "border-box", ...panel(accent + "aa"),
+        width: "min(100%, 1040px)", maxWidth: "100%", flexShrink: 0, boxSizing: "border-box", ...panel(accent + "aa"),
         padding: "18px 22px", display: "grid", gridTemplateColumns: "auto minmax(0,1fr) auto", gap: "24px", alignItems: "center",
         position: "relative",
       }}>
-        {/* striscia del colore di famiglia, come sulla casella della mappa */}
-        <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: dither(famTile.tile, famTile.tile2, 2) }} />
+        {/* striscia del colore della scena, come nei dialoghi */}
+        <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: accent }} />
 
-        {/* ritratto grande, incorniciato d'oro come sulla mappa */}
-        <div style={{ width: 216, height: 216, padding: 6, boxSizing: "border-box", background: dither(famTile.tile, famTile.tile2, 2),
-          boxShadow: [bevel(GOLD, 2), node.elite ? `0 0 0 3px #000, 0 0 0 6px #f08a2a` : "4px 4px 0 #000"].join(", "),
-          display: "grid", placeItems: "center", overflow: "hidden" }}>
-          {spriteId
-            ? <Asset id={spriteId} size={204} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ fontSize: "96px", lineHeight: 1 }}>{icon}</span>}
-        </div>
+        {/* ritratto condiviso con i dialoghi: stessa cornice, respira */}
+        <StagePortrait spriteId={spriteId} accent={accent} icon={icon} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
-          <span style={{ fontSize: "11px", letterSpacing: "3px", color: MK.accent }}>PROSSIMA TAPPA</span>
-          <span style={{ fontSize: "34px", lineHeight: 1, color: MK.txt }}>{name}</span>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {/* stesso ordine del dialogo: cartellini, nome, testo */}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: "11px", letterSpacing: "3px", color: MK.accent }}>PROSSIMA TAPPA</span>
             <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "3px 8px", color: tag.col, background: "#000", boxShadow: `inset 0 0 0 1px ${tag.col}` }}>{famTile.glyph} {tag.label}</span>
             {node.elite && <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "3px 8px", color: "#000", background: "#f08a2a" }}>★ ÉLITE · PREMI DOPPI</span>}
           </div>
-          <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.6, color: MK.ink, maxWidth: "56ch" }}>{desc}</p>
+          <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: "normal", fontSize: "30px", lineHeight: 1.05, color: MK.txt }}>{name}</h2>
+          <p style={{ margin: 0, fontSize: "16px", lineHeight: 1.6, fontStyle: "italic", color: MK.ink, maxWidth: "62ch" }}>{desc}</p>
           {bossGate && (
             <div style={{ padding: "10px 14px", background: "#000", boxShadow: `inset 0 0 0 2px ${bossGate.canEnter ? MK.green : MK.red}`, fontSize: "13px", lineHeight: 1.5, color: MK.txt }}>
               <span style={{ color: bossGate.canEnter ? MK.green : MK.red, letterSpacing: "2px" }}>{bossGate.canEnter ? "ACCESSO CONSENTITO" : "ACCESSO NEGATO"}</span>

@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { FONT, FONT_TITLE } from "../../data/theme.js";
 import { normalizePortrait } from "../../utils/nail.js";
 import { hasAsset } from "../../assets/registry.js";
-import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
-import { GOLD, bevel, dither } from "../map/mapTheme.js";
+import { GOLD } from "../map/mapTheme.js";
 import { MK } from "../desk/mapKit.jsx";
+import { StagePortrait } from "../desk/StagePortrait.jsx";
 
 // ─── IL DIALOGO — evento / NPC su desktop ────────────────────────
 // Impaginato come la soglia del nodo (proprietario, 2026-09-19): riquadro
@@ -38,7 +38,6 @@ function chipColor(badge, isCost) {
 
 const STAGE_CSS = `
   @keyframes evStageCursor { 0%,100% { opacity:1; } 50% { opacity:0; } }
-  @keyframes evBreathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes evKeyIn { from { transform: translateX(12px); opacity: 0; } to { transform: none; opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .ev-anim { animation: none !important; } }
 `;
@@ -73,14 +72,15 @@ export function EventStage({
     <div style={{
       flex: "1 1 0", minWidth: 0, minHeight: 0, width: "100%", alignSelf: "stretch", boxSizing: "border-box",
       background: MK.bg, padding: "20px", overflowY: "auto",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: "18px",
+      // ancorato a sinistra come la soglia: il riquadro non si sposta cambiando pagina
+      display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "18px",
       fontFamily: FONT, color: TXT,
     }}>
       <style>{STAGE_CSS}</style>
 
       {/* ══ Il personaggio: ritratto, nome, battuta ══ */}
       <article aria-label={ev.title} onClick={onSkip} style={{
-        width: "min(100%, 1040px)", boxSizing: "border-box", flexShrink: 0, position: "relative",
+        width: "min(100%, 1040px)", maxWidth: "100%", boxSizing: "border-box", flexShrink: 0, position: "relative",
         background: MK.panel, boxShadow: `inset 0 0 0 2px ${tag}aa, 5px 5px 0 #000`,
         padding: "18px 22px", display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: "24px", alignItems: "center",
         cursor: typingDone ? "default" : "pointer",
@@ -88,26 +88,9 @@ export function EventStage({
         {/* striscia del colore del tipo, come la soglia */}
         <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: tag }} />
 
-        {/* ritratto: stessa misura e cornice d'oro della soglia */}
-        <div style={{ width: 216, height: 216, padding: 6, boxSizing: "border-box", overflow: "hidden",
-          background: `radial-gradient(60% 60% at 50% 40%, ${tag}33 0 50%, ${tag}1a 50% 70%, transparent 70%), ${dither("#0b1110", "#0f1716", 2)}`,
-          boxShadow: `${bevel(GOLD, 2)}, 4px 4px 0 #000`, display: "grid", placeItems: "center" }}>
-          <div className="ev-anim" style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", overflow: "hidden",
-            animation: "evBreathe 3.2s steps(4) infinite" }}>
-            {spriteId ? (
-              <Asset id={spriteId} size="100%" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : bigArt ? (
-              <pre style={{ margin: 0, color: GOLD.mid, fontSize: "11px", lineHeight: 1.2, fontFamily: FONT, textAlign: "left" }}>
-                {normalizePortrait(bigArt).map((line, i) => {
-                  const t = blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line;
-                  return <span key={i}>{t}{"\n"}</span>;
-                })}
-              </pre>
-            ) : (
-              <span style={{ fontSize: "96px", lineHeight: 1 }}>{node.secret ? "🔮" : cat.icon}</span>
-            )}
-          </div>
-        </div>
+        {/* ritratto condiviso con la soglia: stessa cornice, respira */}
+        <StagePortrait spriteId={spriteId} accent={tag} icon={node.secret ? "🔮" : cat.icon}
+          art={!spriteId && bigArt ? normalizePortrait(bigArt).map((line, i) => (blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line)) : null} />
 
         {/* nome e battuta, alla destra del ritratto */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
@@ -130,10 +113,10 @@ export function EventStage({
       </article>
 
       {/* ══ Le scelte, centrate sotto ══ */}
-      <section style={{ width: "min(100%, 760px)", display: "flex", flexDirection: "column" }}>
+      <section style={{ width: "min(100%, 1040px)", display: "flex", flexDirection: "column", alignItems: "center" }}>
         {/* le scelte: tasti numerati, premibili anche da tastiera */}
         {typingDone && (
-          <div style={{ display: "flex", flexDirection: "column", gap: many ? "6px" : "10px", paddingBottom: 6 }}>
+          <div style={{ width: "min(100%, 760px)", display: "flex", flexDirection: "column", gap: many ? "6px" : "10px", paddingBottom: 6 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontSize: "12px", letterSpacing: "3px", color: MK.accent }}>COSA FAI?</span>
               <span style={{ fontSize: "10px", color: DIM, letterSpacing: "1px" }}>tasti 1–{choices.length}</span>
