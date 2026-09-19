@@ -410,16 +410,6 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
           </span>
         ))}
         <span style={{display:"inline-flex", alignItems:"center", gap:"6px", color: C.orange, flexShrink:0}}>★ ÉLITE</span>
-        <span style={{marginLeft:"auto", color: theme.ink, flexShrink:0}}>PAGATO = già visitato</span>
-        {tokens && (
-          <button type="button" onClick={() => setPanelOpen(o => !o)} style={{
-            display:"inline-flex", alignItems:"center", gap:"6px", flexShrink:0, padding:"0 6px", height: 22,
-            border:"none", background:"#000", color: GOLD.mid, fontFamily: FONT, fontSize:"11px", letterSpacing:"1px",
-            cursor:"pointer", boxShadow:`inset 0 0 0 1px ${GOLD.lo}`,
-          }}>
-            <Pedina id={pedinaId} size={16} /> {TOKENS[pedinaId]?.name.toUpperCase()}
-          </button>
-        )}
       </div>
     </div>
   );

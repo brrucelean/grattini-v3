@@ -289,6 +289,13 @@ export default function Grattini() {
       updatePlayer(p => ({...p, scratchCards: [...p.scratchCards, bonusCard], bonusStartCard: null}));
       addLog(`🦃 Il Tacchino di Natale: ${bonusCard.name} gratis nel mazzo!`, C.gold);
     }
+    // Chiusura forte dell'intro: nessun overlay o ritorno alla grattata deve
+    // poter coprire la mappa dopo RIFIUTA o dopo la scelta del premio.
+    setScratchingCard(null);
+    setReturnScreen(null);
+    setCardSelectMode(false);
+    setSelectedCardIdx(null);
+    setCurrentNode(null);
     setScreen("map");
   };
 
@@ -1184,6 +1191,7 @@ export default function Grattini() {
           achievements={achievements}
           discoveredRelics={discoveredRelics}
           discoveredTokens={discoveredTokens}
+          allTimeStats={getStored(STORAGE_KEYS.alltime, {})}
           onOpenTrophies={() => setShowTrophies(true)}
           onOpenReliquie={() => setShowReliquie(true)}
           onOpenStats={() => setShowAllTimeStats(true)}

@@ -135,7 +135,7 @@ export function IntroDesk({ messages, cards, prizes, onScratch, onRefuse, onPock
       {choosing && (
         <div style={{ width: "min(100%, 1000px)", display: "flex", flexDirection: "column", gap: "10px" }}>
           <span style={{ alignSelf: "center", fontSize: "12px", letterSpacing: "3px", color: INK }}>
-            QUALE INTASCHI? UNO SOLO
+            SCEGLI QUALE DEI TRE PREMI INTASCARE
           </span>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${prizes.length}, minmax(0, 324px))`, justifyContent: "center", gap: "14px" }}>
             {prizes.map((ip, idx) => (

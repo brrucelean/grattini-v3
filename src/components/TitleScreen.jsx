@@ -18,6 +18,7 @@ export function TitleScreen({
   achievements,
   discoveredRelics,
   discoveredTokens,
+  allTimeStats,
   onOpenTrophies,
   onOpenReliquie,
   onOpenStats,
@@ -28,7 +29,7 @@ export function TitleScreen({
   const counts = {
     trophies: [Object.keys(achievements || {}).length, ACHIEVEMENTS.length],
     relics: [(discoveredRelics || []).length, Object.keys(RELIC_DEFS).length],
-    stats: null,
+    stats: [allTimeStats?.totalWins || 0, allTimeStats?.totalRuns || 0],
     tokens: [(discoveredTokens || []).length, Object.keys(TOKENS).length],
   };
   const actions = {
@@ -115,7 +116,7 @@ export function TitleScreen({
           background:#070908; font:24px/1 ${FONT_TITLE}; box-shadow:3px 3px 0 #000; }
         .title-meta-count { font-size:12px; color:var(--paper); }
         .title-meta-label { display:block; margin-top:14px; font:16px/1 ${FONT_TITLE}; letter-spacing:2px; }
-        .title-meter { display:block; height:6px; margin-top:8px; border:1px solid var(--accent); background:#050706; }
+        .title-meter { display:flex; height:6px; margin-top:8px; border:1px solid var(--accent); background:#050706; overflow:hidden; }
         .title-meter > span { display:block; height:100%; background:var(--accent); }
         .title-settings { width:100%; padding:9px 12px; border:0; border-top:1px solid #35413d; background:#080b0a;
           color:${C.dim}; font:11px ${FONT}; letter-spacing:2px; text-align:left; cursor:pointer; }
@@ -197,15 +198,21 @@ export function TitleScreen({
           <div className="title-meta">
             {META_CARDS.map(card => {
               const count = counts[card.key];
-              const pct = count ? Math.min(100, count[1] ? count[0] / count[1] * 100 : 0) : 100;
+              const pct = Math.min(100, count[1] ? count[0] / count[1] * 100 : 0);
+              const lossPct = card.key === "stats" && count[1] ? 100 - pct : 0;
+              const countLabel = card.key === "stats" ? `${Math.round(pct)}% VINTE` : `${count[0]} / ${count[1]}`;
+              const accent = card.key === "stats" && count[1] && lossPct > pct ? C.red : card.accent;
               return (
-                <button key={card.key} className="title-meta-button" style={{"--accent":card.accent}} onClick={actions[card.key]}>
+                <button key={card.key} className="title-meta-button" style={{"--accent":accent}} onClick={actions[card.key]}>
                   <span className="title-meta-top">
                     <span className="title-meta-mark" aria-hidden>{card.mark}</span>
-                    <span className="title-meta-count">{count ? `${count[0]} / ${count[1]}` : "APRI"}</span>
+                    <span className="title-meta-count">{countLabel}</span>
                   </span>
                   <span className="title-meta-label">{card.label}</span>
-                  <span className="title-meter" aria-hidden><span style={{width:`${pct}%`}} /></span>
+                  <span className="title-meter" aria-hidden>
+                    <span style={{width:`${pct}%`, background:card.key === "stats" ? C.cyan : undefined}} />
+                    {card.key === "stats" && <span style={{width:`${lossPct}%`, background:C.red}} />}
+                  </span>
                 </button>
               );
             })}
