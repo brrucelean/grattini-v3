@@ -56,6 +56,7 @@ import { GameOverDesk, VictoryDesk, CedoleDesk } from "./components/desk/EndScre
 import { MK, mkPanel, MkButton, MkScreen, MkTitle } from "./components/desk/mapKit.jsx";
 import { MinigameTable, CoverCell, MazeGlyph } from "./components/minigame/MinigameTable.jsx";
 import { Backpack } from "./components/inventory/Backpack.jsx";
+import { TokenDock } from "./components/tokens/TokenDock.jsx";
 import { TokenPouchModal } from "./components/tokens/TokenPouchModal.jsx";
 import { TokenCollection } from "./components/tokens/TokenCollection.jsx";
 import { ResetProgress } from "./components/desk/ResetProgress.jsx";
@@ -418,7 +419,7 @@ export default function Grattini() {
     if (withModal && r.outcome === "added") {
       setItemFoundModal({
         emoji: "🪙", tokenId, name: def.name,
-        desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia (zaino → GETTONI). Clicca la pedina sulla mappa per equipaggiarlo.`,
+        desc: `VANTAGGIO: ${def.pro}\nFREGATURA: ${def.contro}\nQUANDO: ${def.quando}\n\nÈ nella custodia sotto la mappa. Trascinalo sul primo posto per renderlo attivo.`,
         subtitle: `${source} · Gettone ${TOKEN_RARITY[def.rarity].label}`,
       });
     }
@@ -2104,6 +2105,8 @@ export default function Grattini() {
           />
           )}
           </Suspense>
+
+          <TokenDock tokens={player.tokens} canSwap={canSwapToken(player.tokens)} onEquip={handleEquipToken} />
 
           {/* Striscia inventario compatta — flexShrink:0, NON toglie spazio alla mappa */}
           {(player.items.length > 0 || player.grattatori.length > 0) && (

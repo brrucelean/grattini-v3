@@ -2,8 +2,6 @@ import { FONT } from "../../data/theme.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../../data/items.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
-import { POUCH_SIZE } from "../../data/tokens.js";
-import { TokenCard } from "../tokens/TokenCard.jsx";
 
 // ─── ZAINO — si apre al centro, materico come le vecchie app iOS ──
 // Tradotto in pixel art: cuoio a dithering, cuciture tratteggiate, patta con
@@ -50,7 +48,7 @@ function Pocket({ title, count, children }) {
       background: CANVAS, padding: "14px 14px 16px", display: "flex", flexDirection: "column", gap: "10px",
       // tasca cucita sul cuoio
       boxShadow: "inset 0 0 0 2px #15130f, 0 0 0 3px #4e2a14, 0 0 0 5px #1a0c04",
-      outline: `2px dashed ${STITCH}`, outlineOffset: "4px", minWidth: 0,
+      outline: `2px dashed ${STITCH}`, outlineOffset: "4px", minWidth: 0, minHeight: 0,
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <span style={{ fontSize: "12px", letterSpacing: "2px", color: STITCH }}>{title}</span>
@@ -62,7 +60,6 @@ function Pocket({ title, count, children }) {
 }
 
 export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClose }) {
-  const tokens = player.tokens;
   const items = player.items || [];
   const tools = player.grattatori || [];
   const itemSlots = Math.max(maxItems, items.length);
@@ -76,11 +73,11 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
       <style>{`@keyframes bpOpen { 0% { transform: translateY(-16px); } 50% { transform: translateY(-6px); } 100% { transform: none; } }
         @media (prefers-reduced-motion: reduce) { .bp-body { animation: none !important; } }`}</style>
       <div className="bp-body" style={{
-        pointerEvents: "auto", width: "min(820px, 100%)", maxHeight: "calc(100vh - 32px)", overflowY: "auto",
+        pointerEvents: "auto", width: "min(820px, 100%)", maxHeight: "calc(100vh - 32px)", overflow: "hidden",
         background: LEATHER, boxSizing: "border-box",
         boxShadow: "inset 0 0 0 3px #2a1608, inset 4px 4px 0 3px #8a5530, inset -4px -4px 0 3px #3e2010, 8px 8px 0 #0a0503",
         outline: `2px dashed ${STITCH}`, outlineOffset: "-12px",
-        animation: "bpOpen 0.18s steps(3)", position: "relative",
+        animation: "bpOpen 0.18s steps(3)", position: "relative", display: "flex", flexDirection: "column",
       }}>
         {/* ── Patta con targhetta, cinghia e fibbia ── */}
         <div style={{ position: "relative", background: LEATHER_DARK, padding: "18px 24px 22px", display: "flex", alignItems: "center", justifyContent: "center",
@@ -98,7 +95,11 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
         </div>
 
         {/* ── Tasche ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)", gap: "22px", padding: "34px 26px 18px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)",
+          gap: "22px", padding: "34px 26px 18px", flex: 1, minHeight: 0,
+        }}>
           <Pocket title="CONSUMABILI" count={`${items.length}/${maxItems}`}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: "8px" }}>
               {Array.from({ length: itemSlots }, (_, idx) => {
@@ -145,46 +146,10 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
               })}
             </div>
           </Pocket>
+
         </div>
 
-        {/* ── Terza tasca: i gettoni della mappa (G-01) ── */}
-        {tokens && (
-          <div style={{ padding: "4px 26px 18px" }}>
-            <Pocket title="GETTONI" count={`${tokens.pouch.length}/${POUCH_SIZE}`}>
-              {/* Nello zaino i gettoni si guardano e basta: il cambio pedina
-                  avviene solo sulla mappa (clic sulla pedina), prima del nodo. */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 10px", background: "#1c1a15",
-                boxShadow: "inset 2px 2px 0 0 #0c0b08", fontSize: "11px", lineHeight: 1.4, color: INK }}>
-                <span aria-hidden style={{ ...brassPlate, padding: "2px 6px", fontSize: "10px", letterSpacing: "1px", flexShrink: 0 }}>REGOLA</span>
-                <span>Qui vedi i gettoni che porti e cosa fanno. <span style={{ color: BRASS.hi }}>La pedina si cambia solo sulla mappa</span>:
-                  mentre cammini, clicca la tua pedina e scegli CAMBIA GETTONE, prima di entrare nel nodo.</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${POUCH_SIZE}, minmax(0,1fr))`, gap: "12px" }}>
-                {Array.from({ length: POUCH_SIZE }, (_, idx) => {
-                  const id = tokens.pouch[idx];
-                  if (!id) return (
-                    <div key={idx} style={{ minHeight: "120px", display: "flex", alignItems: "center", justifyContent: "center",
-                      outline: "2px dashed #4a463c", outlineOffset: "-4px", color: "#6d6552", fontSize: "11px", letterSpacing: "1px" }}>
-                      POSTO LIBERO
-                    </div>
-                  );
-                  const active = id === tokens.equipped;
-                  return (
-                    <div key={id} style={{ display: "flex", flexDirection: "column", gap: "6px", minWidth: 0,
-                      outline: active ? `2px solid ${BRASS.mid}` : "none", outlineOffset: "3px" }}>
-                      <TokenCard id={id} compact fill badge={active ? "PEDINA ATTIVA" : null} />
-                      <span style={{ fontSize: "10px", letterSpacing: "1px", textAlign: "center", color: active ? BRASS.hi : "#a8987a" }}>
-                        {active ? "STA CAMMINANDO SULLA MAPPA" : "IN TASCA"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </Pocket>
-          </div>
-        )}
-
-        <div style={{ padding: "0 26px 26px", textAlign: "center", fontSize: "11px", color: STITCH, letterSpacing: "1px" }}>
+        <div style={{ padding: "0 26px 22px", flexShrink: 0, textAlign: "center", fontSize: "11px", color: STITCH, letterSpacing: "1px" }}>
           Clic su un consumabile per usarlo · clic su un grattatore per prenderlo in mano
         </div>
       </div>

@@ -67,13 +67,21 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
 
   const pos = useMemo(() => {
     const out = {};
+    const verticalCoords = map.rows.flat().map(n => n.x ?? 0.5);
+    const minCoord = Math.min(...verticalCoords);
+    const maxCoord = Math.max(...verticalCoords);
+    const coordSpan = Math.max(0.001, maxCoord - minCoord);
+    // Distribuzione centrata: stesso respiro sopra la prima fila e sotto
+    // l'ultima, mantenendo i nodi vicini alla numerazione e senza scalarli.
+    const edgeGap = 18;
+    const topCenter = PAYLINE_H + 8 + T / 2 + edgeGap;
+    const bottomCenter = PAYLINE_H + 8 + usableH - T / 2 - LABEL_H - edgeGap;
     map.rows.forEach((row, rIdx) => {
       row.forEach(node => {
         const x = mx(originX + colW * rIdx + colW / 2);
         // node.x ∈ [0,1] era l'ascissa della mappa verticale: qui diventa l'ordinata.
-        const top = PAYLINE_H + 8 + T / 2;
-        const span = Math.max(0, usableH - T - LABEL_H);
-        const y = node.type === "boss" ? PAYLINE_H + 8 + usableH / 2 - LABEL_H / 2 : top + (node.x ?? 0.5) * span;
+        const normalizedY = ((node.x ?? 0.5) - minCoord) / coordSpan;
+        const y = topCenter + normalizedY * Math.max(0, bottomCenter - topCenter);
         out[node.id] = { x: Math.round(x), y: Math.round(y) };
       });
     });
@@ -111,9 +119,11 @@ export function MapBoard({ map, currentRow, visitedNodes, onSelectNode, reachabl
 
   // Dove sta la pedina: l'ultimo nodo visitato nella colonna precedente.
   const pedinaNode = moving || (currentRow > 0 ? map.rows[currentRow - 1]?.find(n => visitedNodes.includes(n.id)) : null);
+  const startNode = map.rows[0]?.find(n => n.type === "start") || map.rows[0]?.[0];
+  const startPos = startNode && pos[startNode.id];
   const pedinaAt = pedinaNode && pos[pedinaNode.id]
     ? pos[pedinaNode.id]
-    : { x: Math.round(mx(PAD_X + colW * 0.3)), y: Math.round(PAYLINE_H + 8 + usableH / 2) };
+    : { x: Math.round(mx(PAD_X + colW * 0.3)), y: startPos?.y ?? Math.round(PAYLINE_H + 8 + usableH / 2) };
 
   // Scatti sonori quando la pedina avanza (stessa voce della mappa legacy).
   const lastPedina = useRef(null);

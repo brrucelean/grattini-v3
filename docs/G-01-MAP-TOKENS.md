@@ -25,12 +25,12 @@ Sono la parte collezionabile e divertente, e costano poco.
 | Regola | Valore |
 |---|---|
 | Pedine equipaggiate | **1** alla volta |
-| Custodia | **3 posti**, dentro lo zaino, sezione `GETTONI n/3` |
+| Custodia | **3 posti affiancati** nella fascia sotto la mappa: principale a sinistra, due riserve accanto |
 | Gettone d'Ottone | parte in custodia, **occupa uno dei 3 posti** e si può buttare come gli altri |
 | Custodia mai vuota | non puoi buttare l'ultimo gettone; se un effetto te lo toglie (sequestro), torna l'Ottone |
 | Buttare quello equipaggiato | si equipaggia il primo rimasto in custodia |
 | Custodia piena | scelta obbligatoria: `EQUIPAGGIA` · `CONSERVA` (butti uno) · `SCAMBIA` · `RIFIUTA` |
-| Cambio pedina | solo sulla mappa, **prima** di scegliere il nodo |
+| Cambio pedina | solo sulla mappa, **prima** di scegliere il nodo; trascina una riserva sul primo posto |
 | Dopo la scelta del nodo | gettone bloccato fino al ritorno sulla mappa |
 | Durata | solo la run corrente |
 | Metagame | si salva solo il **catalogo** dei gettoni scoperti (vetrina, niente effetti) |
