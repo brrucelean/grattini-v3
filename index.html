@@ -34,6 +34,13 @@
            Le safe-area sono gestite internamente dal componente Grattini via
            env(safe-area-inset-top/bottom) sullo S.container. */
       }
+      /* Vetro CRT su tutto il gioco: righe orizzontali sopra ogni schermata,
+         modali e tooltip compresi. pointer-events:none → clic e grattate
+         passano attraverso. Richiesto dall'utente dopo il tabaccaio. */
+      body::after {
+        content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2147483647;
+        background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+      }
     </style>
   </head>
   <body>

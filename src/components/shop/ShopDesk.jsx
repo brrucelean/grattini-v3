@@ -7,7 +7,7 @@ import { Tooltip } from "../Tooltip.jsx";
 // ─── IL TABACCHI DI NOTTE (desktop) ─────────────────────────────
 // Unica eccezione alla regola "chiaro tranne la lotta", voluta dall'utente:
 // il tabaccaio deve far venire voglia di spendere. Insegne al neon che
-// sfarfallano, vetro CRT a righe, luci che corrono attorno alla slot,
+// sfarfallano, luci che corrono attorno alla slot,
 // cartellini da volantino ("SOLO €1,80!"), il biglietto più ricco marcato
 // HOT e un GRATTA che pulsa quando hai qualcosa in tasca.
 // Tutto in vista senza scorrere: insegna + ticker in alto, vetrina e
@@ -24,9 +24,7 @@ const glowText = (c) => `0 0 4px ${c}, 0 0 12px ${c}aa`;
 
 const CSS = `
 .sd-root { position: relative; }
-/* vetro CRT: righe orizzontali sopra tutto, senza bloccare i clic */
-.sd-root::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
-  background: repeating-linear-gradient(0deg, #00000038 0 1px, transparent 1px 3px); }
+/* le righe CRT ora stanno su tutto il gioco (index.html, body::after) */
 @keyframes sdFlicker { 0%,19%,22%,62%,64%,100% { opacity: 1; } 20%,21%,63% { opacity: 0.25; } }
 @keyframes sdPulse { 0%,100% { box-shadow: ${tube(YELLOW, 3)}; } 50% { box-shadow: 0 0 0 3px ${YELLOW}, 0 0 4px ${YELLOW}55; } }
 @keyframes sdChase { to { background-position: 16px 0, -16px 100%, 0 -16px, 100% 16px; } }
@@ -207,8 +205,11 @@ export function ShopDesk({
 
       {/* ══ Insegna: ritratto in un monitor CRT, neon, ticker LED, GRATTA/ESCI ══ */}
       <header style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr) auto", gap: "18px", alignItems: "center", flexShrink: 0 }}>
-        <div style={{ width: 88, height: 88, padding: "4px", boxSizing: "border-box", background: "#000", boxShadow: tube(CYAN), overflow: "hidden" }}>
-          <Asset id="spr-tabaccaio-v3" emoji="🏪" size={80} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        {/* Primo piano: lo sprite (64×96) ingrandito sul viso, centrato nel monitor */}
+        <div style={{ width: 88, height: 88, padding: "4px", boxSizing: "border-box", background: "#000", boxShadow: tube(CYAN) }}>
+          <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#1a1030" }}>
+            <Asset id="spr-tabaccaio-v3" emoji="🏪" size={171} style={{ position: "absolute", maxWidth: "none", width: 171, height: 256, left: -45, top: -8 }} />
+          </div>
         </div>
         <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "18px", flexWrap: "wrap" }}>
