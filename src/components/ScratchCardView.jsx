@@ -68,6 +68,20 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   const firstHitUsed = useRef(false); // Reliquia Occhio di Tigre
   // Mechanic-specific state
   const runningSumRef = useRef(0);
+  // Tredici: ogni cella prende il numero vero al primo tocco, nell'ordine
+  // della sequenza stampata (card.sum13Plan, vedi _sum13Plan in card.js).
+  const sum13Ref = useRef({ pos: 0, claimed: new Set() });
+  const claimSum13 = (arr, idx) => {
+    const plan = card.sum13Plan;
+    const st = sum13Ref.current;
+    if (!plan || st.claimed.has(idx) || arr[idx].scratched || arr[idx].isItem || st.pos >= plan.length) return arr;
+    st.claimed.add(idx);
+    const v = plan[st.pos++];
+    const next = [...arr];
+    next[idx] = { ...next[idx], value: v, symbol: String(v) };
+    return next;
+  };
+  const onFirstTouch = card.sum13Plan ? (idx) => setCells(prev => claimSum13(prev, idx)) : undefined;
   const [runningSum, setRunningSum] = useState(0);
   const [busted, setBusted] = useState(false);
   const collectedRef = useRef(0);
@@ -321,7 +335,8 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
       }
     }
 
-    const newCells = [...cells];
+    // "Gratta tutto" e la barra spaziatrice non passano dal primo tocco
+    const newCells = [...(card.sum13Plan ? claimSum13(cells, idx) : cells)];
     indicesToScratch.forEach(i => { newCells[i] = {...newCells[i], scratched: true}; });
     setCells(newCells);
     const newScratched = scratched + indicesToScratch.length;
@@ -661,7 +676,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
           const isPartialMatch = cell.scratched && !winFound && matchCount >= 2 && matchCount < card.matchNeeded;
           return (
             <ScratchCell key={idx} cell={cell} idx={idx}
-              onScratch={doScratch} finished={locked}
+              onScratch={doScratch} finished={locked} onFirstTouch={onFirstTouch}
               isWinSymbol={isWinSymbol} isPartialMatch={isPartialMatch}
               bloodMode={nailState === "marcia"}
               isBloody={bloodyCells.has(idx)}

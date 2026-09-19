@@ -382,17 +382,17 @@ export function generateLabirintoGrid() {
 }
 
 // ─── GRATTA & COMBINA GENERATOR ─────────────────────────────
-// Bilanciamento (costo €25, target RTP 90% = evTarget -0.10).
-// La carta non ha stato di sconfitta e il giocatore sceglie l'ordine dei click,
-// quindi può sempre accoppiare i simboli uguali: con 5 simboli e 15% di celle
-// vuote la MEGA COMBO scattava nel 56% dei casi (RTP 1099%). Con 9 simboli e
-// 35% di vuoti la MEGA torna un evento raro (~8%) e l'RTP scende a ~89%.
-export const COMBINA_COMBO_PRIZE = 10;
-export const COMBINA_MEGA_MULT = 5;
+// Bilanciamento (costo €25, target RTP ~90%) — BAL-001/002/003, set. 2026.
+// Le celle sono coperte, quindi non si possono "scegliere" gli abbinamenti:
+// con 9 simboli e 35% di vuoti l'RTP reale era 19–27% (vedi BUG-REGISTER).
+// 5 simboli, 25% di vuoti, €15 a combo, MEGA ×3 (Monte Carlo, 15k partite):
+// tieni fermo A 92%, alterna 88%, a caso 64%; MEGA COMBO ~6%.
+export const COMBINA_COMBO_PRIZE = 15;
+export const COMBINA_MEGA_MULT = 3;
 
 export function generateCombinaState() {
-  const SYMS = ["⭐","🔔","💎","🍋","🎯","🍒","🔥","🍀","👑"];
-  const makeGrid = () => Array.from({length:6}, () => roll(0.35) ? null : pick(SYMS));
+  const SYMS = ["⭐","🔔","💎","🍒","🍀"];
+  const makeGrid = () => Array.from({length:6}, () => roll(0.25) ? null : pick(SYMS));
   return {
     gridA: makeGrid(), gridB: makeGrid(),
     revealedA: Array(6).fill(false), revealedB: Array(6).fill(false),
@@ -402,11 +402,12 @@ export function generateCombinaState() {
 }
 
 // ─── MAPPA DEL TESORO GENERATOR ─────────────────────────────
-// Bilanciamento (costo €35, target RTP 90% = evTarget -0.10).
+// Bilanciamento (costo €35, target RTP ~90%).
 // Con 2 bombe su 16 e gli hint di distanza un giocatore informato trovava
-// quasi sempre entrambi i tesori: RTP 953%. Con 4 bombe e premi ridotti
-// (vedi TESORO_X_PRIZE / TESORO_JACKPOT) il Monte Carlo dà RTP ≈ 90%.
-export const TESORO_BOMBS = 4;
+// quasi sempre entrambi i tesori: RTP 953%. Con 4 bombe restava al 119%
+// (BAL-003). Con 5 bombe il Monte Carlo (giocatore che sceglie la cella più
+// probabile dagli indizi) dà RTP ≈ 88%; incassare dopo la prima X ≈ 51%.
+export const TESORO_BOMBS = 5;
 export const TESORO_X_PRIZE = 30;   // € per ogni X trovata
 export const TESORO_JACKPOT = 75;   // bonus per aver trovato entrambe
 

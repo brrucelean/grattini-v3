@@ -69,7 +69,7 @@ export const CARD_TYPES = [
   { id:"miliardario",     name:"Il Miliardario",       emoji:"💰", cost:30,  rows:4, cols:4, matchNeeded:4, maxPrize:350,
     malus:{ type:"payExtra", amount:10, desc:"Se perdi, paghi altri €10!" }, desc:"Gratta €, incassa prima dello 🛑 STOP. 5 mine — fidati del tuo istinto.", tier:3, mechanic:"collect",
     theme:{ border:"#ffdd00", bg:"#141100" } },
-  { id:"tredici",         name:"Tredici",              emoji:"🎯", cost:50,  rows:4, cols:4, matchNeeded:4, maxPrize:800,
+  { id:"tredici",         name:"Tredici",              emoji:"🎯", cost:50,  rows:4, cols:4, matchNeeded:4, maxPrize:440,
     malus:{ type:"nailDamage", amount:2, desc:"Costa cara la sfortuna!" }, desc:"Raggiungi ESATTAMENTE 13 — bust se vai oltre!", tier:4, mechanic:"sum13",
     theme:{ border:"#ff2222", bg:"#1a0000" } },
   { id:"maledetto",       name:"Il Maledetto",         emoji:"😈", cost:100, rows:4, cols:4, matchNeeded:3, maxPrize:2000,
@@ -81,10 +81,10 @@ export const CARD_TYPES = [
   { id:"labirinto", name:"Il Labirinto", emoji:"🌀", cost:15, rows:4, cols:4, matchNeeded:0, maxPrize:100,
     desc:"Segui le direzioni, trova l'uscita. Fermati quando vuoi.", mechanic:"labirinto",
     malus:null, tier:2, theme:{ border:"#00aa55", bg:"#001a0a" } },
-  { id:"grattaCombina", name:"Gratta & Combina", emoji:"🔀", cost:25, rows:2, cols:3, matchNeeded:3, maxPrize:140,
+  { id:"grattaCombina", name:"Gratta & Combina", emoji:"🔀", cost:25, rows:2, cols:3, matchNeeded:3, maxPrize:135,
     desc:"Trova coppie sulle due griglie. 3 combo = MEGA COMBO!", mechanic:"combina",
     malus:null, tier:3, theme:{ border:"#ff2e93", bg:"#1a0014" } },
-  { id:"mappaTesor0", name:"La Mappa del Tesoro", emoji:"🗺️", cost:35, rows:4, cols:4, matchNeeded:0, maxPrize:260,
+  { id:"mappaTesor0", name:"La Mappa del Tesoro", emoji:"🗺️", cost:35, rows:4, cols:4, matchNeeded:0, maxPrize:135,
     desc:"Trova le X senza toccare le bombe. Minesweeper style.", mechanic:"tesoro",
     malus:null, tier:3, theme:{ border:"#cc8800", bg:"#1a0e00" } },
   { id:"doppioOnulla", name:"Doppio o Nulla", emoji:"🎲", cost:20, rows:1, cols:1, matchNeeded:1, maxPrize:60,
@@ -129,7 +129,7 @@ export const CARD_BALANCE = {
   puzzle:          { winChance: 0.28, evTarget: -0.08, prizeMin: 18,  prizeMax: 48,   tier: 3 },
   boccaDrago:      { winChance: 0.22, evTarget: -0.08, prizeMin: 40,  prizeMax: 130,  tier: 3 },
   miliardario:     { winChance: 0.17, evTarget: -0.10, prizeMin: 60,  prizeMax: 260,  tier: 3 }, // collect: prize da cell values
-  tredici:         { winChance: 0.14, evTarget:  0.00, prizeMin: 200, prizeMax: 520,  tier: 4 },
+  tredici:         { winChance: 0.14, evTarget: -0.10, prizeMin: 200, prizeMax: 440,  tier: 4 },
   maledetto:       { winChance: 0.11, evTarget:  0.00, prizeMin: 450, prizeMax: 1400, tier: 4 },
   ruota:           { winChance: 0.22, evTarget: -0.02, prizeMin: 25,  prizeMax: 65,   tier: 2 }, // + near-win 1.3x su 30% perse
   labirinto:       { winChance: 0.26, evTarget: -0.09, prizeMin: 30,  prizeMax: 75,   tier: 2 },
@@ -222,11 +222,11 @@ export const TICKET_GUIDE = {
   },
   grattaCombina: {
     tagline: "Due griglie, un colpo di fortuna.",
-    how: "Scopri una casella per griglia: se sono uguali è combo (+€10). Tre combo fanno la MEGA COMBO ×5.",
+    how: "Scopri una casella per griglia: se sono uguali è combo (+€15). Tre combo fanno la MEGA COMBO ×3.",
   },
   mappaTesor0: {
     tagline: "La X segna il punto. Anche le bombe.",
-    how: "Trova le 2 X evitando le 4 💣. I numeri dicono quanto sei lontano dal tesoro più vicino. Incassa quando vuoi.",
+    how: "Trova le 2 X evitando le 5 💣. I numeri dicono quanto sei lontano dal tesoro più vicino. Incassa quando vuoi.",
   },
   doppioOnulla: {
     tagline: "Tutto o niente, in una sola grattata.",

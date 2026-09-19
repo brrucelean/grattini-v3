@@ -35,6 +35,31 @@ export function _sum13WinnerNums(totalCells) {
   return shuffle([...p1, ...p2, ...fill]);
 }
 
+// Tredici — BAL-001. Le celle sono coperte: con i numeri fissati in anticipo
+// arrivare a 13 esatto dipendeva dall'ordine di grattata (vincenti vinte solo
+// nel 24% dei casi, RTP 25%). Ora, come nei gratta e vinci veri, l'esito è
+// deciso alla stampa: ogni cella riceve il suo numero quando la si inizia a
+// grattare, seguendo questa sequenza. Vincente: i parziali toccano 13 esatto.
+// Perdente: i parziali saltano il 13 e sballano.
+export function _sum13Plan(isWinner) {
+  const d9 = () => 1 + Math.floor(rng() * 9);
+  const plan = [];
+  let sum = 0;
+  if (isWinner) {
+    while (sum < 13) {
+      const v = 1 + Math.floor(rng() * Math.min(9, 13 - sum));
+      plan.push(v); sum += v;
+    }
+    return plan;
+  }
+  while (sum <= 13) {
+    let v = d9();
+    while (sum + v === 13) v = d9();
+    plan.push(v); sum += v;
+  }
+  return plan;
+}
+
 // True se NESSUN prefisso delle carte permette di fermarsi battendo il banco:
 // scorrendo le carte in ordine, o si sballa (>7.5) prima di superare il banco,
 // oppure non lo si supera mai. È la condizione che rende una carta davvero perdente.
@@ -202,11 +227,12 @@ export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
   if (type.mechanic === "sum13") {
     // Winner: cells with 2 guaranteed winning pairs + low fillers
     // Loser: all 7-9 → any 2 scratches sum ≥14 → always bust
-    const nums = isWinner
-      ? _sum13WinnerNums(totalCells)
-      : Array.from({length: totalCells}, () => pick([7,8,9]));
+    // I numeri stampati qui sono solo segnaposto: la cella prende il valore
+    // vero da sum13Plan quando la si inizia a grattare (vedi _sum13Plan).
+    const nums = Array.from({length: totalCells}, () => 1 + Math.floor(rng() * 9));
     cells = nums.map(n => ({ symbol: String(n), scratched: false, value: n }));
     prize = isWinner ? Math.max(type.cost * 2, rollPrize()) : 0;
+    extra.sum13Plan = _sum13Plan(isWinner);
 
   // ── collect mechanic (Miliardario) ──────────────────────────
   } else if (type.mechanic === "collect") {

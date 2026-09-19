@@ -57,7 +57,10 @@ RTP 103%.
 
 ## BAL-001 — Tredici: vincita reale 3,4% invece di 14%
 
-Stato: **da decidere col proprietario**.
+Stato: **risolto (19/09/2026)**. Ogni cella prende il numero al primo tocco
+seguendo una sequenza stampata (`_sum13Plan`): la vincente tocca 13 esatto,
+la perdente lo salta. prizeMax 520→440. Verifica 20.000 biglietti: vince
+14,5%, RTP 93%.
 
 Le carte vincenti contengono coppie che fanno 13 più riempitivi da 1 a 6, ma
 le celle sono coperte: grattando in qualunque ordine si arriva a esattamente 13
@@ -66,7 +69,8 @@ solo nel 24% delle carte vincenti. Su 20.000 biglietti: vincita 3,4%, RTP 25%
 
 ## BAL-002 — Gratta & Combina: RTP 19–27% invece di 90%
 
-Stato: **da decidere col proprietario**.
+Stato: **risolto (19/09/2026)**. 5 simboli, 25% vuoti, €15 a combo, MEGA ×3.
+Verifica 20.000 partite: tieni fermo A 92%, alterna 89%, a caso 64%; MEGA 6,6%.
 
 Le celle sono coperte ("?"), quindi il giocatore non può scegliere gli
 abbinamenti. Con strategia casuale, alternata o "tieni fermo A" l'RTP resta
@@ -74,7 +78,9 @@ fra 19% e 27%; MEGA COMBO sotto l'1%.
 
 ## BAL-003 — Mappa del Tesoro: RTP 119% con gli indizi di distanza
 
-Stato: **da decidere col proprietario**.
+Stato: **risolto (19/09/2026)**. Bombe 4→5, premi invariati (€30 per X, €75
+bonus). Verifica 20.000 partite: giocatore che usa gli indizi 91%, chi incassa
+dopo la prima X 51%.
 
 Un giocatore che usa gli indizi di distanza per scegliere le celle trova
 entrambe le X nel 31% dei casi: RTP 119% contro l'obiettivo 90%.

@@ -43,12 +43,13 @@ function inkFor(sym = "") {
   return PRINT_INKS[h % PRINT_INKS.length];
 }
 
-export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPartialMatch, ambidestri=false, bloodMode=false, isBloody=false, themeColor=null, blocked=false, onBlockedAttempt=null, fill=false, winTier=1, printSkin=false }) {
+export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPartialMatch, ambidestri=false, bloodMode=false, isBloody=false, themeColor=null, blocked=false, onBlockedAttempt=null, fill=false, winTier=1, printSkin=false, onFirstTouch=null }) {
   const canvasRef = useRef(null);
   const rootRef = useRef(null);
   const drawing = useRef(false);
   const revealed = useRef(cell.scratched);
   const scratchTicks = useRef(0); // throttle del check getImageData (costoso su mobile)
+  const touched = useRef(false); // primo tocco già segnalato a onFirstTouch
   const [winAnim, setWinAnim] = useState(false); // glow burst al reveal vincente
   const [burst, setBurst] = useState(null);      // coriandoli localizzati sulla cella
   const prevScratched = useRef(cell.scratched);
@@ -149,6 +150,8 @@ export function ScratchCell({ cell, idx, onScratch, finished, isWinSymbol, isPar
   const doScratch = (e) => {
     if (blocked) { onBlockedAttempt?.(); return; }
     if (finished || revealed.current || cell.scratched) return;
+    // Primo tocco: il biglietto può decidere adesso cosa c'è sotto (Tredici).
+    if (!touched.current) { touched.current = true; onFirstTouch?.(idx); }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
