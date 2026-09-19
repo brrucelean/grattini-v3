@@ -145,7 +145,7 @@ export function PedinaroDesk({ visit, line, tokens, money, tickets, onBuy, onBar
 
       <div style={{ width: "min(100%, 1000px)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 11, color: C.dim, lineHeight: 1.5 }}>
-          La pedina si cambia sulla mappa: clicca la tua pedina, poi CAMBIA GETTONE.
+          La pedina si cambia sulla mappa: trascina una riserva sul primo posto della custodia, o clicca la pedina.
         </span>
         <button type="button" style={btn("primary")} onClick={onLeave}>ESCI →</button>
       </div>
