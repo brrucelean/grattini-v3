@@ -764,7 +764,7 @@ export default function Grattini() {
           </div>
 
           {/* ── CARMELO STRIP — striscia 96px multi-riga con typewriter, visibile durante introScratch ── */}
-          {returnScreen === "introScratch" && carmeloLog.length > 0 && (
+          {returnScreen === "introScratch" && carmeloLog.length > 0 && !wideShell && (
             <CarmeloScratchStrip messages={carmeloLog} color={C.gold} />
           )}
         </div>
@@ -1061,7 +1061,7 @@ export default function Grattini() {
             cards={scratchingCard ? [] : player.scratchCards}
             prizes={introPrizes}
             onScratch={(card) => {
-              if (!firstScratchShown) triggerNpcComment("first_warning");
+              // Desktop: l'avvertimento sulle unghie è già nell'intro (IntroDesk)
               setScratchingCard(card);
               setReturnScreen("introScratch");
             }}

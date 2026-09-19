@@ -15,10 +15,12 @@ export function useLog() {
     setLog(l => [...l.slice(-20), { id, text, color: color || C.dim }]);
   }, []);
 
-  const triggerNpcComment = useCallback((category) => {
+  // prefix: frase di contesto prima della battuta (es. "Il Poveraccio: €8.")
+  const triggerNpcComment = useCallback((category, prefix = "") => {
     const pool = NPC_CARMELO_COMMENTS[category];
     if (!pool) return;
-    const text = pool[Math.floor(Math.random() * pool.length)];
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const text = !prefix ? pick : Array.isArray(pick) ? [{ t: prefix + " " }, ...pick] : `${prefix} ${pick}`;
     setCarmeloLog(l => [...l, text]);
   }, []);
 

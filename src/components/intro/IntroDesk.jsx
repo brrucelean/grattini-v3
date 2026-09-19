@@ -26,8 +26,7 @@ const RED = C.red, GREEN = C.green;
 const panel = { background: PANEL, boxShadow: `inset 0 0 0 2px ${LINE}, ${SH.shadow}` };
 
 // L'ultima battuta, scritta a macchina (come CarmeloLogBox).
-function useTyped(messages) {
-  const latest = msgPlainText(messages.length ? messages[messages.length - 1] : "");
+function useTyped(latest) {
   const [n, setN] = useState(0);
   useEffect(() => {
     setN(0);
@@ -56,8 +55,13 @@ function Button({ children, onClick, kind = "primary", style }) {
 }
 
 export function IntroDesk({ messages, cards, prizes, onScratch, onRefuse, onPocket }) {
-  const { text, done, skip } = useTyped(messages);
   const choosing = cards.length === 0 && prizes.length >= 3;
+  // Dopo ogni biglietto parla del risultato; a fine giro il congedo arriva
+  // subito dopo l'ultima reazione, quindi si tengono entrambe.
+  const plain = messages.map(msgPlainText);
+  const line = choosing && plain.length >= 2 ? `${plain[plain.length - 2]}\n${plain[plain.length - 1]}` : (plain[plain.length - 1] || "");
+  const { text, done, skip } = useTyped(line);
+  const fresh = cards.length === 3;
 
   return (
     <div style={{
@@ -80,9 +84,14 @@ export function IntroDesk({ messages, cards, prizes, onScratch, onRefuse, onPock
             <span style={{ fontSize: "11px", letterSpacing: "2px", color: ACCENT }}>TABACCHERIA</span>
             <span style={{ fontSize: "26px", lineHeight: 1, color: TXT }}>Nonno Carmelo</span>
           </div>
-          <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.6, fontStyle: "italic", minHeight: "4.8em", color: INK }}>
+          <p style={{ margin: 0, fontSize: "15px", lineHeight: 1.6, fontStyle: "italic", minHeight: "4.8em", color: INK, whiteSpace: "pre-line" }}>
             {text}{!done && <span style={{ color: ACCENT }}>▌</span>}
           </p>
+          {fresh && (
+            <span style={{ fontSize: "12px", lineHeight: 1.5, color: C.gold }}>
+              ⚠ Ogni 3 caselle grattate l'unghia si consuma. Marcia: vinci solo il 25%. Morta: il biglietto si annulla.
+            </span>
+          )}
           {!choosing && cards.length > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
               <span style={{ fontSize: "11px", color: C.dim }}>{done ? "" : "clic per saltare →"}</span>

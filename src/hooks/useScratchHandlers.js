@@ -144,8 +144,9 @@ export function useScratchHandlers({
         if (prev.some(p => p._cardRef === card)) return prev;
         return [...prev, { prize: prizeAmt, cardName: card?.name || "Biglietto", _cardRef: card }];
       });
-      if (prizeAmt > 0) { addLog(`Biglietto: €${prizeAmt} — scegli quale intascare!`, C.gold); triggerNpcComment(prizeAmt >= 5 ? "win_big" : "win_small"); }
-      else { addLog(`Nessuna vincita su questo biglietto.`, C.dim); triggerNpcComment("lose"); }
+      const nm = card?.name || "Il biglietto";
+      if (prizeAmt > 0) { addLog(`Biglietto: €${prizeAmt} — scegli quale intascare!`, C.gold); triggerNpcComment(prizeAmt >= 5 ? "win_big" : "win_small", `${nm}: €${prizeAmt}!`); }
+      else { addLog(`Nessuna vincita su questo biglietto.`, C.dim); triggerNpcComment("lose", `${nm}: niente.`); }
     } else if (card?.isContrabbando) {
       // Contrabbando: "vince" sempre ma il premio è... schiaffi!
       const schiaffi = Math.round(100 + rng() * 900); // 100-1000 schiaffi
