@@ -2346,18 +2346,19 @@ export default function Grattini() {
         // Desktop: grattino sul tavolo (components/minigame/MinigameTable.jsx)
         if (wideShell) return (
           <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-            <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="labirinto" title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
-              how="Segui le frecce fino al 🏆."
-              status={[["Accumulato", `€${ls.prize}`, true], ["Ogni casella nuova", `+€${CELL_PRIZE}`], ["Uscita 🏆", `+€${JACKPOT_PRIZE}`]]}
-              rules={[
-                `Premi MUOVITI: vai dove indica la freccia della casella attuale.`,
-                `Ogni casella nuova vale €${CELL_PRIZE}. Se giri in tondo non guadagni nulla.`,
-                `Arrivi al 🏆 e prendi il jackpot di €${JACKPOT_PRIZE} più l'accumulato.`,
-                `Puoi incassare e scappare quando vuoi.`,
-                `Se entri in un 💀 perdi tutto e un'unghia.`,
-              ]}
+            {(() => {
+              // Dove porta la freccia: quella casella si gratta per muoversi.
+              const [dr, dc] = {"→":[0,1],"↓":[1,0],"←":[0,-1],"↑":[-1,0]}[ls.grid[row][col]] || [0, 0];
+              const tr = row + dr, tc = col + dc;
+              const inGrid = tr >= 0 && tr < 4 && tc >= 0 && tc < 4;
+              const targetSeen = inGrid && ls.revealed.has(`${tr},${tc}`);
+              return (
+            <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="labirinto" accent="#1f7a4a"
+              frame={{ player, gameStats, biome: BIOMES[currentBiome], log, onEquipGrattatore: handleRailEquipGrattatore }}
+              status={[["Accumulato", `€${ls.prize}`, true], ["Ogni casella nuova", `+€${CELL_PRIZE}`]]}
+              hint={!inGrid ? "La freccia porta fuori: incassa e scappa." : targetSeen ? "La freccia torna indietro: nessun premio." : "Gratta la casella con la ★"}
               actions={[
-                { label: "MUOVITI →", onClick: handleMove, kind: "primary" },
+                targetSeen && { label: "MUOVITI →", onClick: handleMove, kind: "primary" },
                 ls.prize > 0 && { label: `INCASSA €${ls.prize}`, onClick: handleIncassa },
                 { label: "ABBANDONA", onClick: closeMinigame, kind: "danger" },
               ]}>
@@ -2365,15 +2366,19 @@ export default function Grattini() {
                 {ls.grid.map((rowData, r) => rowData.map((cell, c) => {
                   const isPos = r === row && c === col;
                   const seen = ls.revealed.has(`${r},${c}`);
+                  const isTarget = !ls.done && inGrid && r === tr && c === tc && !seen;
                   return (
-                    <CoverCell key={`${r},${c}`} fill revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
-                      label={isPos ? `Sei qui: ${cell}` : seen ? cell : "casella coperta"}>
+                    <CoverCell key={`${r},${c}`} revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
+                      onClick={isTarget ? handleMove : undefined} hot={isTarget}
+                      label={isPos ? `Sei qui: ${cell}` : seen ? cell : isTarget ? "casella da grattare" : "casella coperta"}>
                       {isPos || seen ? <span style={{ display: "flex", color: isPos ? "#1f7a4a" : "#8a9a90" }}><MazeGlyph ch={cell} color={isPos ? "#1f7a4a" : "#8a9a90"} /></span> : undefined}
                     </CoverCell>
                   );
                 }))}
               </div>
             </MinigameTable>
+              );
+            })()}
           </div>
         );
 
@@ -2514,7 +2519,7 @@ export default function Grattini() {
                 <span style={{ fontSize: "11px", letterSpacing: "3px", color: "#fff3c4", textAlign: "center" }}>GRIGLIA {which}</span>
                 <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gridTemplateRows: "repeat(2, minmax(0,1fr))", gap: "2cqh 1cqw" }}>
                   {grid.map((sym, i) => (
-                    <CoverCell key={i} fill revealed={revealed[i]} onClick={() => handleReveal(which, i)}
+                    <CoverCell key={i} revealed={revealed[i]} onClick={() => handleReveal(which, i)}
                       mark={revealed[i] && sym && sym === last ? "#9a2a66" : null}
                       label={revealed[i] ? (sym || "vuota") : `griglia ${which}, casella coperta`}>
                       {revealed[i] ? (sym || <span style={{ color: "#b8a878" }}>—</span>) : undefined}
@@ -2530,16 +2535,10 @@ export default function Grattini() {
           );
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="grattaCombina" title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
-                how="Due simboli uguali, uno per griglia = COMBO."
+              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="grattaCombina" accent="#9a2a66"
+                frame={{ player, gameStats, biome: BIOMES[currentBiome], log, onEquipGrattatore: handleRailEquipGrattatore }}
                 status={[["Premio", `€${cs.prize}`, true], ["Combo", `${cs.combos}/3`], ["MEGA COMBO", `×${MEGA_MULT}`]]}
-                rules={[
-                  `Gratta una casella nella griglia A e una nella B.`,
-                  `Se le ultime due scoperte hanno lo stesso simbolo è COMBO: +€${COMBO_PRIZE}.`,
-                  `Tre combo fanno la MEGA COMBO: il premio si moltiplica ×${MEGA_MULT}.`,
-                  `Consiglio: tieni fermo il simbolo di A e cerca il suo gemello in B.`,
-                  `Le caselle vuote (—) non combinano con niente.`,
-                ]}
+                hint="Gratta una casella in A e una in B"
                 actions={[
                   { label: cs.prize > 0 ? `INCASSA €${cs.prize} E VAI` : "ABBANDONA", kind: cs.prize > 0 ? "primary" : "danger", onClick: () => {
                     if (cs.prize > 0) {
@@ -2644,16 +2643,10 @@ export default function Grattini() {
           const DIST_INK = { 1: "#a3161d", 2: "#b0661a", 3: "#8a6a22" };
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
-                how="Trova i 2 💎, evita le 5 💣."
+              <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="mappaTesor0" accent="#8a5a12"
+                frame={{ player, gameStats, biome: BIOMES[currentBiome], log, onEquipGrattatore: handleRailEquipGrattatore }}
                 status={[["Premio", `€${ts.prize}`, true], ["Diamanti", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
-                rules={[
-                  `Ogni 💎 diamante trovato vale €${X_PRIZE}.`,
-                  `Trovali tutti e due e prendi anche il jackpot di €${JACKPOT_PRIZE}.`,
-                  `Il numero dice quanti passi (in orizzontale + in verticale) mancano al 💎 più vicino: 1 = attaccato.`,
-                  `Puoi incassare quello che hai trovato quando vuoi.`,
-                  `Se scopri una 💣 perdi tutto e un'unghia.`,
-                ]}
+                hint="Gratta: i numeri dicono quanto manca al 💎"
                 actions={[
                   ts.prize > 0 && { label: `INCASSA €${ts.prize}`, kind: "primary", onClick: () => {
                     updatePlayer(p => ({...p, money: p.money + ts.prize}));
@@ -2668,7 +2661,7 @@ export default function Grattini() {
                     const isTreasure = ts.treasures.has(idx), isBomb = ts.bombs.has(idx);
                     const dist = rev && !isTreasure && !isBomb ? getManhattanDist(idx) : null;
                     return (
-                      <CoverCell key={idx} fill revealed={rev} onClick={() => handleReveal(idx)}
+                      <CoverCell key={idx} revealed={rev} onClick={() => handleReveal(idx)}
                         mark={rev && isTreasure ? "#8a5a12" : null}
                         label={rev ? (isTreasure ? "tesoro" : isBomb ? "bomba" : `distanza ${dist}`) : "casella coperta"}>
                         {rev ? (isTreasure ? "💎" : isBomb ? "💣" : <span style={{ color: DIST_INK[dist] || "#5d6f68" }}>{dist}</span>) : undefined}
