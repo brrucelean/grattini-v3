@@ -2626,13 +2626,13 @@ export default function Grattini() {
           if (ts.treasures.has(idx)) {
             newFoundTreasures++;
             newPrize += X_PRIZE;
-            addLog(`💎 TESORO TROVATO! +€${X_PRIZE} (${newFoundTreasures}/2)`, C.gold);
+            addLog(`💎 DIAMANTE TROVATO! +€${X_PRIZE} (${newFoundTreasures}/2)`, C.gold);
             if (newFoundTreasures >= 2) {
               // JACKPOT — trovati tutti i tesori: paga il cumulato + jackpot bonus
               const total = newPrize + JACKPOT_PRIZE;
               updatePlayer(p => ({...p, money: p.money + total}));
               addLog(`🗺️ JACKPOT! Trovato tutto! €${newPrize} accumulati + €${JACKPOT_PRIZE} bonus = +€${total}!`, C.gold);
-              endMinigame({ kind: "win", title: `JACKPOT! €${total}`, detail: `Tutte e due le X: €${newPrize} + €${JACKPOT_PRIZE} di bonus.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
+              endMinigame({ kind: "win", title: `JACKPOT! €${total}`, detail: `Tutti e due i 💎 diamanti: €${newPrize} + €${JACKPOT_PRIZE} di bonus.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
               return;
             }
           }
@@ -2645,20 +2645,20 @@ export default function Grattini() {
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
               <MinigameTable result={minigameResult} onContinue={closeMinigame} ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
-                how="Trova le 2 X, evita le 5 💣."
-                status={[["Premio", `€${ts.prize}`, true], ["Tesori", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
+                how="Trova i 2 💎, evita le 5 💣."
+                status={[["Premio", `€${ts.prize}`, true], ["Diamanti", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
                 rules={[
-                  `Ogni X trovata vale €${X_PRIZE}.`,
-                  `Trovale tutte e due e prendi anche il jackpot di €${JACKPOT_PRIZE}.`,
-                  `Il numero è la distanza (passi in orizzontale + in verticale) dalla X più vicina: 1 = attaccata.`,
+                  `Ogni 💎 diamante trovato vale €${X_PRIZE}.`,
+                  `Trovali tutti e due e prendi anche il jackpot di €${JACKPOT_PRIZE}.`,
+                  `Il numero dice quanti passi (in orizzontale + in verticale) mancano al 💎 più vicino: 1 = attaccato.`,
                   `Puoi incassare quello che hai trovato quando vuoi.`,
                   `Se scopri una 💣 perdi tutto e un'unghia.`,
                 ]}
                 actions={[
                   ts.prize > 0 && { label: `INCASSA €${ts.prize}`, kind: "primary", onClick: () => {
                     updatePlayer(p => ({...p, money: p.money + ts.prize}));
-                    addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} tesori trovati.`, C.gold);
-                    endMinigame({ kind: "win", title: `INCASSATI €${ts.prize}`, detail: `${ts.foundTreasures} X trovata. Ecco dov'erano l'altra e le bombe.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
+                    addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} diamanti trovati.`, C.gold);
+                    endMinigame({ kind: "win", title: `INCASSATI €${ts.prize}`, detail: `${ts.foundTreasures} diamante trovato. Ecco dov'erano l'altro e le bombe.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
                   } },
                   { label: "ABBANDONA", kind: "danger", onClick: closeMinigame },
                 ]}>
@@ -2686,10 +2686,10 @@ export default function Grattini() {
             <div style={{...S.panel, borderColor:"#cc8800", background:"#1a0e00"}}>
               <div style={{...S.h2, color:"#cc8800"}}>🗺️ LA MAPPA DEL TESORO</div>
               <div style={{color:C.dim, fontSize:"11px", marginBottom:"8px"}}>
-                Trova le 2 X senza toccare le 💣. I numeri indicano la distanza dal tesoro più vicino.
+                Trova i 2 💎 senza toccare le 💣. I numeri indicano quanti passi mancano al diamante più vicino.
               </div>
               <div style={{color:C.gold, fontSize:"13px", marginBottom:"10px"}}>
-                Trovati: {ts.foundTreasures}/2 · Premio: €{ts.prize > 0 ? ts.prize : "?"} (jackpot €{JACKPOT_PRIZE})
+                Diamanti: {ts.foundTreasures}/2 · Premio: €{ts.prize > 0 ? ts.prize : "?"} (jackpot €{JACKPOT_PRIZE})
               </div>
               <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"4px", maxWidth:"240px", margin:"0 auto 12px"}}>
                 {Array.from({length:16}, (_,idx) => {
@@ -2717,7 +2717,7 @@ export default function Grattini() {
                 {ts.prize > 0 && (
                   <Btn variant="gold" onClick={() => {
                     updatePlayer(p => ({...p, money: p.money + ts.prize}));
-                    addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} tesori trovati.`, C.gold);
+                    addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} diamanti trovati.`, C.gold);
                     closeMinigame();
                   }}>
                     💰 Incassa €{ts.prize}

@@ -85,7 +85,7 @@ export const CARD_TYPES = [
     desc:"Trova coppie sulle due griglie. 3 combo = MEGA COMBO!", mechanic:"combina",
     malus:null, tier:3, theme:{ border:"#ff2e93", bg:"#1a0014" } },
   { id:"mappaTesor0", name:"La Mappa del Tesoro", emoji:"🗺️", cost:35, rows:4, cols:4, matchNeeded:0, maxPrize:135,
-    desc:"Trova le X senza toccare le bombe. Minesweeper style.", mechanic:"tesoro",
+    desc:"Trova i 2 diamanti senza toccare le bombe. Minesweeper style.", mechanic:"tesoro",
     malus:null, tier:3, theme:{ border:"#cc8800", bg:"#1a0e00" } },
   { id:"doppioOnulla", name:"Doppio o Nulla", emoji:"🎲", cost:20, rows:1, cols:1, matchNeeded:1, maxPrize:60,
     malus:null, desc:"🎲 Gratta 1 cella: ✅ raddoppi l'ultimo premio, ❌ niente!", tier:2, mechanic:"doppioOnulla",
@@ -160,7 +160,7 @@ export const LOSS_LINES = {
   turistaPerSempre: ["Vacanza annullata. Si torna al tabacchi.", "Il volo è in ritardo. Per sempre."],
   labirinto:        ["Strada chiusa. Anche quella dopo.", "Il minotauro ringrazia."],
   grattaCombina:    ["Combinazione sbagliata.", "Frutta sì, premio no."],
-  mappaTesor0:      ["La X era da un'altra parte.", "Il pappagallo sapeva. Non ha parlato."],
+  mappaTesor0:      ["Il diamante era da un'altra parte.", "Il pappagallo sapeva. Non ha parlato."],
 };
 export function lossLine(card) {
   const lines = LOSS_LINES[card?.id];
@@ -225,8 +225,8 @@ export const TICKET_GUIDE = {
     how: "Scopri una casella per griglia: se sono uguali è combo (+€15). Tre combo fanno la MEGA COMBO ×3.",
   },
   mappaTesor0: {
-    tagline: "La X segna il punto. Anche le bombe.",
-    how: "Trova le 2 X evitando le 5 💣. I numeri dicono quanto sei lontano dal tesoro più vicino. Incassa quando vuoi.",
+    tagline: "Due diamanti sepolti. E qualche bomba.",
+    how: "Trova i 2 💎 evitando le 5 💣. I numeri dicono quanti passi mancano al diamante più vicino. Incassa quando vuoi.",
   },
   doppioOnulla: {
     tagline: "Tutto o niente, in una sola grattata.",
