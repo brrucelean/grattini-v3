@@ -11,6 +11,8 @@ import { SPR_BIG } from "../data/art.js";
 import { BOSS_SPRITE } from "../data/biomes.js";
 import { AudioEngine, ParticleSystem } from "../audio.js";
 import { hasRelic } from "../utils/hasRelic.js";
+import { rewardMultiplier } from "../utils/tokens.js";
+import { roundMoney } from "../utils/money.js";
 import { Btn } from "./Btn.jsx";
 import { NailDisplay } from "./NailDisplay.jsx";
 import { Asset } from "./Asset.jsx";
@@ -506,6 +508,10 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
   const [hand, setHand] = useState([]); // 3 carte grattabili del player
   const [revealedIdxs, setRevealedIdxs] = useState([]); // indici già grattati
   const [loot, setLoot] = useState(0); // € bottino accumulato
+  const victoryTokenMult = player.tokens ? rewardMultiplier(player.tokens, { elite: isEliteFight }) : 1;
+  const victoryBase = Math.max(0, loot);
+  const victoryElite = roundMoney(victoryBase * (isEliteFight ? 2 : 1));
+  const victoryTotal = roundMoney(victoryElite * victoryTokenMult);
   const [log, setLog] = useState([]); // [{text, color}]
   const [enemyPlan, setEnemyPlan] = useState([]); // carte nemico del turno
   const [enemyHitFlash, setEnemyHitFlash] = useState(0);
@@ -1454,7 +1460,20 @@ export function CombatView({ enemy, player, onEnd, onNailDamage, onNailHeal, onC
       {phase === "win" && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
           <div style={{ color: C.green, fontSize: "22px", fontWeight: "bold", textShadow: `0 0 14px ${C.green}99` }}>🏆 HAI VINTO!</div>
-          <div style={{ color: C.gold, fontSize: "14px" }}>Bottino: €{loot}</div>
+          {isEliteFight ? (
+            <div role="status" style={{
+              color: C.orange, fontSize: "13px", textAlign: "center", lineHeight: 1.55,
+              background: "#1b0d02", border: `2px solid ${C.orange}`, padding: "7px 14px",
+              boxShadow: `0 0 14px ${C.orange}55`, letterSpacing: "0.4px",
+            }}>
+              <strong>★ MOLTIPLICATORE ÉLITE ATTIVO ★</strong><br/>
+              Bottino €{victoryBase} × 2 → <strong>€{victoryElite}</strong>
+              {victoryTokenMult !== 1 && <><br/>Pedina {victoryTokenMult > 1 ? "+" : "−"}{Math.round(Math.abs(victoryTokenMult - 1) * 100)}% → <strong>€{victoryTotal}</strong></>}
+              <br/><span style={{ color: C.gold }}>Hai vinto €{roundMoney(victoryElite - victoryBase)} in più perché eri in un nodo Élite.</span>
+            </div>
+          ) : (
+            <div style={{ color: C.gold, fontSize: "14px" }}>Bottino: €{victoryTotal}</div>
+          )}
           <Btn variant="success" onClick={finishWin} style={{ fontSize: "15px", padding: "10px 28px" }}>INCASSA →</Btn>
         </div>
       )}

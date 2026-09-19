@@ -486,10 +486,15 @@ export function useNodeHandlers({
         const tokens = p.tokens ? markNodeOutcome(p.tokens, true) : p.tokens;
         return {...p, money: p.money + roundMoney(Math.max(0, result.playerMoney) * eliteMulti * tokenMult), nails, tokens};
       });
-      const eliteTag = currentNode?.elite ? " ★ELITE x2!" : "";
+      const baseLoot = roundMoney(Math.max(0, result.playerMoney));
+      const eliteLoot = roundMoney(baseLoot * (currentNode?.elite ? 2 : 1));
       const tokenMult = player.tokens ? rewardMultiplier(player.tokens, { elite: !!currentNode?.elite }) : 1;
       const tokenTag = tokenMult !== 1 ? ` [pedina ${tokenMult > 1 ? "+" : "−"}${Math.round(Math.abs(tokenMult - 1) * 100)}%]` : "";
-      addLog(`🏆 Vittoria! Guadagni €${fmtMoney(roundMoney(Math.max(0, result.playerMoney) * (currentNode?.elite ? 2 : 1) * tokenMult))}!${eliteTag}${tokenTag}`, C.green);
+      const finalLoot = roundMoney(eliteLoot * tokenMult);
+      if (currentNode?.elite) {
+        addLog(`★ MOLTIPLICATORE ÉLITE ATTIVO: bottino €${fmtMoney(baseLoot)} × 2 → €${fmtMoney(eliteLoot)}. Hai vinto €${fmtMoney(eliteLoot - baseLoot)} in più perché eri in un nodo Élite.`, C.orange);
+      }
+      addLog(`🏆 Vittoria! Guadagni €${fmtMoney(finalLoot)}!${tokenTag}`, C.green);
       if (result.winNail) addLog(`✨ Hai preso un'unghia al nemico! Una tua unghia risorge.`, C.green);
       if (result.nailHeals > 0) addLog(`Cure in combattimento: ${result.nailHeals} unghie curate!`, C.green);
       // Boss defeated? Drop reliquia casuale.
