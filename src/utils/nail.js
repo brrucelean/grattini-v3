@@ -347,7 +347,8 @@ export function makeNailCursor(nailState = "sana") {
 const CURSOR_STATE_ALIAS = { scheletro: "morta" };
 export function nailCursor(nailState = "sana") {
   const key = CURSOR_STATE_ALIAS[nailState] || nailState;
-  const url = assetUrl(`cursor-${key}-v3`) || assetUrl(`cursor-${key}`);
+  // Dita della V2 (cursor-<stato>.webp, P-07): le -v3 non si usano più
+  const url = assetUrl(`cursor-${key}`);
   return url ? `url("${url}") 28 2, pointer` : makeNailCursor(nailState);
 }
 

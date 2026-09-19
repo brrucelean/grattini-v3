@@ -49,7 +49,8 @@ const NAILS = [
 ];
 
 function NailsArt() {
-  const sprite = (id) => (`nail-${id}-v3`);
+  // Dita della V2 (nail-<stato>.webp, P-07)
+  const sprite = (id) => (`nail-${id}`);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <span style={{ fontSize: 11, letterSpacing: 2, color: INK }}>OGNI 3 CASELLE GRATTATE, UN GRADINO GIÙ</span>
@@ -57,7 +58,7 @@ function NailsArt() {
         {NAILS.map((n, i) => (
           <div key={n.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, position: "relative" }}>
             <div style={{ width: 80, height: 80, display: "grid", placeItems: "center", background: "#000", boxShadow: `inset 0 0 0 2px ${n.color}66` }}>
-              <Asset id={sprite(n.id)} emoji="💅" size={72} />
+              <Asset id={sprite(n.id)} emoji="💅" size={72} pixel={false} />
             </div>
             <span style={{ fontSize: 12, color: n.color }}>{n.label}</span>
             <span style={{ fontSize: 10, color: INK, background: "#000", padding: "1px 6px", boxShadow: `inset 0 0 0 1px ${n.color}55` }}>premio {n.prize}</span>
@@ -66,7 +67,7 @@ function NailsArt() {
         ))}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 12, alignItems: "center", padding: 10, background: "#000", boxShadow: "inset 0 0 0 2px #ff88cc55" }}>
-        <div style={{ width: 52, height: 52, display: "grid", placeItems: "center" }}><Asset id="nail-kawaii" emoji="💅" size={48} /></div>
+        <div style={{ width: 52, height: 52, display: "grid", placeItems: "center" }}><Asset id="nail-kawaii" emoji="💅" size={48} pixel={false} /></div>
         <span style={{ fontSize: 12, lineHeight: 1.45, color: TXT }}>
           <span style={hl("#ff88cc")}>Kawaii ♡</span> — premio <span style={hl("#ff88cc")}>×2</span>. Non si consuma per usura: si fa con la <span style={hl(C.magenta)}>manicure</span> in locanda.
         </span>

@@ -10,7 +10,6 @@ export const PLAYER_COMBAT_CELLS = {
     { name:"Furto!",      desc:"Ruba €10 al nemico",                                effect:"stealMoney",  value:10, emoji:"💸" },
     { name:"Schiaffo!",   desc:"Degrada 1 stato unghia avversario 🩸",              effect:"lightDamage", emoji:"🖐" },
     // Tradeoff: alto rischio/ricompensa
-    { name:"All-in!",     desc:"+€40 MA il nemico guadagna +€15 sicuri 🎲",         effect:"allIn",       value:40, cost:15, emoji:"🎰", tradeoff:true },
     { name:"Berserk!",    desc:"Strappa unghia nemico MA degrada la tua di 1 🩸",   effect:"berserk",     emoji:"💢", tradeoff:true },
   ],
   DIFESA: [
@@ -29,6 +28,8 @@ export const PLAYER_COMBAT_CELLS = {
     { name:"Grattino!",   desc:"Trovi un grattino in omaggio! 🎫",                  effect:"freeCard",        emoji:"🎫" },
     // Tradeoff: jackpot con rischio
     { name:"Schedina!",   desc:"50% chance: +€60. 50%: −€15 🎟",                   effect:"gamble", value:60, cost:15, emoji:"🎟", tradeoff:true },
+    // All-in: non fa danni, è soldi → sta tra i PREMI (P-06), non tra le botte
+    { name:"All-in!",     desc:"+€40 MA il nemico guadagna +€15 sicuri 🎲",         effect:"allIn",       value:40, cost:15, emoji:"🎰", tradeoff:true },
   ],
 };
 

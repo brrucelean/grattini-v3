@@ -6,7 +6,6 @@ import { getNailVisual } from "../utils/nail.js";
 import { Tooltip } from "./Tooltip.jsx";
 import { VintageBadge } from "./Vintage.jsx";
 import { Asset } from "./Asset.jsx";
-import { hasAsset } from "../assets/registry.js";
 import { NailTierBar, NailScratchBar, NailSlotBar, readNail, CHIRURGO_SLOT_MAX } from "./NailMeter.jsx";
 
 // Chirurgo implants: slot totali (dai dati) e colore per tipo
@@ -37,8 +36,8 @@ function NailSidebarImpl({ nails, activeNail, onSelectNail, locked=false, equipp
         const col = visual?.color || info.color;
         const isActive = i === activeNail;
         const isDead = n.state === "morta";
-        const v3NailId = `nail-${n.state}-v3`;
-        const nailAssetId = hasAsset(v3NailId) ? v3NailId : `nail-${n.state}`;
+        // Dita della V2 (nail-<stato>.webp, P-07): le -v3 restano su disco ma non si usano
+        const nailAssetId = `nail-${n.state}`;
         const canSwitch = !isDead && !isActive && !locked;
         // Derivazione condivisa (tier vivi, grattate rimaste, stato spento…)
         const meter = readNail(n);
@@ -120,7 +119,7 @@ function NailSidebarImpl({ nails, activeNail, onSelectNail, locked=false, equipp
                         ? `drop-shadow(0 0 6px ${col})` : "none",
                       animation: isActive && !isDead ? "crtFlicker 6s ease-in-out infinite" : "none",
                     }}>
-                      <Asset id={!n.implant ? nailAssetId : null} emoji={visual?.emoji || "🖐"} size={34} />
+                      <Asset id={!n.implant ? nailAssetId : null} emoji={visual?.emoji || "🖐"} size={34} pixel={false} />
                     </span>
                     {/* Etichetta stato — 8px, niente ellipsis */}
                     <span style={{
@@ -173,7 +172,7 @@ function NailSidebarImpl({ nails, activeNail, onSelectNail, locked=false, equipp
                       fontSize:"15px", lineHeight:1, flexShrink:0,
                       filter: !isDead && visual?.glow && visual.glow !== "none" ? `drop-shadow(0 0 4px ${col})` : "none",
                     }}>
-                      <Asset id={!n.implant ? nailAssetId : null} emoji={visual?.emoji || "🖐"} size={30} />
+                      <Asset id={!n.implant ? nailAssetId : null} emoji={visual?.emoji || "🖐"} size={30} pixel={false} />
                     </span>
                     <span style={{flex:1, minWidth:0}}>
                       <span style={{display:"flex", alignItems:"center", gap:"4px"}}>

@@ -5,7 +5,6 @@ import { fmtMoney } from "../../utils/money.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
 import { readNail } from "../NailMeter.jsx";
-import { hasAsset } from "../../assets/registry.js";
 
 // ─── TAVOLO DA GRATTATA — ambientazione della schermata di grattata ──
 // Desktop (shell ≥1024px). Il biglietto sta su un tappetino in mezzo al
@@ -247,8 +246,8 @@ export function TableTopBar({ card, nails, activeNail, money }) {
 
 function NailChip({ n, i, active }) {
   const m = readNail(n);
-  const v3 = `nail-${n.state}-v3`;
-  const spriteId = n.implant ? null : (hasAsset(v3) ? v3 : `nail-${n.state}`);
+  // Dita della V2 (nail-<stato>.webp, P-07): le -v3 restano su disco ma non si usano
+  const spriteId = n.implant ? null : `nail-${n.state}`;
   const col = m.off ? m.off.borderCol : m.col;
   // Solo il quadrato, alto quanto la pastiglia dei soldi: così stanno sulla
   // stessa linea. Lo stato si legge dal bordo, dal tooltip e, per gli stati
@@ -261,7 +260,7 @@ function NailChip({ n, i, active }) {
         background: m.isDead ? "repeating-linear-gradient(45deg, #2b2320 0 3px, #1b100a 3px 6px)" : "#1b100a",
         boxShadow: active ? `inset 0 0 0 2px ${C.gold}, 2px 2px 0 #120904` : `inset 0 0 0 2px ${col}`,
       }}>
-        <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} />
+        <Asset id={spriteId} emoji={m.visual?.emoji || "🖐"} size={28} pixel={false} />
         {m.glyph && (
           <span aria-hidden style={{ position: "absolute", right: 2, top: 1, fontSize: "9px", color: col, lineHeight: 1 }}>{m.glyph}</span>
         )}

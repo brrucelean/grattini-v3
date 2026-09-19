@@ -338,6 +338,7 @@ function resolvePlayerCell(c) {
       const dmg = EFFECT_DAMAGE.stealMoney;
       return { dmg, loot: val, log: `🗡️ ${c.name}: ${dmg} danni + rubi €${val}!` };
     }
+    // All-in è una carta PREMIO (DENARO): niente danni, quindi niente tempismo né combo botte
     case "allIn":
       return { loot: val, enemyShield: c.cost || 0, log: `🎰 ${c.name}: +€${val} (ma il nemico si copre +${c.cost||0} scudo)` };
     case "money":

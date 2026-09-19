@@ -3,7 +3,6 @@ import { C } from "../../data/theme.js";
 import { NAIL_INFO } from "../../data/nails.js";
 import { ALL_IMPLANTS_META, CHIRURGO_IMPLANT_IDS } from "../../data/items.js";
 import { getNailVisual } from "../../utils/nail.js";
-import { hasAsset } from "../../assets/registry.js";
 import { Tooltip } from "../Tooltip.jsx";
 import { Asset } from "../Asset.jsx";
 import { NailTierBar, NailScratchBar, NailSlotBar, readNail, CHIRURGO_SLOT_MAX } from "../NailMeter.jsx";
@@ -56,8 +55,8 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
   const isDead = n.state === "morta";
   const meter = readNail(n);
   const chirurgo = !isDead && CHIRURGO_IMPLANT_IDS.has(n.implant) ? CHIRURGO_SLOTS[n.implant] : null;
-  const v3 = `nail-${n.state}-v3`;
-  const spriteId = n.implant ? null : (hasAsset(v3) ? v3 : `nail-${n.state}`);
+  // Dita della V2 (nail-<stato>.webp, P-07): le -v3 restano su disco ma non si usano
+  const spriteId = n.implant ? null : `nail-${n.state}`;
   const canSwitch = !isDead && !active && !locked;
   const name = chirurgo ? chirurgo.label : `${meter.glyph ? meter.glyph + " " : ""}${dense ? meter.shortLabel : info.label}`;
   const mult = chirurgo ? `${n.implantUses}/${chirurgo.max}` : `×${(info.mult || 0).toFixed(1)}`;
@@ -85,7 +84,7 @@ function FingerRow({ n, i, active, locked, dense, onSelect }) {
         {/* Sprite del dito (emoji come riserva finché manca lo sprite) */}
         <span style={{width:`${sprite}px`, height:`${sprite}px`, display:"flex", alignItems:"center", justifyContent:"center",
           background: SH.world, border: edge(isDead ? SH.line : `${col}55`), boxSizing:"border-box"}}>
-          <Asset id={spriteId} emoji={visual?.emoji || "🖐"} size={sprite - 8} />
+          <Asset id={spriteId} emoji={visual?.emoji || "🖐"} size={sprite - 8} pixel={false} />
         </span>
 
         <span style={{display:"grid", gap: dense ? "3px" : "6px", minWidth:0}}>
