@@ -2,6 +2,7 @@ import { FONT } from "../../data/theme.js";
 import { ITEM_DEFS, GRATTATORE_DEFS } from "../../data/items.js";
 import { Asset } from "../Asset.jsx";
 import { Tooltip } from "../Tooltip.jsx";
+import { groupItems, groupGrattatori } from "../../utils/backpack.js";
 
 // ─── ZAINO — si apre al centro, materico come le vecchie app iOS ──
 // Tradotto in pixel art: cuoio a dithering, cuciture tratteggiate, patta con
@@ -10,6 +11,9 @@ import { Tooltip } from "../Tooltip.jsx";
 // Niente sfumature: rilievi fatti con ombre dure a gradini.
 // Stesse azioni di prima: clic su un consumabile = usalo, clic su un
 // grattatore = prendilo in mano / posalo.
+// Oggetti uguali in una casella sola con "×n" (P-04): il raggruppamento è solo
+// visivo (utils/backpack.js), il clic agisce su un pezzo e il numero scala.
+// La Tessera VIP sta nel taschino trasparente della patta (P-05).
 
 const LEATHER = "repeating-conic-gradient(#6b3a1e 0% 25%, #74411f 0% 50%) 0 0 / 4px 4px";
 const LEATHER_DARK = "repeating-conic-gradient(#4e2a14 0% 25%, #573016 0% 50%) 0 0 / 4px 4px";
@@ -42,6 +46,53 @@ function Slot({ children, filled, active, onClick, label }) {
   );
 }
 
+// Etichetta "×n" nell'angolo della casella: targhetta d'ottone piccola.
+function CountTag({ count }) {
+  if (count < 2) return null;
+  return (
+    <span aria-hidden style={{ position: "absolute", right: "3px", top: "3px", fontSize: "10px", lineHeight: 1,
+      padding: "2px 3px", ...brassPlate, boxShadow: `inset 0 0 0 1px ${BRASS.dark}, 2px 2px 0 #0c0b08` }}>×{count}</span>
+  );
+}
+
+// ─── TESSERA VIP nel taschino di plastica della patta ──
+// Non è un consumabile: con player.hasVIP (Mendicante, o tessera usata) resta
+// sempre in vista qui e non occupa caselle. Solo presentazione: l'effetto
+// (Zona VIP del tabaccaio) è lo stesso di prima.
+function VipSleeve() {
+  return (
+    <Tooltip text={"Tessera VIP\nZona VIP aperta nel tabaccaio"}>
+      <span role="img" aria-label="Tessera VIP: Zona VIP aperta nel tabaccaio" style={{
+        position: "relative", display: "block", width: "92px", height: "58px", boxSizing: "border-box", padding: "5px",
+        // taschino cucito: bordo di plastica chiara + cucitura
+        background: "#2a1608",
+        boxShadow: "inset 0 0 0 2px #9fb8bf, inset 0 0 0 3px #1a0c04, 3px 3px 0 #1a0c04",
+        outline: `2px dashed ${STITCH}`, outlineOffset: "3px",
+      }}>
+        {/* la tessera: cartoncino dorato con scritta e banda magnetica */}
+        <span style={{
+          position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between",
+          width: "100%", height: "100%", boxSizing: "border-box", padding: "4px 5px",
+          background: BRASS.hi, color: BRASS.dark, fontFamily: FONT,
+          boxShadow: `inset 0 0 0 2px ${BRASS.dark}, inset -2px -2px 0 2px ${BRASS.lo}`,
+        }}>
+          <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "14px", letterSpacing: "2px", lineHeight: 1 }}>VIP</span>
+            <Asset id="item-tesseraVIP" emoji={ITEM_DEFS.tesseraVIP?.emoji || "🎫"} size={14} />
+          </span>
+          <span style={{ display: "block", height: "5px", background: BRASS.dark }} />
+        </span>
+        {/* plastica trasparente sopra: riflessi netti a strisce, niente sfocature */}
+        <span aria-hidden style={{ position: "absolute", inset: "5px", pointerEvents: "none", overflow: "hidden",
+          background: "rgba(214,238,244,0.14)" }}>
+          <span style={{ position: "absolute", left: "12px", top: 0, width: "4px", height: "100%", background: "rgba(255,255,255,0.35)", transform: "skewX(-20deg)" }} />
+          <span style={{ position: "absolute", left: "20px", top: 0, width: "2px", height: "100%", background: "rgba(255,255,255,0.25)", transform: "skewX(-20deg)" }} />
+        </span>
+      </span>
+    </Tooltip>
+  );
+}
+
 function Pocket({ title, count, children }) {
   return (
     <section style={{
@@ -62,8 +113,12 @@ function Pocket({ title, count, children }) {
 export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClose }) {
   const items = player.items || [];
   const tools = player.grattatori || [];
-  const itemSlots = Math.max(maxItems, items.length);
-  const toolSlots = Math.max(4, Math.ceil(tools.length / 4) * 4);
+  const itemGroups = groupItems(items);
+  const equippedIdx = player.equippedGrattatore?.inventoryIdx ?? null;
+  const toolGroups = groupGrattatori(tools, equippedIdx);
+  // Caselle libere = pezzi che ci stanno ancora (il limite conta i pezzi).
+  const freeItemSlots = Math.max(0, maxItems - items.length);
+  const toolSlots = Math.max(4, Math.ceil(toolGroups.length / 4) * 4);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Zaino" style={{
@@ -83,6 +138,11 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
         <div style={{ position: "relative", background: LEATHER_DARK, padding: "18px 24px 22px", display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "inset 0 -4px 0 0 #2a1608", outline: `2px dashed ${STITCH}`, outlineOffset: "-10px" }}>
           <span style={{ ...brassPlate, fontSize: "20px", letterSpacing: "6px", padding: "8px 22px" }}>ZAINO</span>
+          {player.hasVIP && (
+            <span style={{ position: "absolute", left: "26px", top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
+              <VipSleeve />
+            </span>
+          )}
           {/* cinghia verticale con fibbia */}
           <span aria-hidden style={{ position: "absolute", left: "50%", bottom: "-18px", transform: "translateX(-50%)", width: "34px", height: "30px",
             background: "#3e2010", boxShadow: "inset 0 0 0 2px #1a0c04", zIndex: 2 }}>
@@ -102,13 +162,15 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
         }}>
           <Pocket title="CONSUMABILI" count={`${items.length}/${maxItems}`}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: "8px" }}>
-              {Array.from({ length: itemSlots }, (_, idx) => {
-                const id = items[idx];
-                const it = id ? ITEM_DEFS[id] : null;
-                if (!it) return <Slot key={idx} filled={false} label="Alloggiamento libero" />;
+              {itemGroups.map(({ id, count, indices }) => {
+                const it = ITEM_DEFS[id];
+                if (!it) return null;
+                // si usa l'ultimo pezzo del gruppo: gli indici degli altri non si spostano
+                const idx = indices[indices.length - 1];
                 return (
-                  <Tooltip key={idx} text={`${it.name}\n${it.desc}\nclic per usarlo`}>
-                    <Slot filled label={`${it.name}: usa`} onClick={() => onUseItem(idx, id)}>
+                  <Tooltip key={id} text={`${it.name}${count > 1 ? ` ×${count}` : ""}\n${it.desc}\nclic per ${count > 1 ? "usarne uno" : "usarlo"}`}>
+                    <Slot filled label={`${it.name}${count > 1 ? `, ${count} pezzi` : ""}: usa`} onClick={() => onUseItem(idx, id)}>
+                      <CountTag count={count} />
                       <Asset id={`item-${id}`} emoji={it.emoji} size={32} />
                       <span style={{ fontSize: "10px", width: "100%", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.name}</span>
                       <span aria-label={`rarità ${it.rarity || "comune"}`} style={{ width: 8, height: 8, background: RARITY[it.rarity] || RARITY.comune, boxShadow: "0 0 0 1px #0c0b08" }} />
@@ -116,20 +178,23 @@ export function Backpack({ player, maxItems = 8, onUseItem, onToggleTool, onClos
                   </Tooltip>
                 );
               })}
+              {Array.from({ length: freeItemSlots }, (_, i) => <Slot key={`libero-${i}`} filled={false} label="Alloggiamento libero" />)}
             </div>
           </Pocket>
 
           <Pocket title="GRATTATORI" count={`${tools.length}`}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "8px" }}>
-              {Array.from({ length: toolSlots }, (_, idx) => {
-                const g = tools[idx];
-                if (!g) return <Slot key={idx} filled={false} label="Alloggiamento libero" />;
+              {Array.from({ length: toolSlots }, (_, slot) => {
+                const grp = toolGroups[slot];
+                if (!grp) return <Slot key={`libero-${slot}`} filled={false} label="Alloggiamento libero" />;
+                const { tool: g, count, indices, inHand } = grp;
+                const idx = indices[0];
                 const def = GRATTATORE_DEFS[g.id];
-                const inHand = player.equippedGrattatore?.inventoryIdx === idx;
                 const uses = g.usesLeft || 0;
                 return (
-                  <Tooltip key={idx} text={`${g.name}\n${g.desc || def?.desc || ""}\n${uses} usi · clic per ${inHand ? "posarlo" : "prenderlo"}`}>
-                    <Slot filled active={inHand} label={`${g.name}, ${uses} usi${inHand ? ", in mano" : ""}`} onClick={() => onToggleTool(idx, inHand)}>
+                  <Tooltip key={grp.key} text={`${g.name}${count > 1 ? ` ×${count}` : ""}\n${g.desc || def?.desc || ""}\n${uses} usi${count > 1 ? " ciascuno" : ""} · clic per ${inHand ? "posarlo" : count > 1 ? "prenderne uno" : "prenderlo"}`}>
+                    <Slot filled active={inHand} label={`${g.name}${count > 1 ? `, ${count} pezzi` : ""}, ${uses} usi${inHand ? ", in mano" : ""}`} onClick={() => onToggleTool(idx, inHand)}>
+                      <CountTag count={count} />
                       <Asset id={`item-${g.id}`} emoji={g.emoji} size={32} />
                       <span style={{ fontSize: "10px", width: "100%", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{g.name}</span>
                       <span aria-hidden style={{ display: "flex", gap: "2px", height: "8px", alignItems: "center" }}>
