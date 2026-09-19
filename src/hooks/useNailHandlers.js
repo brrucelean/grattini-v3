@@ -2,10 +2,10 @@ import { useMemo, useCallback } from "react";
 import { C } from "../data/theme.js";
 import { degradeNailObj } from "../utils/nail.js";
 import { hasRelic } from "../utils/hasRelic.js";
-import { spendGrattatoreUse, grattatoreAtLastUse, COMBAT_ONLY_EFFECTS } from "../utils/grattatore.js";
+import { spendGrattatoreUse, grattatoreAtLastUse, grattatoreGoneText, COMBAT_ONLY_EFFECTS } from "../utils/grattatore.js";
 import { fortuneModifier } from "../utils/tokens.js";
 
-export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scratchingCard, addLog }) {
+export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scratchingCard, addLog, setItemFoundModal }) {
   // Reliquie: lista effetti attivi per passare ai componenti figli
   const playerRelicEffects = useMemo(() => (player?.relics || []).map(r => r.effect), [player?.relics]);
   // Fortuna effettiva: base + gettone (Mezzo Corno, Moneta Incollata, Prisma,
@@ -104,13 +104,33 @@ export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scrat
     triggerNpcComment("nail_sanguinante");
   }, [updatePlayer, addLog, triggerNpcComment]);
 
-  // Consuma 1 uso del grattatore equipaggiato (grattini, fine boss-fight, e
-  // CombatView quando l'effetto di un grattatore da combattimento scatta)
-  const consumeGrattatore = useCallback(() => {
-    const spent = grattatoreAtLastUse(player);
-    if (spent) addLog(`${spent.name} consumato!`, C.dim);
+  // Avviso quando un grattatore finisce (consumato, rotto, effetto esaurito):
+  // riga nel registro + popup. Il popup parte a fine giro e, se nello stesso
+  // momento se n'è aperto un altro (reliquia, bioma sbloccato, bluff...), si
+  // aggiunge in fondo al suo testo invece di sovrascriverlo o esserne coperto.
+  const notifyGrattatoreGone = useCallback((g, usesLeft = 0) => {
+    const emoji = g.emoji || "🔧";
+    const text = grattatoreGoneText(g, usesLeft);
+    addLog(`${emoji} ${text}`, C.orange);
+    if (!setItemFoundModal) return;
+    setTimeout(() => setItemFoundModal(cur => cur
+      ? {...cur, desc: `${cur.desc || ""}\n\n${emoji} ${text}`}
+      : { emoji, name: g.name, desc: text, buttonLabel: "OK →",
+          subtitle: usesLeft > 0 ? "Grattatore: effetto finito" : "Grattatore consumato" }
+    ), 0);
+  }, [addLog, setItemFoundModal]);
+
+  // Consuma 1 uso del grattatore equipaggiato (grattini, fine fight per Fascia
+  // da Polso e Guanto da BOSS, e CombatView quando l'effetto di un grattatore
+  // da combattimento scatta). notifyUses: avvisa anche se restano usi (a fine
+  // fight l'effetto della Fascia finisce anche quando non era l'ultimo uso).
+  const consumeGrattatore = useCallback(({ notifyUses = false } = {}) => {
+    const eq = player?.equippedGrattatore;
+    const g = eq && player.grattatori?.[eq.inventoryIdx];
+    if (g && g.usesLeft <= 1) notifyGrattatoreGone(g);
+    else if (g && notifyUses) notifyGrattatoreGone(g, g.usesLeft - 1);
     updatePlayer(spendGrattatoreUse);
-  }, [player, updatePlayer, addLog]);
+  }, [player, updatePlayer, notifyGrattatoreGone]);
 
   const handleCombatCellScratch = useCallback(() => {
     // ── GRATTATORE EQUIPAGGIATO: gratti con l'attrezzo, non con l'unghia ──
@@ -122,7 +142,7 @@ export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scrat
     const eq = player?.equippedGrattatore;
     if (eq && !COMBAT_ONLY_EFFECTS.has(eq.effect)) {
       const spent = grattatoreAtLastUse(player);
-      if (spent) addLog(`${spent.name} consumato!`, C.dim);
+      if (spent) notifyGrattatoreGone(spent);
     }
     updatePlayer(p => {
       if (p.equippedGrattatore) {
@@ -147,7 +167,7 @@ export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scrat
       // Il game over in combattimento lo decide un effect in scratchlite
       return {...p, nails, activeNail: newActive};
     });
-  }, [player, updatePlayer, addLog]);
+  }, [player, updatePlayer, notifyGrattatoreGone]);
 
   return {
     playerRelicEffects,
@@ -157,5 +177,6 @@ export function useNailHandlers({ player, updatePlayer, triggerNpcComment, scrat
     handleNailDamage,
     handleCombatCellScratch,
     consumeGrattatore,
+    notifyGrattatoreGone,
   };
 }

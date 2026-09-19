@@ -340,12 +340,7 @@ export default function Grattini() {
     return () => clearTimeout(t);
   }, [player?.nails, screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── HOOK: useNailHandlers ───
-  const { playerRelicEffects, effectiveFortune, getActiveNailState, handleCellScratch, handleNailDamage, handleCombatCellScratch, consumeGrattatore } = useNailHandlers({
-    player, updatePlayer, triggerNpcComment, scratchingCard, addLog,
-  });
-
-  // ─── HOOK: useItemHandlers ───
+  // ─── HOOK: useItemHandlers ─── (prima di useNailHandlers: gli passa il popup)
   const {
     itemFoundModal, setItemFoundModal,
     nailEquipModal, setNailEquipModal,
@@ -361,6 +356,11 @@ export default function Grattini() {
     handleSaveSmoke,
     handleUseItem,
   } = useItemHandlers({ player, updatePlayer, addLog });
+
+  // ─── HOOK: useNailHandlers ───
+  const { playerRelicEffects, effectiveFortune, getActiveNailState, handleCellScratch, handleNailDamage, handleCombatCellScratch, consumeGrattatore } = useNailHandlers({
+    player, updatePlayer, triggerNpcComment, scratchingCard, addLog, setItemFoundModal,
+  });
   // Riferimento stabile per HUD (memoizzato) — un'arrow function inline nel JSX
   // sarebbe una nuova identità ad ogni render, vanificando il memo.
   const toggleInventoryPanel = useCallback(() => setShowInventoryPanel(v => {

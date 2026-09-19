@@ -178,6 +178,44 @@ export function generateIntroCards(count = 3, fortune = 0) {
   return picked.map(t => ({ ...generateCard(t.id, fortune), owned: false }));
 }
 
+// ─── VINCITE DA JOLLY (match / jolly / trap) ─────────────────
+// Consolazione del jolly: 45% del premio massimo calibrato (CARD_BALANCE),
+// mai sotto il costo del biglietto. È il premio di una carta perdente su cui
+// un jolly completa comunque la combinazione.
+export function jollyConsolationPrize(type) {
+  const cb = CARD_BALANCE[type.id];
+  const pMin = cb?.prizeMin ?? type.cost;
+  const pMax = cb?.prizeMax ?? type.maxPrize;
+  return Math.max(type.cost, Math.round(pMin + rng() * (pMax * 0.45 - pMin)));
+}
+
+// Reliquia Malocchio: le trappole 🔥 diventano jolly ✨ (alla creazione della schedina)
+export function applyTrapToJolly(cells) {
+  return cells.map(c => c.isTrap ? {...c, isTrap: false, isJolly: true, symbol: "✨"} : {...c});
+}
+
+// Simbolo che fa vincere tra le celle grattate (i jolly contano per tutti), o null
+export function matchWinSymbol(cells, matchNeeded) {
+  const counts = {};
+  cells.filter(c => c.scratched && !c.isTrap && !c.isItem && !c.isJolly && !c.isStop).forEach(c => {
+    counts[c.symbol] = (counts[c.symbol] || 0) + 1;
+  });
+  const jollyCount = cells.filter(c => c.scratched && c.isJolly).length;
+  for (const [sym, count] of Object.entries(counts)) {
+    if (count + jollyCount >= matchNeeded) return sym;
+  }
+  return null;
+}
+
+// Premio nominale di una combinazione trovata sulla schedina. Con il Malocchio
+// le trappole della Bocca del Drago diventano jolly DOPO la generazione: su un
+// biglietto nato perdente (prize 0) il poker col jolly pagava €0. Ogni vincita
+// riconosciuta paga un premio vero: se il biglietto non ne aveva, vale la
+// stessa consolazione che le carte col jolly (Porta Sfortuna) già usano.
+export function matchWinPrize(card) {
+  return card.prize > 0 ? card.prize : jollyConsolationPrize(card);
+}
+
 export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
   const type = CARD_TYPES.find(t => t.id === typeId) || CARD_TYPES[0];
   const totalCells = type.rows * type.cols;
@@ -336,8 +374,7 @@ export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
         const afterCounts = {};
         cells.forEach(c => { if (!c.isJolly) afterCounts[c.symbol] = (afterCounts[c.symbol]||0)+1; });
         if (Object.values(afterCounts).some(c => c >= type.matchNeeded - 1)) {
-          // Consolation jolly: 45% del premio massimo calibrato
-          prize = Math.max(type.cost, Math.round(pMin + rng() * (pMax * 0.45 - pMin)));
+          prize = jollyConsolationPrize(type);
         }
       }
     }

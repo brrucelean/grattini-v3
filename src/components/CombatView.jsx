@@ -449,6 +449,12 @@ function TimingBar({ mode = "attack", speed = 1.5, onResult, perfectWiden = 0 })
         {/* cursore */}
         <div style={{ position: "absolute", top: "-3px", bottom: "-3px", left: `calc(${pos * 100}% - 3px)`, width: "6px", background: result ? resultColor : "#fff", boxShadow: `0 0 10px ${result ? resultColor : "#fff"}`, transition: doneRef.current ? "background 0.1s" : "none" }} />
       </div>
+      {/* Zona allargata (Fascia da Polso / Maneki Neko): che si veda il perché */}
+      {perfectWiden > 0 && !result && (
+        <div style={{ color: C.green, fontSize: "11px", letterSpacing: "1px" }}>
+          ZONA PERFETTO ALLARGATA ({Math.round((PERFECT[1] - PERFECT[0]) * 100)}% della barra)
+        </div>
+      )}
       {resultLabel ? (
         <div style={{ color: resultColor, fontSize: "22px", fontWeight: "bold", textShadow: `0 0 16px ${resultColor}` }}>{resultLabel}</div>
       ) : (

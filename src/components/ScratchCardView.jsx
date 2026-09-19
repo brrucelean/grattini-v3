@@ -13,6 +13,8 @@ import { PlayingCardFace } from "./PlayingCardFace.jsx";
 import { ScratchCell } from "./ScratchCell.jsx";
 import { hasAsset, assetUrl } from "../assets/registry.js";
 import { ticketLayout, inset } from "../data/ticketLayout.js";
+import { applyTrapToJolly, matchWinSymbol, matchWinPrize } from "../utils/card.js";
+import { combatOnlyScratchBlock } from "../utils/grattatore.js";
 import { TicketHeader } from "./TicketHeader.jsx";
 import { ANIM } from "../styles/animations.js";
 
@@ -55,13 +57,19 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   const [winPrizeFull, setWinPrizeFull] = useState(0);
   const [cancelled, setCancelled] = useState(false);
   const [nailAdviceDismissed, setNailAdviceDismissed] = useState(false);
+  // Avviso "non puoi grattare": testo del motivo, o false
   const [deadNailWarn, setDeadNailWarn] = useState(false);
   const deadNailTimer = useRef(null);
-  const warnDeadNail = () => {
-    setDeadNailWarn(true);
+  const warnDeadNail = (text = "✝ UNGHIA MORTA — seleziona un'unghia sana per grattare") => {
+    setDeadNailWarn(text);
     clearTimeout(deadNailTimer.current);
     deadNailTimer.current = setTimeout(() => setDeadNailWarn(false), 2000);
   };
+  // Grattatore da combattimento in mano (Fascia da Polso, Coltello, Guanti):
+  // sul grattino non gratta, come l'unghia morta. Niente cella, niente uso speso.
+  const toolBlock = combatOnlyScratchBlock(equippedGrattatore);
+  const scratchBlocked = !!toolBlock || nailState === "morta";
+  const warnBlocked = () => (toolBlock ? warnDeadNail(`🚫 ${toolBlock}`) : warnDeadNail());
   const scratchedWhileMarcia = useRef(false);
   // Celle "sporcate di sangue" — set di indici grattati con unghia marcia/sanguinante.
   // Usato per renderizzare macchie rosse persistenti sulla schedina.
@@ -157,11 +165,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     const newId = card.name + card.prize + card.symbols?.join("");
     if (newId !== cardId.current) {
       cardId.current = newId;
-      const newCells = card.cells.map(c => ({...c}));
-      // Reliquia Malocchio: trappole 🔥 → jolly ✨
-      if (relicEffects.includes("trapToJolly")) {
-        newCells.forEach((c, i) => { if (c.isTrap) newCells[i] = {...c, isTrap: false, isJolly: true, symbol: "✨"}; });
-      }
+      // Reliquia Malocchio: trappole 🔥 → jolly ✨ (il premio lo garantisce matchWinPrize)
+      const newCells = relicEffects.includes("trapToJolly")
+        ? applyTrapToJolly(card.cells)
+        : card.cells.map(c => ({...c}));
       // Chiave d'Ottone: rivela 2 celle-simbolo sui grattini tier 3+ (mai un
       // oggetto nascosto: segnato come grattato senza doScratch andrebbe perso)
       if (equippedGrattatore?.effect === "revealPath" && card.tier >= 3 && REVEAL_MECHANICS.has(card.mechanic)) {
@@ -191,15 +198,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   // Check for winning combo among revealed cells
   const checkWin = (newCells) => {
     if (NO_MATCH_MECHANICS.has(card.mechanic)) return null;
-    const counts = {};
-    newCells.filter(c => c.scratched && !c.isTrap && !c.isItem && !c.isJolly && !c.isStop).forEach(c => {
-      counts[c.symbol] = (counts[c.symbol] || 0) + 1;
-    });
-    const jollyCount = newCells.filter(c => c.scratched && c.isJolly).length;
-    for (const [sym, count] of Object.entries(counts)) {
-      if (count + jollyCount >= card.matchNeeded) return sym;
-    }
-    return null;
+    return matchWinSymbol(newCells, card.matchNeeded);
   };
 
   // Moltiplicatore-unghia per lo stato corrente (NAIL_INFO: vale per qualsiasi
@@ -318,8 +317,9 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   const doScratch = (idx) => {
     if (cells[idx].scratched || locked) return;
     // Stesso blocco delle celle (ScratchCell `blocked`), che però spazio e
-    // "Gratta tutto" scavalcavano: con l'unghia morta non si gratta.
-    if (nailState === "morta") { warnDeadNail(); return; }
+    // "Gratta tutto" scavalcavano: con l'unghia morta non si gratta (né con
+    // un grattatore da combattimento in mano).
+    if (scratchBlocked) { warnBlocked(); return; }
     if (!equippedGrattatore && nailState === "marcia") scratchedWhileMarcia.current = true;
     // Macchia visiva: SOLO con unghia marcia (rosso) e senza grattatore.
     // Sanguinante (arancione) è uno stato "dolore" — fa male ma il premio resta
@@ -425,9 +425,10 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     }
 
     // ── Normal match / jolly / trap ───────────────────────────────
+    // matchWinPrize: mai €0, anche su un biglietto nato perdente (Malocchio)
     const sym = checkWin(newCells);
     if (sym && !winFound) {
-      declareWin(card.prize, sym);
+      declareWin(matchWinPrize(card), sym);
       setNearWin(false);
       AudioEngine.win();
     } else if (!sym && !winFound && card.matchNeeded) {
@@ -444,7 +445,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
 
   const scratchAll = () => {
     if (NO_MATCH_MECHANICS.has(card.mechanic) || locked) return;
-    if (nailState === "morta") { warnDeadNail(); return; }
+    if (scratchBlocked) { warnBlocked(); return; }
     const newCells = cells.map(c => ({...c, scratched: true}));
     const fresh = newCells.filter((c, i) => !cells[i].scratched);
     setCells(newCells);
@@ -464,7 +465,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     fresh.filter(c => !c.isTrap && !c.isItem).forEach(() => { AudioEngine.scratch(); onCellScratch(!!equippedGrattatore); });
     setScratched(newCells.length);
     const sym = checkWin(newCells);
-    if (sym && !winFound) { declareWin(card.prize, sym); AudioEngine.win(); }
+    if (sym && !winFound) { declareWin(matchWinPrize(card), sym); AudioEngine.win(); }
     else if (!sym && !winFound) stopWithLoss();
   };
 
@@ -604,6 +605,17 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
   // minigioco dedicato e non passano mai da qui: solo la galleria dev li mostra.
   // Al posto di celle finte (grattabili ma senza vincita) si spiega il gioco.
   const guide = ticketGuide(card);
+  // Avviso "non puoi grattare" (unghia morta, grattatore da combattimento)
+  const blockBanner = deadNailWarn && (
+    <div style={{
+      margin:"0 auto 8px", maxWidth:"min(340px, 94vw)", padding:"8px 12px", textAlign:"center",
+      border:`2px solid ${C.red}`, background:"#1a0005", color:C.red, fontWeight:"bold",
+      fontSize:"12px", letterSpacing:"0.5px", boxShadow:`0 0 14px ${C.red}88, inset 0 0 10px ${C.red}22`,
+      animation:ANIM.pulseUrgent,
+    }}>
+      {deadNailWarn}
+    </div>
+  );
   const DockTag = fit && hasTicket ? "div" : Fragment;
   const isMinigame = MINIGAME_MECHANICS.has(card.mechanic);
   const playContent = isMinigame ? (
@@ -622,6 +634,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     </div>
   ) : card.mechanic === "ruota" ? (
     <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:"8px", margin:"10px auto 12px"}}>
+      {blockBanner}
       <div style={{color:C.gold, fontSize:"11px", letterSpacing:"3px", fontFamily:FONT}}>
         ★ FERMA I RULLI ★
       </div>
@@ -668,16 +681,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
     </div>
   ) : (
     <>
-      {deadNailWarn && (
-        <div style={{
-          margin:"0 auto 8px", maxWidth:"min(340px, 94vw)", padding:"8px 12px", textAlign:"center",
-          border:`2px solid ${C.red}`, background:"#1a0005", color:C.red, fontWeight:"bold",
-          fontSize:"12px", letterSpacing:"0.5px", boxShadow:`0 0 14px ${C.red}88, inset 0 0 10px ${C.red}22`,
-          animation:ANIM.pulseUrgent,
-        }}>
-          ✝ UNGHIA MORTA — seleziona un'unghia sana per grattare
-        </div>
-      )}
+      {blockBanner}
       <div style={{
         display:"grid", gridTemplateColumns:`repeat(${card.cols}, 1fr)`,
         ...(hasTicket ? {
@@ -704,7 +708,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
               isWinSymbol={isWinSymbol} isPartialMatch={isPartialMatch}
               bloodMode={nailState === "marcia"}
               isBloody={bloodyCells.has(idx)}
-              blocked={nailState === "morta"} onBlockedAttempt={warnDeadNail}
+              blocked={scratchBlocked} onBlockedAttempt={warnBlocked}
               ambidestri={ambidestri} themeColor={card.theme?.border} fill={hasTicket}
               printSkin={hasV3Ticket}
               /* Scala la festa dei coriandoli col valore del biglietto:

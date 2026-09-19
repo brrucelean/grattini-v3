@@ -9,6 +9,7 @@ import { degradeNailObj, healNail, healDamagedNails, isDamagedNail } from "../ut
 import { roundMoney, fmtMoney } from "../utils/money.js";
 import { roll, pick, shuffle } from "../utils/random.js";
 import { generateCard } from "../utils/card.js";
+import { combatOnlyScratchBlock, grattatoreSpentAtFightEnd } from "../utils/grattatore.js";
 import { generateMap, generateLabirintoGrid, generateCombinaState, generateTesoroState } from "../utils/map.js";
 import { AudioEngine } from "../audio.js";
 import { pickNewRelic } from "../utils/hasRelic.js";
@@ -228,6 +229,20 @@ export function useNodeHandlers({
     // (es. Jackpot Mix — cartone premium, ci vuole l'attrezzo)
     if (card?.requiresGrattatore && !player.equippedGrattatore) {
       addLog(`🔧 ${card.name} richiede un GRATTATORE equipaggiato. Le tue unghie non bastano!`, C.red);
+      return;
+    }
+    // Grattatori da combattimento (Fascia da Polso, Coltello, Guanti): sul
+    // grattino non grattano, la grattata non parte e non si spende nessun uso.
+    // I minigiochi (Labirinto, Combina, Tesoro) non usano grattatori: passano.
+    const blocked = !MINIGAMES[card?.mechanic] && combatOnlyScratchBlock(player.equippedGrattatore);
+    if (blocked) {
+      addLog(`🚫 ${blocked}: funziona solo in combattimento.`, C.red);
+      setItemFoundModal({
+        emoji: "🚫", name: blocked,
+        desc: "Questo grattatore funziona solo in combattimento.\nMettilo via (o cambia attrezzo) per grattare il biglietto.",
+        subtitle: "Grattatore da combattimento", buttonLabel: "Ok →",
+      });
+      AudioEngine.error?.();
       return;
     }
     setSelectedCardIdx(idx);
@@ -459,17 +474,18 @@ export function useNodeHandlers({
     // Guanto da BOSS: si sgretola SOLO dopo un boss fight (non dopo miniboss/ladri).
     // Altrimenti resta in inventario/equipaggiato per il vero boss.
     const wasBossFight = currentNode?.type === "boss";
-    if (wasBossFight) {
-      if (player.guantoBossActive) {
+    // Fine fight vera (non riavvolta dal Gettone VHS): la Fascia da Polso si
+    // consuma sempre, il Guanto da BOSS dopo il boss. L'avviso (registro +
+    // popup) lo dà consumeGrattatore.
+    const endFightGrattatori = () => {
+      if (wasBossFight && player.guantoBossActive) {
         updatePlayer(p => ({...p, guantoBossActive: false}));
         addLog("🧤 Il Guanto da BOSS si sgretola in mille pezzi. Ha retto fino all'ultimo.", C.gold);
       }
-      if (player.equippedGrattatore?.effect === "bossShield") {
-        consumeGrattatore();
-        addLog("🧤 Il Guanto da BOSS si sgretola in mille pezzi. Ha retto fino all'ultimo.", C.gold);
-      }
-    }
+      if (grattatoreSpentAtFightEnd(player, { isBoss: wasBossFight })) consumeGrattatore({ notifyUses: true });
+    };
     if (result.won) {
+      endFightGrattatori();
       setGameStats(s => ({...s, combatsWon: (s.combatsWon || 0) + 1}));
       updatePlayer(p => {
         const nails = healDamagedNails(p.nails, result.nailHeals || 0);
@@ -614,6 +630,7 @@ export function useNodeHandlers({
     } else {
       // Gettone VHS: riavvolge invece di perdere (1 per bioma, €10)
       if (tryRewindCombat?.()) return;
+      endFightGrattatori();
       // Apply damage and money loss in one update to avoid stale state
       updatePlayer(p => {
         if (p.tokens) p = {...p, tokens: markNodeOutcome(p.tokens, false)};

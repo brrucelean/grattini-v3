@@ -9,6 +9,7 @@ import { rng, roll } from "../utils/random.js";
 import { AudioEngine } from "../audio.js";
 import { generateMap } from "../utils/map.js";
 import { scratchPrize, onScratchWin } from "../utils/tokens.js";
+import { COMBAT_ONLY_EFFECTS } from "../utils/grattatore.js";
 import { STORAGE_KEYS, getStoredNumber, setStoredNumber } from "../utils/storage.js";
 
 // Impianti a usi limitati: stato dell'unghia quando gli usi finiscono.
@@ -331,9 +332,10 @@ export function useScratchHandlers({
     }
 
     // Consume grattatore use (skip for portaChiavi which has its own logic,
-    // e bossShield che va speso SOLO dentro la boss-fight, mai su grattini normali)
+    // e i grattatori da combattimento — Guanto da BOSS, Fascia, Coltello, Guanto
+    // di Ferro — che sui grattini non grattano: si spendono solo in fight)
     const gEff = grattatore?.effect;
-    if (gEff !== "portaChiavi" && gEff !== "bossShield") consumeGrattatore();
+    if (gEff && gEff !== "portaChiavi" && !COMBAT_ONLY_EFFECTS.has(gEff)) consumeGrattatore();
 
     // Traccia la carta grattata per il Bambino Collezionista (storico)
     if (card && !isIntro) {
