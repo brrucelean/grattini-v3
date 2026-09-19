@@ -2332,7 +2332,7 @@ export default function Grattini() {
         // Desktop: grattino sul tavolo (components/minigame/MinigameTable.jsx)
         if (wideShell) return (
           <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-            <MinigameTable title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
+            <MinigameTable ticketId="labirinto" title="Il Labirinto" emoji="🌀" accent="#1f7a4a"
               how="Parti dall'angolo in alto a sinistra e segui la freccia della casella in cui sei."
               status={[["Accumulato", `€${ls.prize}`, true], ["Ogni casella nuova", `+€${CELL_PRIZE}`], ["Uscita 🏆", `+€${JACKPOT_PRIZE}`]]}
               rules={[
@@ -2347,12 +2347,12 @@ export default function Grattini() {
                 ls.prize > 0 && { label: `INCASSA €${ls.prize}`, onClick: handleIncassa },
                 { label: "ABBANDONA", onClick: closeMinigame, kind: "danger" },
               ]}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 76px)", gap: "6px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: "1.5cqh" }}>
                 {ls.grid.map((rowData, r) => rowData.map((cell, c) => {
                   const isPos = r === row && c === col;
                   const seen = ls.revealed.has(`${r},${c}`);
                   return (
-                    <CoverCell key={`${r},${c}`} revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
+                    <CoverCell key={`${r},${c}`} size="23.5cqh" revealed={isPos || seen} mark={isPos ? "#1f7a4a" : null}
                       label={isPos ? `Sei qui: ${cell}` : seen ? cell : "casella coperta"}>
                       {isPos || seen ? <span style={{ color: isPos ? "#1f7a4a" : "#8a9a90" }}>{cell}</span> : undefined}
                     </CoverCell>
@@ -2495,10 +2495,10 @@ export default function Grattini() {
             const last = which === "A" ? cs.lastRevealedA : cs.lastRevealedB;
             return (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "11px", letterSpacing: "3px", color: "#9a2a66" }}>GRIGLIA {which}</span>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 72px)", gap: "6px" }}>
+                <span style={{ fontSize: "11px", letterSpacing: "3px", color: "#fff3c4" }}>GRIGLIA {which}</span>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, auto)", gap: "2cqh" }}>
                   {grid.map((sym, i) => (
-                    <CoverCell key={i} size={72} revealed={revealed[i]} onClick={() => handleReveal(which, i)}
+                    <CoverCell key={i} size="min(34cqh, 12cqw)" revealed={revealed[i]} onClick={() => handleReveal(which, i)}
                       mark={revealed[i] && sym && sym === last ? "#9a2a66" : null}
                       label={revealed[i] ? (sym || "vuota") : `griglia ${which}, casella coperta`}>
                       {revealed[i] ? (sym || <span style={{ color: "#b8a878" }}>—</span>) : undefined}
@@ -2509,12 +2509,12 @@ export default function Grattini() {
             );
           };
           const pair = (v) => (
-            <span style={{ width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px",
+            <span style={{ width: "26cqh", height: "26cqh", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13cqh",
               background: "#fbeebc", boxShadow: "inset 0 0 0 2px #d9c27a" }}>{v || "·"}</span>
           );
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
+              <MinigameTable ticketId="grattaCombina" title="Gratta & Combina" emoji="🔀" accent="#9a2a66"
                 how="Scopri una casella per griglia: se le ultime due scoperte sono uguali è COMBO."
                 status={[["Premio", `€${cs.prize}`, true], ["Combo", `${cs.combos}/3`], ["MEGA COMBO", `×${MEGA_MULT}`]]}
                 rules={[
@@ -2530,11 +2530,11 @@ export default function Grattini() {
                     closeMinigame();
                   } },
                 ]}>
-                <div style={{ display: "flex", alignItems: "center", gap: "22px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4cqw" }}>
                   {deskGrid("A")}
                   <div aria-label="Ultime due scoperte" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
                     {pair(cs.lastRevealedA)}
-                    <span style={{ fontSize: "18px", color: cs.lastRevealedA && cs.lastRevealedA === cs.lastRevealedB ? "#9a2a66" : "#5d6f68" }}>=</span>
+                    <span style={{ fontSize: "18px", color: cs.lastRevealedA && cs.lastRevealedA === cs.lastRevealedB ? "#ffe14a" : "#fff3c4" }}>=</span>
                     {pair(cs.lastRevealedB)}
                   </div>
                   {deskGrid("B")}
@@ -2626,7 +2626,7 @@ export default function Grattini() {
           const DIST_INK = { 1: "#a3161d", 2: "#b0661a", 3: "#8a6a22" };
           return (
             <div style={{ flex:1, minHeight:0, width:"100%", display:"flex" }}>
-              <MinigameTable title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
+              <MinigameTable ticketId="mappaTesor0" title="La Mappa del Tesoro" emoji="🗺️" accent="#8a5a12"
                 how="Due X nascoste e 5 bombe. Ogni casella vuota ti dice quanto sei lontano dal tesoro più vicino."
                 status={[["Premio", `€${ts.prize}`, true], ["Tesori", `${ts.foundTreasures}/2`], ["Jackpot", `+€${JACKPOT_PRIZE}`]]}
                 rules={[
@@ -2644,13 +2644,13 @@ export default function Grattini() {
                   } },
                   { label: "ABBANDONA", kind: "danger", onClick: closeMinigame },
                 ]}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 76px)", gap: "6px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: "1.5cqh" }}>
                   {Array.from({length:16}, (_, idx) => {
                     const rev = ts.revealed[idx];
                     const isTreasure = ts.treasures.has(idx), isBomb = ts.bombs.has(idx);
                     const dist = rev && !isTreasure && !isBomb ? getManhattanDist(idx) : null;
                     return (
-                      <CoverCell key={idx} revealed={rev} onClick={() => handleReveal(idx)}
+                      <CoverCell key={idx} size="23.5cqh" revealed={rev} onClick={() => handleReveal(idx)}
                         mark={rev && isTreasure ? "#8a5a12" : null}
                         label={rev ? (isTreasure ? "tesoro" : isBomb ? "bomba" : `distanza ${dist}`) : "casella coperta"}>
                         {rev ? (isTreasure ? "💎" : isBomb ? "💣" : <span style={{ color: DIST_INK[dist] || "#5d6f68" }}>{dist}</span>) : undefined}
