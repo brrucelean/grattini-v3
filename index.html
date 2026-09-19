@@ -32,8 +32,7 @@
         border-radius: clamp(14px, 2.2vw, 38px) / clamp(10px, 1.6vw, 28px);
         transform: scale(.988, .982);
         transform-origin: center;
-        filter: url(#crt-warp) contrast(1.09) saturate(.92) brightness(.96);
-        animation: crtFrameJitter 14s steps(1) infinite;
+        filter: contrast(1.035) saturate(.98);
         box-shadow:
           inset 0 0 24px rgba(0,0,0,.34),
           inset 0 0 80px rgba(0,0,0,.16),
@@ -47,28 +46,19 @@
       /* ══ PELLICOLA CRT / PIXEL ══════════════════════════════════════
          Overlay neutro da cabinato: micro-griglia RGB, scanline, grana e
          vignettatura. Il foil colorato resta locale sui soli oggetti premio. */
-      @keyframes gameCrtFlicker {
-        0%,100% { opacity: .72; }
-        48%     { opacity: .68; }
-        49%     { opacity: .56; }
-        50%     { opacity: .75; }
-        82%     { opacity: .69; }
-      }
       @keyframes crtFrameJitter {
-        0%,72%,72.8%,73.35%,100% { transform: scale(.988, .982) translate3d(0,0,0); }
-        72.12% { transform: scale(.991, .982) translate3d(-3px,1px,0); }
-        72.28% { transform: scale(.986, .984) translate3d(5px,-1px,0); }
-        72.44% { transform: scale(.990, .981) translate3d(-2px,0,0); }
-        73.05% { transform: scale(.988, .982) translate3d(2px,0,0); }
-        73.18% { transform: scale(.988, .982) translate3d(-1px,0,0); }
+        0%,100% { transform:scale(.988,.982) translate3d(0,0,0); }
+        18% { transform:scale(.989,.982) translate3d(-2px,0,0); }
+        32% { transform:scale(.987,.983) translate3d(3px,-1px,0); }
+        48% { transform:scale(.989,.982) translate3d(-1px,1px,0); }
+        68% { transform:scale(.988,.982) translate3d(2px,0,0); }
       }
       @keyframes crtSyncTear {
-        0%,71.9%,73.5%,100% { opacity:0; transform:translateY(-110%); }
-        72.05% { opacity:.18; transform:translateY(16vh); }
-        72.32% { opacity:.36; transform:translateY(47vh); }
-        72.58% { opacity:.13; transform:translateY(72vh); }
-        73.08% { opacity:.22; transform:translateY(31vh); }
-        73.3%  { opacity:0; transform:translateY(104vh); }
+        0% { opacity:0; transform:translateY(-110%); }
+        20% { opacity:.14; transform:translateY(18vh); }
+        48% { opacity:.24; transform:translateY(52vh); }
+        72% { opacity:.10; transform:translateY(78vh); }
+        100% { opacity:0; transform:translateY(108vh); }
       }
       @keyframes gameGrainStep {
         0%   { transform: translate3d(-2%, -3%, 0); }
@@ -80,11 +70,11 @@
       body::before {
         content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2147483645;
         background:
-          linear-gradient(90deg, rgba(255,35,35,.10) 0 1px, rgba(45,255,135,.055) 1px 2px, rgba(45,125,255,.10) 2px 3px),
-          repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.47) 2px 3px);
+          linear-gradient(90deg, rgba(255,55,55,.032) 0 1px, rgba(55,255,145,.018) 1px 2px, rgba(55,145,255,.032) 2px 3px),
+          repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.20) 2px 3px);
         background-size: 3px 100%, 100% 3px;
-        mix-blend-mode: multiply;
-        animation: gameCrtFlicker 8s steps(1) infinite;
+        opacity:.48;
+        mix-blend-mode:normal;
       }
       #root::before {
         content: ""; position: fixed; inset:0; pointer-events:none;
@@ -104,32 +94,25 @@
           repeating-linear-gradient(0deg, rgba(225,255,245,.13) 0 1px, rgba(0,0,0,.16) 1px 3px, transparent 3px 5px),
           linear-gradient(90deg, transparent, rgba(180,255,235,.11) 20%, rgba(255,255,255,.15) 50%, rgba(150,205,255,.10) 78%, transparent);
         mix-blend-mode:screen;
-        animation:crtSyncTear 14s steps(1) infinite;
       }
+      html.crt-glitch #root { animation:crtFrameJitter .42s steps(1) 1; }
+      html.crt-glitch #root::after { animation:crtSyncTear .52s steps(5) 1; }
       body::after {
         content: ""; position: fixed; inset: -8%; pointer-events: none; z-index: 2147483647;
-        background-image:
-          repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, rgba(255,255,255,.009) 1px 2px, transparent 2px 4px),
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='2' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
-        background-size:auto,96px 96px;
-        mix-blend-mode:soft-light; opacity:.52;
-        animation:gameGrainStep .34s steps(4) infinite;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .72 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size:80px 80px;
+        mix-blend-mode:screen; opacity:.115;
+        animation:gameGrainStep .22s steps(3) infinite;
       }
       @media (prefers-reduced-motion: reduce) {
         body::before, body::after, #root::before { animation:none !important; }
-        body::before { opacity:.68; }
+        body::before { opacity:.48; }
         #root { animation:none !important; }
         #root::after { display:none; }
       }
     </style>
   </head>
   <body>
-    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
-      <filter id="crt-warp" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.0015 0.085" numOctaves="1" seed="7" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.1" xChannelSelector="R" yChannelSelector="B" />
-      </filter>
-    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
