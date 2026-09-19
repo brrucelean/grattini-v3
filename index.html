@@ -29,6 +29,15 @@
       #root {
         width: 100%; height: 100%;
         overflow: hidden;
+        border-radius: clamp(14px, 2.2vw, 38px) / clamp(10px, 1.6vw, 28px);
+        transform: scale(.988, .982);
+        transform-origin: center;
+        filter: url(#crt-warp) contrast(1.09) saturate(.92) brightness(.96);
+        box-shadow:
+          inset 0 0 34px rgba(0,0,0,.82),
+          inset 0 0 110px rgba(0,0,0,.42),
+          0 0 0 5px #050706,
+          0 0 28px #000;
         /* NON mettere padding safe-area qui: il game div è position:fixed
            relativo al viewport, non a #root, quindi il padding sarebbe ignorato.
            Le safe-area sono gestite internamente dal componente Grattini via
@@ -38,11 +47,11 @@
          Overlay neutro da cabinato: micro-griglia RGB, scanline, grana e
          vignettatura. Il foil colorato resta locale sui soli oggetti premio. */
       @keyframes gameCrtFlicker {
-        0%,100% { opacity: .32; }
-        48%     { opacity: .30; }
-        49%     { opacity: .25; }
-        50%     { opacity: .33; }
-        82%     { opacity: .31; }
+        0%,100% { opacity: .72; }
+        48%     { opacity: .68; }
+        49%     { opacity: .56; }
+        50%     { opacity: .75; }
+        82%     { opacity: .69; }
       }
       @keyframes gameGrainStep {
         0%   { transform: translate3d(-2%, -3%, 0); }
@@ -54,19 +63,22 @@
       body::before {
         content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 2147483645;
         background:
-          linear-gradient(90deg, rgba(255,50,50,.026) 0 1px, rgba(50,255,150,.018) 1px 2px, rgba(60,150,255,.026) 2px 3px),
-          repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.24) 2px 3px);
+          linear-gradient(90deg, rgba(255,35,35,.10) 0 1px, rgba(45,255,135,.055) 1px 2px, rgba(45,125,255,.10) 2px 3px),
+          repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.47) 2px 3px);
         background-size: 3px 100%, 100% 3px;
-        mix-blend-mode: soft-light;
+        mix-blend-mode: multiply;
         animation: gameCrtFlicker 8s steps(1) infinite;
       }
       #root::before {
         content: ""; position: fixed; inset:0; pointer-events:none;
         z-index:2147483646;
         background:
-          radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.18) 78%, rgba(0,0,0,.52) 100%),
-          linear-gradient(90deg, rgba(255,255,255,.018), transparent 2%, transparent 98%, rgba(255,255,255,.014));
-        box-shadow: inset 0 0 60px rgba(0,0,0,.28);
+          linear-gradient(105deg, rgba(255,255,255,.055) 0%, transparent 16%, transparent 76%, rgba(190,225,255,.025) 86%, transparent 100%),
+          radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.15) 69%, rgba(0,0,0,.58) 96%, rgba(0,0,0,.88) 100%);
+        box-shadow:
+          inset 22px 0 38px rgba(0,0,0,.36),
+          inset -22px 0 38px rgba(0,0,0,.36),
+          inset 0 0 80px rgba(0,0,0,.46);
       }
       body::after {
         content: ""; position: fixed; inset: -8%; pointer-events: none; z-index: 2147483647;
@@ -74,16 +86,22 @@
           repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, rgba(255,255,255,.009) 1px 2px, transparent 2px 4px),
           url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='2' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
         background-size:auto,96px 96px;
-        mix-blend-mode:soft-light; opacity:.18;
-        animation:gameGrainStep 1.8s steps(5) infinite;
+        mix-blend-mode:soft-light; opacity:.34;
+        animation:gameGrainStep .9s steps(5) infinite;
       }
       @media (prefers-reduced-motion: reduce) {
         body::before, body::after, #root::before { animation:none !important; }
-        body::before { opacity:.30; }
+        body::before { opacity:.68; }
       }
     </style>
   </head>
   <body>
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <filter id="crt-warp" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.0015 0.085" numOctaves="1" seed="7" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.1" xChannelSelector="R" yChannelSelector="B" />
+      </filter>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
