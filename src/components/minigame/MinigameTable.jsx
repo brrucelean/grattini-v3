@@ -2,6 +2,7 @@ import { FONT } from "../../data/theme.js";
 import { TABLE_BG, MAT_STYLE } from "../scratch/ScratchTable.jsx";
 import { TICKET_LAYOUT, TICKET_LAYOUT_FALLBACK } from "../../data/ticketLayout.js";
 import { assetUrl } from "../../assets/registry.js";
+import { WinPanel, NoWinPanel } from "../scratch/OutcomePanel.jsx";
 
 // ─── TAVOLO DEI MINIGIOCHI (desktop) ────────────────────────────
 // Labirinto, Gratta & Combina e Mappa del Tesoro avevano ancora i vecchi
@@ -87,34 +88,24 @@ export function MinigameTable({ ticketId, title, emoji, accent, how, status, chi
               <span style={{ fontSize: "clamp(16px, 2.6cqw, 30px)", lineHeight: 1, color: INK, letterSpacing: "1px" }}>{title.toUpperCase()}</span>
               <span style={{ fontSize: "clamp(13px, 1.7cqw, 17px)", lineHeight: 1.35, color: INK }}>{how}</span>
             </div>
-            {/* timbro dell'esito sul cartiglio */}
-            {result && (
-              <div aria-hidden style={{ ...box(lay.header), display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-                <span style={{ transform: "rotate(-8deg)", padding: "4px 14px", fontSize: "clamp(22px, 4cqw, 44px)", letterSpacing: "4px",
-                  color: result.kind === "win" ? "#1f7a4a" : RED, border: `4px solid ${result.kind === "win" ? "#1f7a4a" : RED}`,
-                  background: "#fff3c4e6" }}>{result.kind === "win" ? "VINTO" : "PERSO"}</span>
-              </div>
-            )}
             {/* riquadro di gioco */}
             <div style={{ ...box(lay.play), containerType: "size" }}>
               <div style={{ width: "100%", height: "100%", boxSizing: "border-box", padding: "2.5cqh 1.5cqw", display: "flex", alignItems: "stretch", justifyContent: "center" }}>
                 {children}
               </div>
             </div>
+            {/* esito: la stessa fascia dei grattini normali, sopra il fondo del biglietto */}
+            {result && (
+              <div style={{ position: "absolute", left: "50%", bottom: "4%", transform: "translateX(-50%)", width: "min(92%, 640px)", zIndex: 30 }}>
+                {result.kind === "win"
+                  ? <WinPanel amountLabel={result.title} detail={result.detail} onOk={onContinue} okLabel={result.amount ? `✓ RITIRA €${result.amount}` : "✓ OK"} />
+                  : <NoWinPanel reason={`${result.title} ${result.detail}`} onOk={onContinue} />}
+              </div>
+            )}
           </article>
         </div>
-        {/* esito: cartello al posto di stato e azioni */}
-        {result ? (
-          <div role="status" style={{ display: "flex", alignItems: "center", gap: "16px", flexShrink: 0, padding: "10px 12px 10px 16px",
-            background: CREAM, boxShadow: `inset 0 0 0 3px ${result.kind === "win" ? "#1f7a4a" : RED}, 5px 5px 0 ${SHADOW}` }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "22px", lineHeight: 1, color: result.kind === "win" ? "#1f7a4a" : RED }}>{result.title}</span>
-              <span style={{ fontSize: "13px", lineHeight: 1.4, color: INK, maxWidth: "52ch" }}>{result.detail}</span>
-            </div>
-            <ActionButton label="CONTINUA →" kind="primary" onClick={onContinue} />
-          </div>
-        ) : (
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+        {/* striscia di stato + azioni, sotto il biglietto (a gioco finito parla la fascia di esito) */}
+        {!result && <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
           {status.map(([k, v, strong]) => (
             <span key={k} style={{ fontSize: "12px", padding: "6px 10px", background: strong ? accent : CREAM,
               color: strong ? CREAM : INK, boxShadow: strong ? `3px 3px 0 ${SHADOW}` : `inset 0 0 0 1px ${EDGE}, 3px 3px 0 ${SHADOW}` }}>
@@ -123,8 +114,7 @@ export function MinigameTable({ ticketId, title, emoji, accent, how, status, chi
           ))}
           <span style={{ width: "12px" }} />
           {actions.filter(Boolean).map(a => <ActionButton key={a.label} {...a} />)}
-        </div>
-        )}
+        </div>}
       </div>
 
       {/* ══ Come si vince ══ */}

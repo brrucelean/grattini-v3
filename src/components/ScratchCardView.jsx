@@ -8,6 +8,7 @@ import { AudioEngine } from "../audio.js";
 import { roll, pick, shuffle } from "../utils/random.js";
 import { S } from "../utils/styles.js";
 import { Btn } from "./Btn.jsx";
+import { NoWinPanel } from "./scratch/OutcomePanel.jsx";
 import { PlayingCardFace } from "./PlayingCardFace.jsx";
 import { ScratchCell } from "./ScratchCell.jsx";
 import { hasAsset, assetUrl } from "../assets/registry.js";
@@ -1457,34 +1458,7 @@ export function ScratchCardView({ card, onDone, nailState, nailImplant=null, gra
 
       {/* NO WIN — Vintage */}
       {toOverlay(showNoWin && !finished && (
-        <div style={{
-          position: "relative",
-          marginTop: "6px", padding: "10px 14px",
-          border: `2px solid ${C.red}`, background: "#1a0000",
-          display: "flex", alignItems: "center", gap: "12px",
-          boxShadow: `0 0 14px ${C.red}55, inset 0 0 16px ${C.red}18`,
-        }}>
-          {cornerBrackets(C.red, 10, 4, false)}
-          <div style={{fontSize: "28px", flexShrink: 0, filter: `drop-shadow(0 0 6px ${C.red}aa)`}}>😔</div>
-          <div style={{flex: 1, textAlign: "left"}}>
-            <div style={{
-              display: "inline-block",
-              background: C.red, color: "#000",
-              padding: "2px 8px", fontSize: "10px", fontWeight: "bold",
-              letterSpacing: "2px", marginBottom: "4px",
-              boxShadow: `0 0 8px ${C.red}aa`,
-            }}>
-              ★ NESSUNA VINCITA ★
-            </div>
-            <div style={{color: C.dim, fontSize: "10px", fontStyle: "italic"}}>
-              {lossReason()}
-            </div>
-          </div>
-          <Btn variant="default" onClick={() => handleFinish(false)}
-            style={{fontSize: "11px", padding: "5px 14px", flexShrink: 0}}>
-            OK →
-          </Btn>
-        </div>
+        <NoWinPanel reason={lossReason()} onOk={() => handleFinish(false)} />
       ))}
 
       {/* FINISHED RESULT — Vintage hero */}

@@ -2322,7 +2322,7 @@ export default function Grattini() {
             const totalPrize = newPrize + JACKPOT_PRIZE;
             updatePlayer(p => ({...p, money: p.money + totalPrize}));
             addLog(`🏆 SEI USCITO! Jackpot €${JACKPOT_PRIZE} + €${newPrize} = €${totalPrize}!`, C.gold);
-            endMinigame({ kind: "win", title: `HAI VINTO €${totalPrize}`, detail: `Sei uscito dal labirinto: €${newPrize} di strada + €${JACKPOT_PRIZE} di jackpot.` }, () => setLabirintoState(st => st && ({...st, done: true, pos: [nr, nc], revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
+            endMinigame({ kind: "win", amount: totalPrize, title: `€${totalPrize}`, detail: `Sei uscito dal labirinto: €${newPrize} di strada + €${JACKPOT_PRIZE} di jackpot.` }, () => setLabirintoState(st => st && ({...st, done: true, pos: [nr, nc], revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
             return;
           }
           const newRevealed = new Set(ls.revealed);
@@ -2336,7 +2336,7 @@ export default function Grattini() {
           if (ls.prize > 0) {
             updatePlayer(p => ({...p, money: p.money + ls.prize}));
             addLog(`🏃 Hai incassato €${ls.prize} scappando dal labirinto!`, C.gold);
-            endMinigame({ kind: "win", title: `INCASSATI €${ls.prize}`, detail: "Sei scappato prima della trappola. Ecco dove portavano le frecce." },
+            endMinigame({ kind: "win", amount: ls.prize, title: `€${ls.prize}`, detail: "Sei scappato prima della trappola. Ecco dove portavano le frecce." },
               () => setLabirintoState(st => st && ({...st, done: true, revealed: new Set(Array.from({length:16}, (_, i) => `${Math.floor(i/4)},${i%4}`))})));
             return;
           }
@@ -2459,7 +2459,7 @@ export default function Grattini() {
               const megaPrize = newPrize * MEGA_MULT;
               updatePlayer(p => ({...p, money: p.money + megaPrize}));
               addLog(`🎆 MEGA COMBO x${MEGA_MULT}! +€${megaPrize}!`, C.gold);
-              endMinigame({ kind: "win", title: `MEGA COMBO! €${megaPrize}`, detail: `Tre combo: €${newPrize} moltiplicati ×${MEGA_MULT}.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
+              endMinigame({ kind: "win", amount: megaPrize, title: `🎆 MEGA COMBO! €${megaPrize}`, detail: `Tre combo: €${newPrize} moltiplicati ×${MEGA_MULT}.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
               return;
             }
             newState = {...newState, combos: newCombos, prize: newPrize, lastRevealedA: null, lastRevealedB: null};
@@ -2476,7 +2476,7 @@ export default function Grattini() {
               addLog("Nessuna combo trovata...", C.dim);
             }
             endMinigame(newState.prize > 0
-              ? { kind: "win", title: `HAI VINTO €${newState.prize}`, detail: `${newState.combos} ${newState.combos === 1 ? "combo" : "combo"} da €${COMBO_PRIZE}. Per la MEGA ne servivano 3.` }
+              ? { kind: "win", amount: newState.prize, title: `€${newState.prize}`, detail: `${newState.combos} ${newState.combos === 1 ? "combo" : "combo"} da €${COMBO_PRIZE}. Per la MEGA ne servivano 3.` }
               : { kind: "lose", title: "NESSUNA COMBO", detail: "Hai scoperto tutte le caselle senza mai due simboli uguali di fila." }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
             return;
           }
@@ -2544,7 +2544,7 @@ export default function Grattini() {
                   { label: cs.prize > 0 ? `INCASSA €${cs.prize} E VAI` : "ABBANDONA", kind: cs.prize > 0 ? "primary" : "danger", onClick: () => {
                     if (cs.prize > 0) {
                       updatePlayer(p => ({...p, money: p.money + cs.prize})); addLog(`Incassato €${cs.prize} abbandonando.`, C.dim);
-                      endMinigame({ kind: "win", title: `INCASSATI €${cs.prize}`, detail: `${cs.combos} combo prima di lasciare. Ecco cosa c'era sotto.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
+                      endMinigame({ kind: "win", amount: cs.prize, title: `€${cs.prize}`, detail: `${cs.combos} combo prima di lasciare. Ecco cosa c'era sotto.` }, () => setCombinaState(st => st && ({...st, done: true, revealedA: Array(6).fill(true), revealedB: Array(6).fill(true)})));
                     } else closeMinigame();
                   } },
                 ]}>
@@ -2632,7 +2632,7 @@ export default function Grattini() {
               const total = newPrize + JACKPOT_PRIZE;
               updatePlayer(p => ({...p, money: p.money + total}));
               addLog(`🗺️ JACKPOT! Trovato tutto! €${newPrize} accumulati + €${JACKPOT_PRIZE} bonus = +€${total}!`, C.gold);
-              endMinigame({ kind: "win", title: `JACKPOT! €${total}`, detail: `Tutti e due i 💎 diamanti: €${newPrize} + €${JACKPOT_PRIZE} di bonus.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
+              endMinigame({ kind: "win", amount: total, title: `🗺️ JACKPOT! €${total}`, detail: `Tutti e due i 💎 diamanti: €${newPrize} + €${JACKPOT_PRIZE} di bonus.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
               return;
             }
           }
@@ -2658,7 +2658,7 @@ export default function Grattini() {
                   ts.prize > 0 && { label: `INCASSA €${ts.prize}`, kind: "primary", onClick: () => {
                     updatePlayer(p => ({...p, money: p.money + ts.prize}));
                     addLog(`💰 Incassato €${ts.prize} con ${ts.foundTreasures} diamanti trovati.`, C.gold);
-                    endMinigame({ kind: "win", title: `INCASSATI €${ts.prize}`, detail: `${ts.foundTreasures} diamante trovato. Ecco dov'erano l'altro e le bombe.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
+                    endMinigame({ kind: "win", amount: ts.prize, title: `€${ts.prize}`, detail: `${ts.foundTreasures} diamante trovato. Ecco dov'erano l'altro e le bombe.` }, () => setTesoroState(st => st && ({...st, done: true, revealed: Array(16).fill(true)})));
                   } },
                   { label: "ABBANDONA", kind: "danger", onClick: closeMinigame },
                 ]}>
