@@ -323,15 +323,15 @@ export function generateMap(biomeIdx = 0, opts = {}) {
 }
 
 // ─── LABIRINTO GENERATOR ────────────────────────────────────
-// Costanti di bilanciamento (costo carta €15, target RTP 91% = evTarget -0.09).
+// Costanti P-12 (costo carta €15, target RTP circa 120%).
 // Calibrate risolvendo l'EV di ogni strategia "fermati dopo n passi" sulla
 // distribuzione reale delle lunghezze di percorso (6:31% 8:29% 10:18% 12:13% 14:10%):
 // il massimo su tutte le strategie è €13.66 → RTP 91.0%, e l'ottimo è spingere
 // fino all'uscita, così il jackpot resta un'esca vera e non decorativa.
 // (le celle a rischio sono L-1: start e uscita sono sempre sicure)
 export const LABIRINTO_DEATH_P = 0.24;   // chance che una cella del percorso sia 💀
-export const LABIRINTO_CELL_PRIZE = 6;   // € per ogni cella nuova superata
-export const LABIRINTO_JACKPOT = 50;     // bonus all'uscita 🏆
+export const LABIRINTO_CELL_PRIZE = 8;   // € per ogni cella nuova superata
+export const LABIRINTO_JACKPOT = 70;     // bonus all'uscita 🏆
 
 export function generateLabirintoGrid() {
   // 4x4 grid, start [0,0], end [3,3]
@@ -399,12 +399,12 @@ export function generateLabirintoGrid() {
 }
 
 // ─── GRATTA & COMBINA GENERATOR ─────────────────────────────
-// Bilanciamento (costo €25, target RTP ~90%) — BAL-001/002/003, set. 2026.
+// Bilanciamento P-12 (costo €25, target RTP ~120%).
 // Le celle sono coperte, quindi non si possono "scegliere" gli abbinamenti:
 // con 9 simboli e 35% di vuoti l'RTP reale era 19–27% (vedi BUG-REGISTER).
 // 5 simboli, 25% di vuoti, €15 a combo, MEGA ×3 (Monte Carlo, 15k partite):
 // tieni fermo A 92%, alterna 88%, a caso 64%; MEGA COMBO ~6%.
-export const COMBINA_COMBO_PRIZE = 15;
+export const COMBINA_COMBO_PRIZE = 20;
 export const COMBINA_MEGA_MULT = 3;
 
 export function generateCombinaState() {
@@ -419,14 +419,14 @@ export function generateCombinaState() {
 }
 
 // ─── MAPPA DEL TESORO GENERATOR ─────────────────────────────
-// Bilanciamento (costo €35, target RTP ~90%).
+// Bilanciamento P-12 (costo €35, target RTP ~120%).
 // Con 2 bombe su 16 e gli hint di distanza un giocatore informato trovava
 // quasi sempre entrambi i tesori: RTP 953%. Con 4 bombe restava al 119%
 // (BAL-003). Con 5 bombe il Monte Carlo (giocatore che sceglie la cella più
 // probabile dagli indizi) dà RTP ≈ 88%; incassare dopo la prima X ≈ 51%.
 export const TESORO_BOMBS = 5;
-export const TESORO_X_PRIZE = 30;   // € per ogni X trovata
-export const TESORO_JACKPOT = 75;   // bonus per aver trovato entrambe
+export const TESORO_X_PRIZE = 40;   // € per ogni X trovata
+export const TESORO_JACKPOT = 105;  // bonus per aver trovato entrambe
 
 export function generateTesoroState() {
   const positions = shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FONT, FONT_TITLE } from "../../data/theme.js";
 import { normalizePortrait } from "../../utils/nail.js";
-import { hasAsset } from "../../assets/registry.js";
+import { assetUrl, hasAsset } from "../../assets/registry.js";
 import { Tooltip } from "../Tooltip.jsx";
 import { GOLD } from "../map/mapTheme.js";
 import { MK } from "../desk/mapKit.jsx";
@@ -50,6 +50,7 @@ export function EventStage({
   const [hover, setHover] = useState(-1);
   const tag = tagColor(cat);
   const spriteId = hasAsset(`spr-${node.type}`) && !node.secret ? `spr-${node.type}` : null;
+  const secretScene = node.secret ? assetUrl("scene-retrobottega") : null;
   const many = choices.length > 5;
 
   // Tasti 1–9: scegli senza mouse (solo quando la battuta è finita).
@@ -81,19 +82,30 @@ export function EventStage({
       {/* ══ Il personaggio: ritratto, nome, battuta ══ */}
       <article aria-label={ev.title} onClick={onSkip} style={{
         width: "min(100%, 1040px)", maxWidth: "100%", boxSizing: "border-box", flexShrink: 0, position: "relative",
-        background: MK.panel, boxShadow: `inset 0 0 0 2px ${tag}aa, 5px 5px 0 #000`,
-        padding: "18px 22px", display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: "24px", alignItems: "center",
+        background: secretScene ? `#090604 url(${secretScene}) center / cover no-repeat` : MK.panel,
+        boxShadow: `inset 0 0 0 2px ${tag}aa, 5px 5px 0 #000`,
+        minHeight: secretScene ? "clamp(360px, 54vw, 570px)" : undefined,
+        padding: secretScene ? "24px 28px" : "18px 22px",
+        display: "grid", gridTemplateColumns: secretScene ? "minmax(0,1fr)" : "auto minmax(0,1fr)",
+        gap: "24px", alignItems: secretScene ? "end" : "center",
         cursor: typingDone ? "default" : "pointer",
       }}>
+        {secretScene && <span aria-hidden style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 35%, rgba(0,0,0,.88) 100%)", pointerEvents: "none" }} />}
         {/* striscia del colore del tipo, come la soglia */}
         <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: tag }} />
 
         {/* ritratto condiviso con la soglia: stessa cornice, respira */}
-        <StagePortrait spriteId={spriteId} accent={tag} icon={node.secret ? "🔮" : cat.icon}
-          art={!spriteId && bigArt ? normalizePortrait(bigArt).map((line, i) => (blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line)) : null} />
+        {!secretScene && <StagePortrait spriteId={spriteId} accent={tag} icon={node.secret ? "🔮" : cat.icon}
+          art={!spriteId && bigArt ? normalizePortrait(bigArt).map((line, i) => (blink && (i === 4 || i === 5) ? line.replace(/[•◕⊕∞☠><=;.]/g, "─") : line)) : null} />}
 
         {/* nome e battuta, alla destra del ritratto */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
+        <div style={{
+          display: "flex", flexDirection: "column", gap: "10px", minWidth: 0, position: "relative",
+          maxWidth: secretScene ? "720px" : undefined,
+          padding: secretScene ? "16px 18px" : 0,
+          background: secretScene ? "rgba(0,0,0,.76)" : "transparent",
+          boxShadow: secretScene ? `inset 0 0 0 2px ${tag}99` : "none",
+        }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: "11px", letterSpacing: "2px", padding: "3px 8px", color: tag, background: "#000", boxShadow: `inset 0 0 0 1px ${tag}` }}>{cat.label}</span>
             {cat.danger > 0 && (

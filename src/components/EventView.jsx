@@ -6,7 +6,7 @@ import { normalizePortrait } from "../utils/nail.js";
 import { pickNewRelic } from "../utils/hasRelic.js";
 import { surgeonPrice } from "../utils/shop.js";
 import { Asset } from "./Asset.jsx";
-import { hasAsset } from "../assets/registry.js";
+import { assetUrl, hasAsset } from "../assets/registry.js";
 import { Tooltip } from "./Tooltip.jsx";
 import { AudioEngine } from "../audio.js";
 import { useIsMobile } from "../hooks/useIsMobile.js";
@@ -632,6 +632,13 @@ export function EventView({ node, player, onChoice }) {
           </div>
         )}
       </div>
+
+      {node.secret && assetUrl("scene-retrobottega") && (
+        <img src={assetUrl("scene-retrobottega")} alt="Il retrobottega segreto della tabaccheria" style={{
+          width:"100%", aspectRatio:"16 / 9", objectFit:"cover", display:"block",
+          imageRendering:"pixelated", borderBottom:`2px solid ${accent}66`,
+        }} />
+      )}
 
       {/* ── BODY — portrait + dialogue ─────────────────────────── */}
       <div style={{

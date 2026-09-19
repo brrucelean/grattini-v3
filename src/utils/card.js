@@ -283,9 +283,9 @@ export function generateCard(typeId, fortune=0, relicBonus=0, forceWin=false) {
 
   // ── collect mechanic (Miliardario) ──────────────────────────
   } else if (type.mechanic === "collect") {
-    // Rebalance: stopCount 2→5 e valuePool ridotto → ROI ottimale ≈ −11% (t3 sano).
-    // Player optimal: peek ~2-3 celle; optimal stop vicino a €60-90.
-    const valuePool = [5, 10, 15, 25, 40, 80];
+    // P-12: il rischio resta identico, ma i valori salgono. Il grattino deve
+    // produrre denaro piu' in fretta del combattimento quando si osa incassare.
+    const valuePool = [8, 15, 20, 35, 55, 110];
     const stopCount = 5;
     const values = Array.from({length: totalCells - stopCount}, () => pick(valuePool));
     const valueCells = values.map(v => ({ symbol: `€${v}`, scratched: false, value: v, isStop: false }));

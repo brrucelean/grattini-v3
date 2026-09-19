@@ -7,7 +7,7 @@ export const CAT_BG = { COMBATTIMENTO:"#1a0005", DIFESA:"#00051a", DENARO:"#1a10
 export const PLAYER_COMBAT_CELLS = {
   COMBATTIMENTO: [
     { name:"Strappa!",    desc:"TAGLIA un'unghia — morta istantanea! 💀",           effect:"damageNail",  emoji:"✂️" },
-    { name:"Furto!",      desc:"Ruba €10 al nemico",                                effect:"stealMoney",  value:10, emoji:"💸" },
+    { name:"Furto!",      desc:"Ruba €8 al nemico",                                 effect:"stealMoney",  value:8, emoji:"💸" },
     { name:"Schiaffo!",   desc:"Degrada 1 stato unghia avversario 🩸",              effect:"lightDamage", emoji:"🖐" },
     // Tradeoff: alto rischio/ricompensa
     { name:"Berserk!",    desc:"Strappa unghia nemico MA degrada la tua di 1 🩸",   effect:"berserk",     emoji:"💢", tradeoff:true, tradeoffChance:0.14 },
@@ -15,21 +15,21 @@ export const PLAYER_COMBAT_CELLS = {
   DIFESA: [
     { name:"Scudo!",      desc:"Blocca il prossimo attacco",                        effect:"block",       emoji:"🛡" },
     { name:"Schiva!",     desc:"Schiva tutto — nessun danno",                       effect:"dodge",       emoji:"💨" },
-    { name:"Adrenalina!", desc:"Unghie danneggiate: cura 1. Sane: +€15.",           effect:"adrenaline",  value:15, emoji:"💉" },
+    { name:"Adrenalina!", desc:"Unghie danneggiate: cura 1. Sane: +€12.",           effect:"adrenaline",  value:12, emoji:"💉" },
     // Tradeoff: difesa costosa
-    { name:"Fortezza!",   desc:"Blocca tutto MA perdi €20 per costruirla 🏰",       effect:"fortress",    cost:20, emoji:"🏰", tradeoff:true, tradeoffChance:0.28 },
+    { name:"Fortezza!",   desc:"Blocca tutto MA perdi €15 per costruirla 🏰",       effect:"fortress",    cost:15, emoji:"🏰", tradeoff:true, tradeoffChance:0.28 },
   ],
   DENARO: [
-    { name:"+10€",        desc:"Guadagni €10",                                      effect:"money", value:10,  emoji:"💰" },
-    { name:"+20€",        desc:"Guadagni €20",                                      effect:"money", value:20,  emoji:"💰" },
-    { name:"+30€",        desc:"Guadagni €30",                                      effect:"money", value:30,  emoji:"💰" },
-    { name:"+50€",        desc:"Guadagni €50",                                      effect:"money", value:50,  emoji:"💰" },
+    { name:"+8€",         desc:"Guadagni €8",                                       effect:"money", value:8,   emoji:"💰" },
+    { name:"+15€",        desc:"Guadagni €15",                                      effect:"money", value:15,  emoji:"💰" },
+    { name:"+22€",        desc:"Guadagni €22",                                      effect:"money", value:22,  emoji:"💰" },
+    { name:"+35€",        desc:"Guadagni €35",                                      effect:"money", value:35,  emoji:"💰" },
     // Grattino in omaggio — carta gratis trovata in combattimento
     { name:"Grattino!",   desc:"Trovi un grattino in omaggio! 🎫",                  effect:"freeCard",        emoji:"🎫" },
     // Tradeoff: jackpot con rischio
-    { name:"Schedina!",   desc:"50% chance: +€60. 50%: −€15 🎟",                   effect:"gamble", value:60, cost:15, emoji:"🎟", tradeoff:true, tradeoffChance:0.28 },
+    { name:"Schedina!",   desc:"50% chance: +€45. 50%: −€15 🎟",                   effect:"gamble", value:45, cost:15, emoji:"🎟", tradeoff:true, tradeoffChance:0.28 },
     // All-in: non fa danni, è soldi → sta tra i PREMI (P-06), non tra le botte
-    { name:"All-in!",     desc:"+€40 al bottino MA il nemico guadagna +15 di scudo 🎲", effect:"allIn",   value:40, cost:15, emoji:"🎰", tradeoff:true, tradeoffChance:0.14 },
+    { name:"All-in!",     desc:"+€30 al bottino MA il nemico guadagna +15 di scudo 🎲", effect:"allIn",   value:30, cost:15, emoji:"🎰", tradeoff:true, tradeoffChance:0.14 },
   ],
 };
 
@@ -231,4 +231,3 @@ export const EFFECT_DAMAGE = {
   berserk:     30,  // Berserk — danno pesante ma degrada 1 unghia tua
   stealMoney:  16,  // Furto! — danno + rubi soldi
 };
-

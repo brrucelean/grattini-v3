@@ -54,51 +54,51 @@ export const CARD_TYPES = [
   // e la carta pagava il 100% delle volte (RTP 237%). A 4 serve un tris + jolly:
   // paga nel 30% dei casi, RTP 98%. Stessa meccanica di turistaPerSempre, che
   // infatti era già in bersaglio proprio perché ha matchNeeded 4.
-  { id:"portaFortuna",    name:"Porta Sfortuna",       emoji:"🐈‍⬛", cost:2,   rows:3, cols:3, matchNeeded:4, maxPrize:11,
+  { id:"portaFortuna",    name:"Porta Sfortuna",       emoji:"🐈‍⬛", cost:2,   rows:3, cols:3, matchNeeded:4, maxPrize:10,
     malus:null, desc:"Trova 4 simboli — c'è un JOLLY ✨ nascosto (se ti va bene, che raramente va)", tier:2, mechanic:"jolly",
     theme:{ border:"#00bb55", bg:"#0a1510" } },
-  { id:"fintoMilionario", name:"Il Finto Milionario",  emoji:"💵", cost:5,   rows:3, cols:3, matchNeeded:3, maxPrize:35,
+  { id:"fintoMilionario", name:"Il Finto Milionario",  emoji:"💵", cost:5,   rows:3, cols:3, matchNeeded:3, maxPrize:46,
     malus:{ type:"payExtra", amount:5, desc:"Se perdi, paghi altri €5!" }, desc:"Trova 3 simboli uguali", tier:2, mechanic:"match",
     theme:{ border:"#00cccc", bg:"#001515" } },
-  { id:"puzzle",          name:"Puzzle",               emoji:"🧩", cost:10,  rows:4, cols:3, matchNeeded:3, maxPrize:55,
+  { id:"puzzle",          name:"Puzzle",               emoji:"🧩", cost:10,  rows:4, cols:3, matchNeeded:3, maxPrize:60,
     malus:{ type:"nailDamage", amount:2, desc:"Danneggia l'unghia di 2 stati!" }, desc:"Trova 3 simboli uguali", tier:3, mechanic:"match",
     theme:{ border:"#3d8bff", bg:"#08101f" } },
-  { id:"boccaDrago",      name:"Bocca del Drago",      emoji:"🐲", cost:20,  rows:4, cols:3, matchNeeded:4, maxPrize:150,
+  { id:"boccaDrago",      name:"Bocca del Drago",      emoji:"🐲", cost:20,  rows:4, cols:3, matchNeeded:4, maxPrize:155,
     malus:{ type:"nailDamage", amount:1, desc:"Sanguini se non vinci!" }, desc:"Trova 4 — attento alle 🔥 trappole!", tier:3, mechanic:"trap",
     theme:{ border:"#ff8800", bg:"#1a0800" } },
-  { id:"miliardario",     name:"Il Miliardario",       emoji:"💰", cost:30,  rows:4, cols:4, matchNeeded:4, maxPrize:350,
+  { id:"miliardario",     name:"Il Miliardario",       emoji:"💰", cost:30,  rows:4, cols:4, matchNeeded:4, maxPrize:340,
     malus:{ type:"payExtra", amount:10, desc:"Se perdi, paghi altri €10!" }, desc:"Gratta €, incassa prima dello 🛑 STOP. 5 mine — fidati del tuo istinto.", tier:3, mechanic:"collect",
     theme:{ border:"#ffdd00", bg:"#141100" } },
-  { id:"tredici",         name:"Tredici",              emoji:"🎯", cost:50,  rows:4, cols:4, matchNeeded:4, maxPrize:440,
+  { id:"tredici",         name:"Tredici",              emoji:"🎯", cost:50,  rows:4, cols:4, matchNeeded:4, maxPrize:560,
     malus:{ type:"nailDamage", amount:2, desc:"Costa cara la sfortuna!" }, desc:"Raggiungi ESATTAMENTE 13 — bust se vai oltre!", tier:4, mechanic:"sum13",
     theme:{ border:"#ff2222", bg:"#1a0000" } },
-  { id:"maledetto",       name:"Il Maledetto",         emoji:"😈", cost:100, rows:4, cols:4, matchNeeded:3, maxPrize:2000,
+  { id:"maledetto",       name:"Il Maledetto",         emoji:"😈", cost:100, rows:4, cols:4, matchNeeded:3, maxPrize:1500,
     malus:{ type:"nailBleed", desc:"La cedola del diavolo — apre la maledizione!" }, desc:"La cedola del diavolo — rischio totale", tier:4, mechanic:"match",
     theme:{ border:"#990000", bg:"#0a0000" } },
-  { id:"ruota",           name:"La Ruota",             emoji:"🎡", cost:15,  rows:1, cols:3, matchNeeded:3, maxPrize:65,
+  { id:"ruota",           name:"La Ruota",             emoji:"🎡", cost:15,  rows:1, cols:3, matchNeeded:3, maxPrize:75,
     malus:null, desc:"🎰 Ferma i 3 rulli! 3 uguali = JACKPOT!", tier:2, mechanic:"ruota",
     theme:{ border:"#ff2e88", bg:"#1a0012" } },
-  { id:"labirinto", name:"Il Labirinto", emoji:"🌀", cost:15, rows:4, cols:4, matchNeeded:0, maxPrize:100,
+  { id:"labirinto", name:"Il Labirinto", emoji:"🌀", cost:15, rows:4, cols:4, matchNeeded:0, maxPrize:182,
     desc:"Segui le direzioni, trova l'uscita. Fermati quando vuoi.", mechanic:"labirinto",
     malus:null, tier:2, theme:{ border:"#00aa55", bg:"#001a0a" } },
-  { id:"grattaCombina", name:"Gratta & Combina", emoji:"🔀", cost:25, rows:2, cols:3, matchNeeded:3, maxPrize:135,
+  { id:"grattaCombina", name:"Gratta & Combina", emoji:"🔀", cost:25, rows:2, cols:3, matchNeeded:3, maxPrize:180,
     desc:"Trova coppie sulle due griglie. 3 combo = MEGA COMBO!", mechanic:"combina",
     malus:null, tier:3, theme:{ border:"#ff2e93", bg:"#1a0014" } },
-  { id:"mappaTesor0", name:"La Mappa del Tesoro", emoji:"🗺️", cost:35, rows:4, cols:4, matchNeeded:0, maxPrize:135,
+  { id:"mappaTesor0", name:"La Mappa del Tesoro", emoji:"🗺️", cost:35, rows:4, cols:4, matchNeeded:0, maxPrize:185,
     desc:"Trova i 2 diamanti senza toccare le bombe. Minesweeper style.", mechanic:"tesoro",
     malus:null, tier:3, theme:{ border:"#cc8800", bg:"#1a0e00" } },
-  { id:"doppioOnulla", name:"Doppio o Nulla", emoji:"🎲", cost:20, rows:1, cols:1, matchNeeded:1, maxPrize:60,
+  { id:"doppioOnulla", name:"Doppio o Nulla", emoji:"🎲", cost:20, rows:1, cols:1, matchNeeded:1, maxPrize:58,
     malus:null, desc:"🎲 Gratta 1 cella: ✅ raddoppi l'ultimo premio, ❌ niente!", tier:2, mechanic:"doppioOnulla",
     theme:{ border:"#ff4433", bg:"#1a0705" } },
-  { id:"mahjong", name:"Il Mahjong", emoji:"🀄", cost:25, rows:3, cols:3, matchNeeded:3, maxPrize:140,
+  { id:"mahjong", name:"Il Mahjong", emoji:"🀄", cost:25, rows:3, cols:3, matchNeeded:3, maxPrize:135,
     malus:null, desc:"🀄 Trova 3 tessere uguali — esclusiva Quartiere Cinese!", tier:3, mechanic:"match",
     theme:{ border:"#ff3333", bg:"#1a0000" }, biome:3 },
-  { id:"jackpotMix", name:"Jackpot Mix", emoji:"🎰", cost:20, rows:3, cols:3, matchNeeded:3, maxPrize:180,
+  { id:"jackpotMix", name:"Jackpot Mix", emoji:"🎰", cost:20, rows:3, cols:3, matchNeeded:3, maxPrize:130,
     malus:{ type:"nailDamage", amount:2, desc:"Senza grattatore le unghie si spezzano!" },
     desc:"🔧 RICHIEDE GRATTATORE. Cartone premium: solo chi ha un attrezzo professionale può grattarlo.",
     tier:3, mechanic:"match", requiresGrattatore:true,
     theme:{ border:"#ffaa00", bg:"#1a1100" } },
-  { id:"turistaPerSempre", name:"Turista Per Sempre", emoji:"✈️", cost:40, rows:4, cols:4, matchNeeded:4, maxPrize:320,
+  { id:"turistaPerSempre", name:"Turista Per Sempre", emoji:"✈️", cost:40, rows:4, cols:4, matchNeeded:4, maxPrize:280,
     malus:null,
     desc:"✈️ VIP Quartiere Cinese. Souvenir d'oriente — alti premi, basse chance.",
     tier:3, mechanic:"jolly", biome:3,
@@ -106,12 +106,13 @@ export const CARD_TYPES = [
 ];
 
 // ─── CARD BALANCE — unica fonte di verità per winChance e EV ─
-// REBALANCE Beta 4.1 — calibrato via Monte Carlo (100k iterazioni/carta):
-//   • Hit rate percepito: 21% → 28-30% (riduce la frustrazione "perdi sempre")
-//   • RTP target: t1 95-100% · t2 92-98% · t3 85-92% · t4 95-100% (alta varianza)
-//   • Pre-rebalance: 67% run perdenti · 26% bancarotta · RTP globale 78%
-//   • Post-rebalance: simulato ~45% run profittevoli · <12% bancarotta · RTP ~93%
-// prizeMin/prizeMax calibrati per RTP target mantenendo la gerarchia tier.
+// REBALANCE P-12 — il grattino e' il motore economico della run:
+//   • tier 1 vicino al pareggio: niente farming sicuro con i biglietti da spiccioli;
+//   • tier 2 sopra il 110%: il giocatore comincia a far girare denaro;
+//   • tier 3/4 tra 120% e 140%: rischio, costo delle unghie e jackpot sono ripagati;
+//   • i malus in denaro sono inclusi nella calibrazione (Finto Milionario).
+// I minigiochi usano gli stessi target ma hanno i premi reali in utils/map.js.
+// Verifica con `node scripts/check-economy.mjs` e tests/economy.test.js.
 //
 // FORTUNA Beta 5 — il bonus chance è stato alzato a +6%/punto, cap +5 (era +5%/punto cap +3).
 // Verifica con `node scripts/check-balance.mjs`: tutte le carte diventano EV+ con Fortuna 5,
@@ -122,23 +123,24 @@ export const CARD_BALANCE = {
   // già il doppio del costo, e con premio medio €2 l'RTP era 128% — farming
   // lento ma illimitato sulla carta più economica. Con 1-2 la media scende a
   // €1,50 → RTP 96%, senza toccare la winChance (il 32% di hit rate è voluto).
-  fortunaFlash:    { winChance: 0.32, evTarget:  0.00, prizeMin: 1,   prizeMax: 2,    tier: 1 },
-  setteEMezzo:     { winChance: 0.34, evTarget:  0.00, prizeMin: 2,   prizeMax: 4,    tier: 1 },
-  portaFortuna:    { winChance: 0.30, evTarget: -0.03, prizeMin: 4,   prizeMax: 9,    tier: 2 },
-  fintoMilionario: { winChance: 0.26, evTarget: -0.05, prizeMin: 10,  prizeMax: 28,   tier: 2 },
-  puzzle:          { winChance: 0.28, evTarget: -0.08, prizeMin: 18,  prizeMax: 48,   tier: 3 },
-  boccaDrago:      { winChance: 0.22, evTarget: -0.08, prizeMin: 40,  prizeMax: 130,  tier: 3 },
-  miliardario:     { winChance: 0.17, evTarget: -0.10, prizeMin: 60,  prizeMax: 260,  tier: 3 }, // collect: prize da cell values
-  tredici:         { winChance: 0.14, evTarget: -0.10, prizeMin: 200, prizeMax: 440,  tier: 4 },
-  maledetto:       { winChance: 0.11, evTarget:  0.00, prizeMin: 450, prizeMax: 1400, tier: 4 },
-  ruota:           { winChance: 0.22, evTarget: -0.02, prizeMin: 25,  prizeMax: 65,   tier: 2 }, // + near-win 1.3x su 30% perse
-  labirinto:       { winChance: 0.26, evTarget: -0.09, prizeMin: 30,  prizeMax: 75,   tier: 2 },
-  grattaCombina:   { winChance: 0.28, evTarget: -0.10, prizeMin: 45,  prizeMax: 115,  tier: 3 },
-  mappaTesor0:     { winChance: 0.22, evTarget: -0.10, prizeMin: 75,  prizeMax: 210,  tier: 3 },
-  doppioOnulla:    { winChance: 0.48, evTarget: -0.09, prizeMin: 28,  prizeMax: 48,   tier: 2 },
-  mahjong:         { winChance: 0.28, evTarget: -0.10, prizeMin: 45,  prizeMax: 115,  tier: 3 },
-  jackpotMix:      { winChance: 0.24, evTarget:  0.00, prizeMin: 45,  prizeMax: 120,  tier: 3 },
-  turistaPerSempre:{ winChance: 0.20, evTarget: -0.14, prizeMin: 85,  prizeMax: 260,  tier: 3 },
+  fortunaFlash:    { winChance: 0.32, evTarget: -0.04, prizeMin: 1,   prizeMax: 2,    tier: 1 },
+  setteEMezzo:     { winChance: 0.34, evTarget:  0.02, prizeMin: 2,   prizeMax: 4,    tier: 1 },
+  portaFortuna:    { winChance: 0.30, evTarget:  0.14, prizeMin: 5,   prizeMax: 10,   tier: 2 },
+  // Il premio copre anche il malus medio di €3,50 (70% sconfitte × €5).
+  fintoMilionario: { winChance: 0.30, evTarget:  0.22, prizeMin: 18,  prizeMax: 46,   tier: 2 },
+  puzzle:          { winChance: 0.30, evTarget:  0.26, prizeMin: 24,  prizeMax: 60,   tier: 3 },
+  boccaDrago:      { winChance: 0.24, evTarget:  0.26, prizeMin: 55,  prizeMax: 155,  tier: 3 },
+  miliardario:     { winChance: 0.20, evTarget:  0.24, prizeMin: 80,  prizeMax: 340,  tier: 3 },
+  tredici:         { winChance: 0.16, evTarget:  0.28, prizeMin: 240, prizeMax: 560,  tier: 4 },
+  maledetto:       { winChance: 0.13, evTarget:  0.36, prizeMin: 600, prizeMax: 1500, tier: 4 },
+  ruota:           { winChance: 0.25, evTarget:  0.26, prizeMin: 40,  prizeMax: 75,   tier: 2 },
+  labirinto:       { winChance: 0.26, evTarget:  0.20, prizeMin: 40,  prizeMax: 100,  tier: 2 },
+  grattaCombina:   { winChance: 0.28, evTarget:  0.20, prizeMin: 60,  prizeMax: 150,  tier: 3 },
+  mappaTesor0:     { winChance: 0.22, evTarget:  0.20, prizeMin: 95,  prizeMax: 260,  tier: 3 },
+  doppioOnulla:    { winChance: 0.52, evTarget:  0.20, prizeMin: 34,  prizeMax: 58,   tier: 2 },
+  mahjong:         { winChance: 0.30, evTarget:  0.20, prizeMin: 65,  prizeMax: 135,  tier: 3 },
+  jackpotMix:      { winChance: 0.26, evTarget:  0.30, prizeMin: 70,  prizeMax: 130,  tier: 3 },
+  turistaPerSempre:{ winChance: 0.24, evTarget:  0.20, prizeMin: 120, prizeMax: 280,  tier: 3 },
 };
 
 // ─── BATTUTE DI SCONFITTA PER BIGLIETTO ──────────────────────

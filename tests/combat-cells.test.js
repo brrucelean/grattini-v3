@@ -14,9 +14,9 @@ test("All-in è una carta PREMIO (DENARO), non un attacco", () => {
   assert.equal(byEffect("DIFESA", "allIn"), undefined);
 });
 
-test("All-in mantiene i suoi numeri: +€40 al bottino, nemico +15", () => {
+test("P-12: All-in resta un premio ma non supera un grattino medio", () => {
   const c = byEffect("DENARO", "allIn");
-  assert.equal(c.value, 40);
+  assert.equal(c.value, 30);
   assert.equal(c.cost, 15);
   assert.equal(c.tradeoff, true);
 });
