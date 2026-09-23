@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { C, FONT } from "../../data/theme.js";
+import { C, FONT, FONT_TITLE } from "../../data/theme.js";
 import { BIOMES, BOSS_MIN_MONEY } from "../../data/biomes.js";
 import { AudioEngine } from "../../audio.js";
 import { Asset } from "../Asset.jsx";
@@ -7,6 +7,7 @@ import { Pedina } from "../map/Pedina.jsx";
 import { TokenCard } from "../tokens/TokenCard.jsx";
 import { SH } from "../shell/shellTokens.js";
 import { BIOME_THEME, GOLD, FAMILY, dither, bevel } from "../map/mapTheme.js";
+import { StagePortrait } from "../desk/StagePortrait.jsx";
 
 // ─── IL QUADERNO DI NONNO CARMELO — tutorial in 4 capitoli ──────
 // Prologo della scena al bancone (IntroDesk): stessi colori della mappa,
@@ -20,6 +21,10 @@ const BG = dither(T.board, T.board2);
 const PANEL = T.marquee, LINE = SH.line, LINE_HI = SH.lineHi;
 const TXT = C.text, INK = T.ink, ACCENT = T.accent;
 const panel = { background: PANEL, boxShadow: `inset 0 0 0 2px ${LINE}, ${SH.shadow}` };
+const PAPER = "#efe2b5";
+const PAPER_2 = "#e7d69f";
+const PAPER_INK = "#243b38";
+const paperLines = `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER}`;
 const hl = (color) => ({ color, fontWeight: "normal" });
 
 function useTyped(text) {
@@ -264,65 +269,90 @@ export function TutorialDesk({ page, onPage, onDone }) {
     }}>
       <div style={{ width: "min(100%, 1060px)", display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
 
-        {/* ══ Testata: titolo del quaderno + capitoli ══ */}
-        <header style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 11, letterSpacing: 3, color: ACCENT }}>PRIMA DI PARTIRE · APPUNTI DEL VECCHIO</span>
-            <span style={{ fontSize: 26, lineHeight: 1, color: TXT }}>Il quaderno di Nonno Carmelo</span>
-          </div>
-          <nav aria-label="Capitoli" style={{ display: "flex", gap: 4 }}>
-            {CHAPTERS.map((c, i) => {
-              const on = i === page;
-              return (
-                <button key={c.tab} type="button" onClick={() => onPage(i)} aria-current={on ? "step" : undefined} style={{
-                  fontFamily: FONT, fontSize: 11, letterSpacing: 1, padding: "7px 10px", border: "none", cursor: "pointer",
-                  background: on ? GOLD.mid : "#000", color: on ? GOLD.dark : i < page ? TXT : INK,
-                  boxShadow: on ? `inset 0 0 0 2px ${GOLD.dark}, 3px 3px 0 #000` : `inset 0 0 0 1px ${LINE_HI}`,
-                }}>{["I", "II", "III", "IV"][i]} · {c.tab}</button>
-              );
-            })}
-          </nav>
-        </header>
-
-        {/* Corpo centrato tra testata e navigazione: niente vuoto sotto il
-            contenuto, e AVANTI resta nello stesso punto su tutti i capitoli. */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
-        {/* ══ La voce del vecchio ══ */}
-        <section onClick={skip} aria-label="Nonno Carmelo" style={{
-          ...panel, padding: "14px 18px", display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 18, alignItems: "center",
-          cursor: done ? "default" : "pointer",
+        {/* La pagina parlata usa la stessa grammatica degli altri NPC: striscia,
+            ritratto di scena, cartellino, nome e battuta dattiloscritta. */}
+        <section onClick={skip} aria-label="Dialogo con Nonno Carmelo" style={{
+          ...panel, position: "relative", padding: "16px 20px 16px 24px",
+          display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 22, alignItems: "center",
+          cursor: done ? "default" : "pointer", flexShrink: 0,
         }}>
-          <div style={{ width: 124, height: 124, padding: 4, boxSizing: "border-box", background: "#000", boxShadow: `inset 0 0 0 2px ${LINE_HI}`, overflow: "hidden" }}>
-            <Asset id="spr-vecchio" emoji="👴" size={116} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, letterSpacing: 2, color: ch.color }}>CAPITOLO {["I", "II", "III", "IV"][page]}</span>
-              <span style={{ fontSize: 22, lineHeight: 1, color: TXT }}>{ch.title}</span>
+          <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: ch.color }} />
+          <StagePortrait spriteId="spr-vecchio" accent={ch.color} size={148} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11, letterSpacing: 3, color: ACCENT }}>TABACCHERIA</span>
+              <span style={{ fontSize: 10, letterSpacing: 2, padding: "3px 8px", color: ch.color, background: "#000", boxShadow: `inset 0 0 0 1px ${ch.color}` }}>
+                CAPITOLO {["I", "II", "III", "IV"][page]}
+              </span>
             </div>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, fontStyle: "italic", color: INK, minHeight: "4.8em" }}>
-              “{shown}{!done && <span style={{ color: ACCENT }}>▌</span>}{done && "”"}
+            <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: "normal", fontSize: 28, lineHeight: 1.05, color: TXT }}>Nonno Carmelo</h2>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, fontStyle: "italic", color: INK, minHeight: "4.8em" }}>
+              ❝ {shown}{!done && <span style={{ color: ch.color }}>▌</span>}{done && " ❞"}
             </p>
+            {!done && <span style={{ alignSelf: "flex-end", fontSize: 10, letterSpacing: 1, color: C.dim }}>tocca per saltare →</span>}
           </div>
         </section>
 
-        {/* ══ Illustrazione + regole ══ */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 14, alignItems: "start" }}>
-          <section aria-label="Illustrazione" style={{ ...panel, padding: 18 }}>
-            <ch.Art />
-          </section>
-          <section aria-label="Regole" style={{ ...panel, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
-            <span style={{ fontSize: 11, letterSpacing: 2, color: ch.color }}>COSA DEVI SAPERE</span>
-            {ch.rules.map((r, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr)", gap: 10, alignItems: "start" }}>
-                <span style={{ width: 22, height: 22, display: "grid", placeItems: "center", background: "#000",
-                  boxShadow: `inset 0 0 0 1px ${ch.color}99`, color: ch.color, fontSize: 11 }}>{i + 1}</span>
-                <span style={{ fontSize: 14, lineHeight: 1.55, color: TXT }}>{r}</span>
-              </div>
-            ))}
-          </section>
-        </div>
-        </div>
+        {/* Sketchbook aperto: copertina, fogli rigati, dorso e spirale. */}
+        <article aria-label="Libretto di istruzioni di Nonno Carmelo" style={{
+          position: "relative", flex: 1, padding: "14px", background: "#6d4425",
+          boxShadow: `inset 0 0 0 3px #332014, inset 0 0 0 6px #a77a3f, 7px 7px 0 #000`,
+          display: "flex", flexDirection: "column", gap: 10,
+        }}>
+          <style>{`
+            @keyframes sketchbookPageIn {
+              0% { opacity: 0; transform: perspective(900px) rotateY(-5deg) translateX(14px); }
+              55% { opacity: 1; transform: perspective(900px) rotateY(1deg) translateX(-2px); }
+              100% { opacity: 1; transform: perspective(900px) rotateY(0) translateX(0); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .sketchbook-spread { animation: none !important; }
+            }
+          `}</style>
+          <header style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: "2px 4px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span style={{ fontSize: 10, letterSpacing: 3, color: PAPER_2 }}>LIBRETTO DI ISTRUZIONI · APPUNTI DEL VECCHIO</span>
+              <span style={{ fontSize: 22, lineHeight: 1, color: "#fff1bd" }}>{ch.title}</span>
+            </div>
+            <nav aria-label="Capitoli" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {CHAPTERS.map((c, i) => {
+                const on = i === page;
+                return (
+                  <button key={c.tab} type="button" onClick={() => onPage(i)} aria-current={on ? "step" : undefined} style={{
+                    fontFamily: FONT, fontSize: 10, letterSpacing: 1, padding: "6px 9px", border: "none", cursor: "pointer",
+                    background: on ? ch.color : "#24180f", color: on ? "#000" : i < page ? PAPER : "#ad9b73",
+                    boxShadow: on ? "2px 2px 0 #000" : "inset 0 0 0 1px #725b3a",
+                  }}>{["I", "II", "III", "IV"][i]} · {c.tab}</button>
+                );
+              })}
+            </nav>
+          </header>
+
+          <div key={page} className="sketchbook-spread" style={{
+            position: "relative", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", minHeight: 390,
+            transformOrigin: "50% 50%", animation: "sketchbookPageIn 0.28s steps(4) both",
+          }}>
+            <span aria-hidden style={{ position: "absolute", zIndex: 3, left: "50%", top: 0, bottom: 0, width: 18, transform: "translateX(-50%)",
+              background: "repeating-linear-gradient(0deg, transparent 0 13px, #332014 13px 17px, #d7c58f 17px 20px)",
+              filter: "drop-shadow(2px 0 #806b43)" }} />
+            <section aria-label="Illustrazione" style={{ background: paperLines, color: PAPER_INK, padding: "22px 28px 22px 22px", boxShadow: "inset 3px 0 #c5af74, inset 0 3px #c5af74" }}>
+              <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: "#6e654d" }}>FIG. {page + 1} · {ch.tab}</span>
+              <ch.Art />
+            </section>
+            <section aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER_2}`,
+              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: "inset -3px 0 #c5af74, inset 0 3px #c5af74", display: "flex", flexDirection: "column", gap: 12 }}>
+              <span style={{ fontSize: 12, letterSpacing: 2, color: PAPER_INK, borderBottom: `3px double ${PAPER_INK}`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
+              {ch.rules.map((r, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "start" }}>
+                  <span style={{ width: 24, height: 24, display: "grid", placeItems: "center", border: `2px solid ${ch.color}`,
+                    color: PAPER_INK, fontSize: 11, transform: `rotate(${i % 2 ? 1 : -1}deg)` }}>{i + 1}</span>
+                  <span style={{ fontSize: 14, lineHeight: 1.55, color: PAPER_INK }}>{r}</span>
+                </div>
+              ))}
+              <span style={{ marginTop: "auto", alignSelf: "flex-end", fontSize: 10, color: "#756948", transform: "rotate(-2deg)" }}>— N. Carmelo</span>
+            </section>
+          </div>
+        </article>
 
         {/* ══ Navigazione: stessi punti su tutte le pagine ══ */}
         <footer style={{ display: "grid", gridTemplateColumns: "160px minmax(0,1fr) 260px", gap: 12, alignItems: "center" }}>
