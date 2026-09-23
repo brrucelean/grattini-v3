@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { C, FONT, FONT_TITLE } from "../../data/theme.js";
 import { BIOMES, BOSS_MIN_MONEY } from "../../data/biomes.js";
 import { AudioEngine } from "../../audio.js";
@@ -57,7 +57,7 @@ function NailsArt() {
   // Dita della V2 (nail-<stato>.webp, P-07)
   const sprite = (id) => (`nail-${id}`);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: 14 }}>
       <span style={{ fontSize: 11, letterSpacing: 2, color: INK }}>OGNI 3 CASELLE GRATTATE, UN GRADINO GIÙ</span>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 6, alignItems: "end" }}>
         {NAILS.map((n, i) => (
@@ -90,7 +90,7 @@ function CombatArt() {
     </div>
   );
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: 12 }}>
       {/* il nemico */}
       <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 12, alignItems: "center" }}>
         <div style={{ width: 64, height: 64, background: "#000", boxShadow: `inset 0 0 0 2px ${C.red}66`, overflow: "hidden" }}>
@@ -141,7 +141,7 @@ const PATH = [
 
 function MapArt() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: 12 }}>
       <div style={{ position: "relative", display: "grid", gridTemplateColumns: `repeat(${PATH.length}, minmax(0,1fr))`, gap: 4, padding: "14px 6px", background: dither(T.board, T.board2), boxShadow: "inset 0 0 0 2px #000" }}>
         <div aria-hidden style={{ position: "absolute", left: "8%", right: "8%", top: 40, borderTop: `2px dashed ${GOLD.lo}` }} />
         {PATH.map((n, i) => {
@@ -177,7 +177,7 @@ const SHOWCASE = ["ficheBlu", "monetaVicolo", "madreperla", "vhs", "specchietto"
 
 function TokenArt() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: 12 }}>
       <div style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 14, alignItems: "center" }}>
         <div style={{ padding: 10, background: "#000", boxShadow: `inset 0 0 0 2px ${GOLD.mid}` }}><Pedina id="ottone" size={56} /></div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -248,9 +248,13 @@ const CHAPTERS = [
 ];
 
 export function TutorialDesk({ page, onPage, onDone }) {
+  const previousPage = useRef(page);
   const ch = CHAPTERS[page] || CHAPTERS[0];
   const { shown, done, skip } = useTyped(ch.voice);
   const last = page === CHAPTERS.length - 1;
+  const turnDirection = page >= previousPage.current ? "forward" : "backward";
+
+  useEffect(() => { previousPage.current = page; }, [page]);
 
   // ← → per sfogliare
   useEffect(() => {
@@ -300,14 +304,20 @@ export function TutorialDesk({ page, onPage, onDone }) {
           display: "flex", flexDirection: "column", gap: 10,
         }}>
           <style>{`
-            @keyframes sketchbookPageIn {
-              0% { opacity: 0; transform: perspective(900px) rotateY(-5deg) translateX(14px); }
-              55% { opacity: 1; transform: perspective(900px) rotateY(1deg) translateX(-2px); }
-              100% { opacity: 1; transform: perspective(900px) rotateY(0) translateX(0); }
+            @keyframes turnPageForward {
+              0% { transform: rotateY(-94deg); filter: brightness(.62); }
+              45% { transform: rotateY(-42deg); filter: brightness(.78); }
+              100% { transform: rotateY(0); filter: brightness(1); }
+            }
+            @keyframes turnPageBackward {
+              0% { transform: rotateY(94deg); filter: brightness(.62); }
+              45% { transform: rotateY(42deg); filter: brightness(.78); }
+              100% { transform: rotateY(0); filter: brightness(1); }
             }
             @media (prefers-reduced-motion: reduce) {
-              .sketchbook-spread { animation: none !important; }
+              .sketch-page { animation: none !important; }
             }
+            .sketch-rules b { color:#7b3030 !important; background:#fff5cf; padding:0 2px; box-shadow:0 1px #7b3030; }
           `}</style>
           <header style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: "2px 4px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -328,22 +338,31 @@ export function TutorialDesk({ page, onPage, onDone }) {
             </nav>
           </header>
 
-          <div key={page} className="sketchbook-spread" style={{
+          <div key={page} style={{
             position: "relative", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", minHeight: 390,
-            transformOrigin: "50% 50%", animation: "sketchbookPageIn 0.28s steps(4) both",
+            perspective: 1300, isolation: "isolate",
           }}>
-            <span aria-hidden style={{ position: "absolute", zIndex: 3, left: "50%", top: 0, bottom: 0, width: 18, transform: "translateX(-50%)",
-              background: "repeating-linear-gradient(0deg, transparent 0 13px, #332014 13px 17px, #d7c58f 17px 20px)",
-              filter: "drop-shadow(2px 0 #806b43)" }} />
-            <section aria-label="Illustrazione" style={{ background: paperLines, color: PAPER_INK, padding: "22px 28px 22px 22px", boxShadow: "inset 3px 0 #c5af74, inset 0 3px #c5af74" }}>
+            <span aria-hidden style={{ position: "absolute", zIndex: 5, left: "50%", top: -2, bottom: -2, width: 20, transform: "translateX(-50%)",
+              background: "repeating-linear-gradient(0deg, transparent 0 12px, #2a1b11 12px 16px, #d7c58f 16px 19px)",
+              filter: "drop-shadow(3px 0 #806b43) drop-shadow(-2px 0 #5b462c)" }} />
+            <span aria-hidden style={{ position: "absolute", zIndex: 2, left: "calc(50% - 26px)", top: 0, bottom: 0, width: 52,
+              background: "linear-gradient(90deg, transparent, #49371555 42%, #fff7d844 50%, #49371566 58%, transparent)" }} />
+            <section className="sketch-page" aria-label="Illustrazione" style={{
+              background: paperLines, color: PAPER_INK, padding: "22px 30px 22px 22px", boxShadow: "inset 3px 0 #c5af74, inset 0 3px #c5af74, inset 0 -3px #b79c60",
+              transformOrigin: "right center", animation: turnDirection === "backward" ? "turnPageBackward .48s steps(7) both" : "none",
+            }}>
               <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: "#6e654d" }}>FIG. {page + 1} · {ch.tab}</span>
               <ch.Art />
             </section>
-            <section aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER_2}`,
-              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: "inset -3px 0 #c5af74, inset 0 3px #c5af74", display: "flex", flexDirection: "column", gap: 12 }}>
+            <section className="sketch-page sketch-rules" aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER_2}`,
+              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: "inset -3px 0 #c5af74, inset 0 3px #c5af74, inset 0 -3px #b79c60",
+              display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10,
+              transformOrigin: "left center", animation: turnDirection === "forward" ? "turnPageForward .48s steps(7) both" : "none",
+            }}>
               <span style={{ fontSize: 12, letterSpacing: 2, color: PAPER_INK, borderBottom: `3px double ${PAPER_INK}`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
               {ch.rules.map((r, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "start" }}>
+                <div key={i} style={{ flex: 1, display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "center",
+                  padding: "4px 0", borderBottom: i < ch.rules.length - 1 ? "1px dashed #806f493d" : "none" }}>
                   <span style={{ width: 24, height: 24, display: "grid", placeItems: "center", border: `2px solid ${ch.color}`,
                     color: PAPER_INK, fontSize: 11, transform: `rotate(${i % 2 ? 1 : -1}deg)` }}>{i + 1}</span>
                   <span style={{ fontSize: 14, lineHeight: 1.55, color: PAPER_INK }}>{r}</span>
