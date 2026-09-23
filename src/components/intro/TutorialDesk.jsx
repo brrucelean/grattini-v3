@@ -21,10 +21,14 @@ const BG = dither(T.board, T.board2);
 const PANEL = T.marquee, LINE = SH.line, LINE_HI = SH.lineHi;
 const TXT = C.text, INK = T.ink, ACCENT = T.accent;
 const panel = { background: PANEL, boxShadow: `inset 0 0 0 2px ${LINE}, ${SH.shadow}` };
-const PAPER = "#efe2b5";
-const PAPER_2 = "#e7d69f";
-const PAPER_INK = "#243b38";
-const paperLines = `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER}`;
+const PAPER = "#111918";
+const PAPER_2 = "#0c1313";
+const PAPER_INK = "#d6e2dc";
+const PAPER_DIM = "#78928a";
+const paperLines = [
+  "repeating-linear-gradient(0deg, transparent 0 27px, #5f81761f 27px 28px)",
+  "repeating-conic-gradient(#111918 0% 25%, #141d1c 0% 50%) 0 0 / 4px 4px",
+].join(", ");
 const hl = (color) => ({ color, fontWeight: "normal" });
 
 function useTyped(text) {
@@ -299,8 +303,8 @@ export function TutorialDesk({ page, onPage, onDone }) {
 
         {/* Sketchbook aperto: copertina, fogli rigati, dorso e spirale. */}
         <article aria-label="Libretto di istruzioni di Nonno Carmelo" style={{
-          position: "relative", flex: 1, padding: "14px", background: "#6d4425",
-          boxShadow: `inset 0 0 0 3px #332014, inset 0 0 0 6px #a77a3f, 7px 7px 0 #000`,
+          position: "relative", flex: 1, padding: "14px", background: dither("#080d0c", "#0b1110", 2),
+          boxShadow: `inset 0 0 0 2px #020404, inset 0 0 0 5px ${GOLD.lo}, inset 0 0 0 7px #020404, 7px 7px 0 #000`,
           display: "flex", flexDirection: "column", gap: 10,
         }}>
           <style>{`
@@ -317,12 +321,12 @@ export function TutorialDesk({ page, onPage, onDone }) {
             @media (prefers-reduced-motion: reduce) {
               .sketch-page { animation: none !important; }
             }
-            .sketch-rules b { color:#7b3030 !important; background:#fff5cf; padding:0 2px; box-shadow:0 1px #7b3030; }
+            .sketch-rules b { background:#000a; padding:0 3px; box-shadow:0 1px currentColor; }
           `}</style>
           <header style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: "2px 4px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span style={{ fontSize: 10, letterSpacing: 3, color: PAPER_2 }}>LIBRETTO DI ISTRUZIONI · APPUNTI DEL VECCHIO</span>
-              <span style={{ fontSize: 22, lineHeight: 1, color: "#fff1bd" }}>{ch.title}</span>
+              <span style={{ fontSize: 10, letterSpacing: 3, color: PAPER_DIM }}>LIBRETTO DI ISTRUZIONI · APPUNTI DEL VECCHIO</span>
+              <span style={{ fontSize: 22, lineHeight: 1, color: PAPER_INK }}>{ch.title}</span>
             </div>
             <nav aria-label="Capitoli" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {CHAPTERS.map((c, i) => {
@@ -330,8 +334,8 @@ export function TutorialDesk({ page, onPage, onDone }) {
                 return (
                   <button key={c.tab} type="button" onClick={() => onPage(i)} aria-current={on ? "step" : undefined} style={{
                     fontFamily: FONT, fontSize: 10, letterSpacing: 1, padding: "6px 9px", border: "none", cursor: "pointer",
-                    background: on ? ch.color : "#24180f", color: on ? "#000" : i < page ? PAPER : "#ad9b73",
-                    boxShadow: on ? "2px 2px 0 #000" : "inset 0 0 0 1px #725b3a",
+                    background: on ? ch.color : "#050807", color: on ? "#000" : i < page ? PAPER_INK : PAPER_DIM,
+                    boxShadow: on ? `inset 0 0 0 1px #000, 2px 2px 0 #000` : `inset 0 0 0 1px ${LINE_HI}`,
                   }}>{["I", "II", "III", "IV"][i]} · {c.tab}</button>
                 );
               })}
@@ -343,32 +347,32 @@ export function TutorialDesk({ page, onPage, onDone }) {
             perspective: 1300, isolation: "isolate",
           }}>
             <span aria-hidden style={{ position: "absolute", zIndex: 5, left: "50%", top: -2, bottom: -2, width: 20, transform: "translateX(-50%)",
-              background: "repeating-linear-gradient(0deg, transparent 0 12px, #2a1b11 12px 16px, #d7c58f 16px 19px)",
-              filter: "drop-shadow(3px 0 #806b43) drop-shadow(-2px 0 #5b462c)" }} />
+              background: `repeating-linear-gradient(0deg, transparent 0 12px, #020303 12px 16px, ${GOLD.mid} 16px 19px)`,
+              filter: "drop-shadow(3px 0 #000) drop-shadow(-2px 0 #000)" }} />
             <span aria-hidden style={{ position: "absolute", zIndex: 2, left: "calc(50% - 26px)", top: 0, bottom: 0, width: 52,
-              background: "linear-gradient(90deg, transparent, #49371555 42%, #fff7d844 50%, #49371566 58%, transparent)" }} />
+              background: `linear-gradient(90deg, transparent, #0009 42%, ${GOLD.mid}18 50%, #0009 58%, transparent)` }} />
             <section className="sketch-page" aria-label="Illustrazione" style={{
-              background: paperLines, color: PAPER_INK, padding: "22px 30px 22px 22px", boxShadow: "inset 3px 0 #c5af74, inset 0 3px #c5af74, inset 0 -3px #b79c60",
+              background: paperLines, color: PAPER_INK, padding: "22px 30px 22px 22px", boxShadow: `inset 2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset -12px 0 18px #0005`,
               transformOrigin: "right center", animation: turnDirection === "backward" ? "turnPageBackward .48s steps(7) both" : "none",
             }}>
-              <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: "#6e654d" }}>FIG. {page + 1} · {ch.tab}</span>
+              <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: PAPER_DIM }}>FIG. {page + 1} · {ch.tab}</span>
               <ch.Art />
             </section>
-            <section className="sketch-page sketch-rules" aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f817622 27px 28px), ${PAPER_2}`,
-              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: "inset -3px 0 #c5af74, inset 0 3px #c5af74, inset 0 -3px #b79c60",
+            <section className="sketch-page sketch-rules" aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f81761f 27px 28px), repeating-conic-gradient(${PAPER_2} 0% 25%, #101817 0% 50%) 0 0 / 4px 4px`,
+              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: `inset -2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset 12px 0 18px #0005`,
               display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10,
               transformOrigin: "left center", animation: turnDirection === "forward" ? "turnPageForward .48s steps(7) both" : "none",
             }}>
-              <span style={{ fontSize: 12, letterSpacing: 2, color: PAPER_INK, borderBottom: `3px double ${PAPER_INK}`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
+              <span style={{ fontSize: 12, letterSpacing: 2, color: ch.color, borderBottom: `3px double ${ch.color}88`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
               {ch.rules.map((r, i) => (
                 <div key={i} style={{ flex: 1, display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "center",
-                  padding: "4px 0", borderBottom: i < ch.rules.length - 1 ? "1px dashed #806f493d" : "none" }}>
+                  padding: "4px 0", borderBottom: i < ch.rules.length - 1 ? `1px dashed ${LINE_HI}` : "none" }}>
                   <span style={{ width: 24, height: 24, display: "grid", placeItems: "center", border: `2px solid ${ch.color}`,
                     color: PAPER_INK, fontSize: 11, transform: `rotate(${i % 2 ? 1 : -1}deg)` }}>{i + 1}</span>
                   <span style={{ fontSize: 14, lineHeight: 1.55, color: PAPER_INK }}>{r}</span>
                 </div>
               ))}
-              <span style={{ marginTop: "auto", alignSelf: "flex-end", fontSize: 10, color: "#756948", transform: "rotate(-2deg)" }}>— N. Carmelo</span>
+              <span style={{ marginTop: "auto", alignSelf: "flex-end", fontSize: 10, color: PAPER_DIM, transform: "rotate(-2deg)" }}>— N. Carmelo</span>
             </section>
           </div>
         </article>
