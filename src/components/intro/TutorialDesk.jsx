@@ -251,14 +251,68 @@ const CHAPTERS = [
   },
 ];
 
+function IllustrationPage({ chapter, index, style = {} }) {
+  const Art = chapter.Art;
+  return (
+    <section aria-label="Illustrazione" style={{
+      height: "100%", boxSizing: "border-box", background: paperLines, color: PAPER_INK,
+      padding: "22px 30px 22px 22px",
+      boxShadow: `inset 2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset -12px 0 18px #0005`,
+      ...style,
+    }}>
+      <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: PAPER_DIM }}>
+        FIG. {index + 1} · {chapter.tab}
+      </span>
+      <Art />
+    </section>
+  );
+}
+
+function RulesPage({ chapter, style = {} }) {
+  return (
+    <section className="sketch-rules" aria-label="Regole" style={{
+      height: "100%", boxSizing: "border-box",
+      background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f81761f 27px 28px), repeating-conic-gradient(${PAPER_2} 0% 25%, #101817 0% 50%) 0 0 / 4px 4px`,
+      color: PAPER_INK, padding: "22px 22px 22px 30px",
+      boxShadow: `inset -2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset 12px 0 18px #0005`,
+      display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10,
+      ...style,
+    }}>
+      <span style={{ fontSize: 12, letterSpacing: 2, color: chapter.color, borderBottom: `3px double ${chapter.color}88`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
+      {chapter.rules.map((rule, i) => (
+        <div key={i} style={{ flex: 1, display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "center",
+          padding: "4px 0", borderBottom: i < chapter.rules.length - 1 ? `1px dashed ${LINE_HI}` : "none" }}>
+          <span style={{ width: 24, height: 24, display: "grid", placeItems: "center", border: `2px solid ${chapter.color}`,
+            color: PAPER_INK, fontSize: 11, transform: `rotate(${i % 2 ? 1 : -1}deg)` }}>{i + 1}</span>
+          <span style={{ fontSize: 14, lineHeight: 1.55, color: PAPER_INK }}>{rule}</span>
+        </div>
+      ))}
+      <span style={{ marginTop: "auto", alignSelf: "flex-end", fontSize: 10, color: PAPER_DIM, transform: "rotate(-2deg)" }}>— N. Carmelo</span>
+    </section>
+  );
+}
+
 export function TutorialDesk({ page, onPage, onDone }) {
-  const previousPage = useRef(page);
+  const [settledPage, setSettledPage] = useState(page);
+  const [turn, setTurn] = useState(null);
+  const turnId = useRef(0);
   const ch = CHAPTERS[page] || CHAPTERS[0];
   const { shown, done, skip } = useTyped(ch.voice);
   const last = page === CHAPTERS.length - 1;
-  const turnDirection = page >= previousPage.current ? "forward" : "backward";
 
-  useEffect(() => { previousPage.current = page; }, [page]);
+  useEffect(() => {
+    if (page === settledPage) return;
+    const nextTurn = { id: ++turnId.current, from: settledPage, to: page, direction: page > settledPage ? "forward" : "backward" };
+    setTurn(nextTurn);
+    const timeout = setTimeout(() => {
+      setSettledPage(page);
+      setTurn(null);
+    }, 560);
+    return () => clearTimeout(timeout);
+  }, [page, settledPage]);
+
+  const bookPage = turn ? turn.to : settledPage;
+  const bookChapter = CHAPTERS[bookPage] || CHAPTERS[0];
 
   // ← → per sfogliare
   useEffect(() => {
@@ -286,7 +340,7 @@ export function TutorialDesk({ page, onPage, onDone }) {
         }}>
           <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: ch.color }} />
           <StagePortrait spriteId="spr-vecchio" accent={ch.color} size={148} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+          <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "center", gap: 8, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontSize: 11, letterSpacing: 3, color: ACCENT }}>TABACCHERIA</span>
               <span style={{ fontSize: 10, letterSpacing: 2, padding: "3px 8px", color: ch.color, background: "#000", boxShadow: `inset 0 0 0 1px ${ch.color}` }}>
@@ -294,7 +348,7 @@ export function TutorialDesk({ page, onPage, onDone }) {
               </span>
             </div>
             <h2 style={{ margin: 0, fontFamily: FONT_TITLE, fontWeight: "normal", fontSize: 28, lineHeight: 1.05, color: TXT }}>Nonno Carmelo</h2>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, fontStyle: "italic", color: INK, minHeight: "4.8em" }}>
+            <p style={{ margin: 0, height: "5em", overflow: "hidden", fontSize: 15, lineHeight: 1.65, fontStyle: "italic", color: INK }}>
               ❝ {shown}{!done && <span style={{ color: ch.color }}>▌</span>}{done && " ❞"}
             </p>
             {!done && <span style={{ alignSelf: "flex-end", fontSize: 10, letterSpacing: 1, color: C.dim }}>tocca per saltare →</span>}
@@ -303,30 +357,32 @@ export function TutorialDesk({ page, onPage, onDone }) {
 
         {/* Sketchbook aperto: copertina, fogli rigati, dorso e spirale. */}
         <article aria-label="Libretto di istruzioni di Nonno Carmelo" style={{
-          position: "relative", flex: 1, padding: "14px", background: dither("#080d0c", "#0b1110", 2),
+          position: "relative", flex: 1, minHeight: 0, padding: "14px", background: dither("#080d0c", "#0b1110", 2),
           boxShadow: `inset 0 0 0 2px #020404, inset 0 0 0 5px ${GOLD.lo}, inset 0 0 0 7px #020404, 7px 7px 0 #000`,
           display: "flex", flexDirection: "column", gap: 10,
         }}>
           <style>{`
-            @keyframes turnPageForward {
-              0% { transform: rotateY(-94deg); filter: brightness(.62); }
-              45% { transform: rotateY(-42deg); filter: brightness(.78); }
-              100% { transform: rotateY(0); filter: brightness(1); }
+            @keyframes flipForward {
+              0% { transform: rotateY(0deg); }
+              100% { transform: rotateY(-180deg); }
             }
-            @keyframes turnPageBackward {
-              0% { transform: rotateY(94deg); filter: brightness(.62); }
-              45% { transform: rotateY(42deg); filter: brightness(.78); }
-              100% { transform: rotateY(0); filter: brightness(1); }
+            @keyframes flipBackward {
+              0% { transform: rotateY(0deg); }
+              100% { transform: rotateY(180deg); }
+            }
+            @keyframes retireStaticPage {
+              0%,49% { opacity:1; }
+              50%,100% { opacity:0; }
             }
             @media (prefers-reduced-motion: reduce) {
-              .sketch-page { animation: none !important; }
+              .turn-overlay { display:none !important; }
             }
             .sketch-rules b { background:#000a; padding:0 3px; box-shadow:0 1px currentColor; }
           `}</style>
           <header style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: "2px 4px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <span style={{ fontSize: 10, letterSpacing: 3, color: PAPER_DIM }}>LIBRETTO DI ISTRUZIONI · APPUNTI DEL VECCHIO</span>
-              <span style={{ fontSize: 22, lineHeight: 1, color: PAPER_INK }}>{ch.title}</span>
+              <span style={{ fontSize: 22, lineHeight: 1, color: PAPER_INK }}>{bookChapter.title}</span>
             </div>
             <nav aria-label="Capitoli" style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {CHAPTERS.map((c, i) => {
@@ -334,7 +390,7 @@ export function TutorialDesk({ page, onPage, onDone }) {
                 return (
                   <button key={c.tab} type="button" onClick={() => onPage(i)} aria-current={on ? "step" : undefined} style={{
                     fontFamily: FONT, fontSize: 10, letterSpacing: 1, padding: "6px 9px", border: "none", cursor: "pointer",
-                    background: on ? ch.color : "#050807", color: on ? "#000" : i < page ? PAPER_INK : PAPER_DIM,
+                    background: on ? bookChapter.color : "#050807", color: on ? "#000" : i < page ? PAPER_INK : PAPER_DIM,
                     boxShadow: on ? `inset 0 0 0 1px #000, 2px 2px 0 #000` : `inset 0 0 0 1px ${LINE_HI}`,
                   }}>{["I", "II", "III", "IV"][i]} · {c.tab}</button>
                 );
@@ -342,8 +398,11 @@ export function TutorialDesk({ page, onPage, onDone }) {
             </nav>
           </header>
 
-          <div key={page} style={{
-            position: "relative", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", minHeight: 390,
+          <div style={{
+            // I fogli riempiono il quaderno fino in fondo: prima erano alti
+            // 390px fissi e sotto restava una fascia nera vuota.
+            position: "relative", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+            flex: 1, minHeight: 360,
             perspective: 1300, isolation: "isolate",
           }}>
             <span aria-hidden style={{ position: "absolute", zIndex: 5, left: "50%", top: -2, bottom: -2, width: 20, transform: "translateX(-50%)",
@@ -351,29 +410,41 @@ export function TutorialDesk({ page, onPage, onDone }) {
               filter: "drop-shadow(3px 0 #000) drop-shadow(-2px 0 #000)" }} />
             <span aria-hidden style={{ position: "absolute", zIndex: 2, left: "calc(50% - 26px)", top: 0, bottom: 0, width: 52,
               background: `linear-gradient(90deg, transparent, #0009 42%, ${GOLD.mid}18 50%, #0009 58%, transparent)` }} />
-            <section className="sketch-page" aria-label="Illustrazione" style={{
-              background: paperLines, color: PAPER_INK, padding: "22px 30px 22px 22px", boxShadow: `inset 2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset -12px 0 18px #0005`,
-              transformOrigin: "right center", animation: turnDirection === "backward" ? "turnPageBackward .48s steps(7) both" : "none",
-            }}>
-              <span style={{ display: "block", marginBottom: 14, fontSize: 10, letterSpacing: 2, color: PAPER_DIM }}>FIG. {page + 1} · {ch.tab}</span>
-              <ch.Art />
-            </section>
-            <section className="sketch-page sketch-rules" aria-label="Regole" style={{ background: `repeating-linear-gradient(0deg, transparent 0 27px, #5f81761f 27px 28px), repeating-conic-gradient(${PAPER_2} 0% 25%, #101817 0% 50%) 0 0 / 4px 4px`,
-              color: PAPER_INK, padding: "22px 22px 22px 30px", boxShadow: `inset -2px 0 ${LINE_HI}, inset 0 2px ${LINE_HI}, inset 0 -2px #000, inset 12px 0 18px #0005`,
-              display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 10,
-              transformOrigin: "left center", animation: turnDirection === "forward" ? "turnPageForward .48s steps(7) both" : "none",
-            }}>
-              <span style={{ fontSize: 12, letterSpacing: 2, color: ch.color, borderBottom: `3px double ${ch.color}88`, paddingBottom: 7 }}>COSA DEVI SAPERE</span>
-              {ch.rules.map((r, i) => (
-                <div key={i} style={{ flex: 1, display: "grid", gridTemplateColumns: "26px minmax(0,1fr)", gap: 10, alignItems: "center",
-                  padding: "4px 0", borderBottom: i < ch.rules.length - 1 ? `1px dashed ${LINE_HI}` : "none" }}>
-                  <span style={{ width: 24, height: 24, display: "grid", placeItems: "center", border: `2px solid ${ch.color}`,
-                    color: PAPER_INK, fontSize: 11, transform: `rotate(${i % 2 ? 1 : -1}deg)` }}>{i + 1}</span>
-                  <span style={{ fontSize: 14, lineHeight: 1.55, color: PAPER_INK }}>{r}</span>
+            <IllustrationPage chapter={bookChapter} index={bookPage} />
+            <RulesPage chapter={bookChapter} />
+
+            {turn && (() => {
+              const fromChapter = CHAPTERS[turn.from];
+              const toChapter = CHAPTERS[turn.to];
+              const forward = turn.direction === "forward";
+              return (
+                <div key={turn.id} className="turn-overlay" aria-hidden style={{ position: "absolute", inset: 0, zIndex: 8, pointerEvents: "none", perspective: 1300 }}>
+                  <div style={{ position: "absolute", top: 0, bottom: 0, width: "50%", left: forward ? 0 : "50%",
+                    animation: "retireStaticPage .56s linear both" }}>
+                    {forward
+                      ? <IllustrationPage chapter={fromChapter} index={turn.from} />
+                      : <RulesPage chapter={fromChapter} />}
+                  </div>
+                  <div style={{ position: "absolute", top: 0, bottom: 0, width: "50%", left: forward ? "50%" : 0,
+                    transformOrigin: forward ? "left center" : "right center", transformStyle: "preserve-3d",
+                    boxShadow: forward ? "-8px 0 12px #0008" : "8px 0 12px #0008",
+                    animation: `${forward ? "flipForward" : "flipBackward"} .56s cubic-bezier(.32,.02,.18,1) both` }}>
+                    <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                      transform: "rotateY(0deg) translateZ(1px)" }}>
+                      {forward
+                        ? <RulesPage chapter={fromChapter} />
+                        : <IllustrationPage chapter={fromChapter} index={turn.from} />}
+                    </div>
+                    <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                      transform: "rotateY(180deg) translateZ(1px)" }}>
+                      {forward
+                        ? <IllustrationPage chapter={toChapter} index={turn.to} />
+                        : <RulesPage chapter={toChapter} />}
+                    </div>
+                  </div>
                 </div>
-              ))}
-              <span style={{ marginTop: "auto", alignSelf: "flex-end", fontSize: 10, color: PAPER_DIM, transform: "rotate(-2deg)" }}>— N. Carmelo</span>
-            </section>
+              );
+            })()}
           </div>
         </article>
 
